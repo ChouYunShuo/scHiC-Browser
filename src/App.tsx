@@ -1,7 +1,24 @@
 import { useEffect, useState } from "react";
 import Axios from "axios";
 import { TextField, Button, Grid } from "@material-ui/core";
+import { makeStyles } from "@material-ui/styles";
+
 import HeatMap from "./components/ContactMap2D";
+import { useGetDatasetsQuery } from "./redux/apiSlice";
+import {
+  updateChrom1,
+  updateChrom2,
+  updateResolution,
+  updateApiCalls,
+} from "./redux/heatmap2DSlice";
+import {
+  getResFromRange,
+  getNewChromZoomIn,
+  getNewChromZoomOut,
+  validateChrom,
+} from "./utils";
+import { useAppDispatch, useAppSelector } from "./redux/hooks";
+
 type queryType = {
   chrom1: string;
   chrom2: string;
@@ -11,34 +28,58 @@ type queryType = {
 };
 
 function App() {
-  const [simpleQuery, setSimpleQuery] = useState<queryType>({
-    chrom1: "",
-    chrom2: "",
-    dataset_name: "scHiC5",
-    resolution: "50000",
-    cell_id: "0",
-  });
-  const [matrixData, setmatrixData] = useState<number[][]>([]);
+  const dispatch = useAppDispatch();
+  const heatmap_state = useAppSelector((state) => state.heatmap2D);
+  const map_cnts = heatmap_state.map_cnts;
 
-  const [imgString, setImgString] = useState<string>();
-
-  const fetchContactMap = () => {
-    Axios.post("http://127.0.0.1:8000/api/query", simpleQuery).then((res) => {
-      const array2D = JSON.parse(res.data);
-      setmatrixData(array2D);
-      console.log(array2D);
-    });
+  const fetchContactMap = async () => {
+    const new_res = getResFromRange(heatmap_state.chrom1, heatmap_state.chrom2);
+    console.log(heatmap_state.chrom1, heatmap_state.chrom2, new_res);
+    if (new_res) dispatch(updateResolution(new_res.toString()));
+    for (let i = 0; i < map_cnts; i++)
+      dispatch(
+        updateApiCalls({
+          call: true,
+          id: i,
+        })
+      );
+    console.log("fetched!");
   };
 
-  const fetchAllDataset = () => {
-    Axios.get("http://127.0.0.1:8000/api/datasets").then((res) => {
-      console.log(res.data);
-    });
+  const zoomIn = () => {
+    const new_chrom1 = getNewChromZoomIn(
+      validateChrom(heatmap_state.chrom1),
+      2
+    );
+    const new_chrom2 = getNewChromZoomIn(
+      validateChrom(heatmap_state.chrom2),
+      2
+    );
+    if (new_chrom1 && new_chrom2) {
+      dispatch(updateChrom1(new_chrom1));
+      dispatch(updateChrom2(new_chrom2));
+      fetchContactMap();
+    }
+  };
+  const zoomOut = () => {
+    const new_chrom1 = getNewChromZoomOut(
+      validateChrom(heatmap_state.chrom1),
+      2
+    );
+    const new_chrom2 = getNewChromZoomOut(
+      validateChrom(heatmap_state.chrom2),
+      2
+    );
+    console.log(new_chrom1);
+    if (new_chrom1 && new_chrom2) {
+      dispatch(updateChrom1(new_chrom1));
+      dispatch(updateChrom2(new_chrom2));
+      fetchContactMap();
+    }
   };
 
-  useEffect(() => {
-    fetchAllDataset();
-  }, []);
+  const { data: allDataset, error, isLoading } = useGetDatasetsQuery();
+  //console.log(allDataset);
 
   return (
     <div>
@@ -48,9 +89,8 @@ function App() {
             id="standard-basic"
             label="Chrom1"
             variant="standard"
-            onChange={(e) =>
-              setSimpleQuery({ ...simpleQuery, chrom1: e.target.value })
-            }
+            value={heatmap_state.chrom1}
+            onChange={(e) => dispatch(updateChrom1(e.target.value))}
           />
         </Grid>
         <Grid item>
@@ -58,9 +98,8 @@ function App() {
             id="standard-basic"
             label="Chrom2"
             variant="standard"
-            onChange={(e) =>
-              setSimpleQuery({ ...simpleQuery, chrom2: e.target.value })
-            }
+            value={heatmap_state.chrom2}
+            onChange={(e) => dispatch(updateChrom2(e.target.value))}
           />
         </Grid>
 
@@ -74,10 +113,39 @@ function App() {
             Send
           </Button>
         </Grid>
+        <Grid item>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => zoomOut()}
+            style={{
+              position: "relative",
+              top: "10px",
+              minWidth: "36px",
+              minHeight: "36px",
+            }}
+          >
+            -
+          </Button>
+        </Grid>
+        <Grid item>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => zoomIn()}
+            style={{
+              position: "relative",
+              top: "10px",
+              minWidth: "36px",
+              minHeight: "36px",
+            }}
+          >
+            +
+          </Button>
+        </Grid>
         <Grid container justifyContent="center">
-          <Grid item>
-            {" "}
-            <HeatMap data={matrixData} psize={2} app_size={600}></HeatMap>{" "}
+          <Grid>
+            <HeatMap map_id={0}></HeatMap>
           </Grid>
         </Grid>
       </Grid>
