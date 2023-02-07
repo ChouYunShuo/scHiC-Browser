@@ -1,4 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit"
+import {
+    validateChrom,
+  } from "../utils";
 type chromInput =`chrom${number|'X'|'Y'}:${number}-${number}`
 type apiCallType = {
     call: boolean,
@@ -10,19 +13,21 @@ type HeatMapStateType = {
     dataset_name: string;
     resolution: string;
     app_size: number;
+    contact_map_size:number,
     pix_size: number;
     map_cnts: number;
     apiCalls: apiCallType[]
 }
 const initialState: HeatMapStateType = {
-    chrom1: "chrom1:0-20000000",
-    chrom2: "chrom1:0-20000000",
+    chrom1: "chrom2:0-100000000",
+    chrom2: "chrom2:0-100000000",
     dataset_name: "scHiC5",
-    resolution: "10000",
-    app_size: 400,
+    resolution: "50000",
+    app_size: 450,
+    contact_map_size:400,
     pix_size: 2,
-    map_cnts: 1,
-    apiCalls: [{call: true, id:0}]
+    map_cnts: 4,
+    apiCalls: [{call: true, id:0},{call: true, id:1},{call: true, id:2},{call: true, id:3}]
 }
 
 const heatMap2DSlice = createSlice({
@@ -47,6 +52,7 @@ const heatMap2DSlice = createSlice({
     },
     
 })
+
 
 export default heatMap2DSlice.reducer
 export const { updateResolution, updateDataset, updateChrom1, updateChrom2,updateApiCalls } = heatMap2DSlice.actions

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import Axios from "axios";
 import { TextField, Button, Grid } from "@material-ui/core";
+import { makeStyles } from "@material-ui/styles";
+
 import HeatMap from "./components/ContactMap2D";
 import { useGetDatasetsQuery } from "./redux/apiSlice";
 import {
@@ -9,7 +11,12 @@ import {
   updateResolution,
   updateApiCalls,
 } from "./redux/heatmap2DSlice";
-import { getResFromRange } from "./utils";
+import {
+  getResFromRange,
+  getNewChromZoomIn,
+  getNewChromZoomOut,
+  validateChrom,
+} from "./utils";
 import { useAppDispatch, useAppSelector } from "./redux/hooks";
 
 type queryType = {
@@ -22,13 +29,13 @@ type queryType = {
 
 function App() {
   const dispatch = useAppDispatch();
-  const heatMapState = useAppSelector((state) => state.heatmap2D);
-  const map_cnts = heatMapState.map_cnts;
+  const heatmap_state = useAppSelector((state) => state.heatmap2D);
+  const map_cnts = heatmap_state.map_cnts;
 
   const fetchContactMap = async () => {
-    const res = getResFromRange(heatMapState.chrom1, heatMapState.chrom2);
-    console.log(res);
-    if (res) dispatch(updateResolution(res.toString()));
+    const new_res = getResFromRange(heatmap_state.chrom1, heatmap_state.chrom2);
+    console.log(heatmap_state.chrom1, heatmap_state.chrom2, new_res);
+    if (new_res) dispatch(updateResolution(new_res.toString()));
     for (let i = 0; i < map_cnts; i++)
       dispatch(
         updateApiCalls({
@@ -37,6 +44,38 @@ function App() {
         })
       );
     console.log("fetched!");
+  };
+
+  const zoomIn = () => {
+    const new_chrom1 = getNewChromZoomIn(
+      validateChrom(heatmap_state.chrom1),
+      2
+    );
+    const new_chrom2 = getNewChromZoomIn(
+      validateChrom(heatmap_state.chrom2),
+      2
+    );
+    if (new_chrom1 && new_chrom2) {
+      dispatch(updateChrom1(new_chrom1));
+      dispatch(updateChrom2(new_chrom2));
+      fetchContactMap();
+    }
+  };
+  const zoomOut = () => {
+    const new_chrom1 = getNewChromZoomOut(
+      validateChrom(heatmap_state.chrom1),
+      2
+    );
+    const new_chrom2 = getNewChromZoomOut(
+      validateChrom(heatmap_state.chrom2),
+      2
+    );
+    console.log(new_chrom1);
+    if (new_chrom1 && new_chrom2) {
+      dispatch(updateChrom1(new_chrom1));
+      dispatch(updateChrom2(new_chrom2));
+      fetchContactMap();
+    }
   };
 
   const { data: allDataset, error, isLoading } = useGetDatasetsQuery();
@@ -50,6 +89,7 @@ function App() {
             id="standard-basic"
             label="Chrom1"
             variant="standard"
+            value={heatmap_state.chrom1}
             onChange={(e) => dispatch(updateChrom1(e.target.value))}
           />
         </Grid>
@@ -58,6 +98,7 @@ function App() {
             id="standard-basic"
             label="Chrom2"
             variant="standard"
+            value={heatmap_state.chrom2}
             onChange={(e) => dispatch(updateChrom2(e.target.value))}
           />
         </Grid>
@@ -72,10 +113,39 @@ function App() {
             Send
           </Button>
         </Grid>
+        <Grid item>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => zoomOut()}
+            style={{
+              position: "relative",
+              top: "10px",
+              minWidth: "36px",
+              minHeight: "36px",
+            }}
+          >
+            -
+          </Button>
+        </Grid>
+        <Grid item>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => zoomIn()}
+            style={{
+              position: "relative",
+              top: "10px",
+              minWidth: "36px",
+              minHeight: "36px",
+            }}
+          >
+            +
+          </Button>
+        </Grid>
         <Grid container justifyContent="center">
-          <Grid item>
-            {" "}
-            <HeatMap map_id={0}></HeatMap>{" "}
+          <Grid>
+            <HeatMap map_id={0}></HeatMap>
           </Grid>
         </Grid>
       </Grid>
