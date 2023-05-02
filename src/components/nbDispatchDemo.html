@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+
+  <meta charset="utf-8">
+  <title>Minimal Working Example &middot; HiGlass</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/higlass@1.6.6/dist/hglib.css">
+
+  <style type="text/css">
+    html, body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+  </style>
+
+  <script crossorigin src="https://unpkg.com/react@16/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/pixi.js@5/dist/pixi.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-bootstrap@0.32.1/dist/react-bootstrap.min.js"></script>
+  <script crossorigin src="https://unpkg.com/higlass@1.6.6/dist/hglib.min.js"></script>
+
+  <script src="https://vis.nucleome.org/static/lib/nb-dispatch.min.js"></script>
+
+  <script src="https://d3js.org/d3.v6.min.js"></script>
+
+</head>
+
+<body style="width:100vw; height:100vh">
+  <h2 style="text-align:center">Link Nucleome Browser with HiGlass</h1>
+  <div style="padding-left: 2vw;">
+    <h3 style="text-align:left">Instruction</h3>
+    <p>To view your own session, you can either:</p>
+    <ul>
+      <li>Upload a HiGlass JSON config file, choose a genome assembly version then click the 'Load viewconfig' button.</li>
+      <li>Construct a combound URL with the link of higlass session and genome assembly version. For example, you can use http://vis.nucleome.org/static/apps/HiGlassDemo?config=<span style="color:red">(HiGlass session)</span>&genome=<span style="color:red">(Genome assembly version)</span> to load HiGlass session, such as http://vis.nucleome.org/static/apps/HiGlassDemo?config=https://higlass.io/l/?d=XWfL14-MQGGLQqFgF4Ej_A&genome=hg38</li>
+    </ul>
+  </div>
+  <div style="position: relative; display: flex;justify-content: center; margin:20px 0">
+    <input type="file" id="selectFiles" value="Import"/>
+    <label style="margin:0 10px 0 0">Choose a genome assembly</label>
+    <select name="genome" id="genome">
+      <option value="hg38" selected="selected">hg38</option>
+      <option value="hg19">hg19</option>
+      <option value="mm10">mm10</option>
+    </select>
+  </div>
+  <div style="text-align:center;">
+    <button id="import" style="position: relative;">Load viewconfig</button>
+  </div>
+  <div style="display: flex; align-items: center; justify-content: center;margin:20px 0;">
+    <textarea id="result" style="display: block; width: 95vw; height: 100px;"></textarea>
+  </div>
+  <div style="width: 99vw; height: 70%;">
+    <div id="development-demo" style="width: 99vw; height: 70%;background-color: white;position:absolute"></div>
+  </div>
+  <div id="out"></div>
+</body>
+
+<script>
+
+// Connect to nb-dispatch
+var nb_hub = nb.dispatch('update', 'brush');
+nb_hub.connect(function (d) {
+});
+
+// check whehter user provide a higlass link
+function getUrlPara(name, url) {
+  return decodeURIComponent((new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(url) || [, ""])[1].replace(/\+/g, '%20')) || null;
+}
+// 
+function getJSON(url, callback) {
+  fetch(url)
+    .then(res => res.json())
+    .then(resJSON => {
+      callback(resJSON);
+  });
+}
+
+//
+var container = document.getElementById('development-demo');
+
+//
+//var link="http://vis.nucleome.org/static/apps/HiGlassDemo?config=https://higlass.io/l/?d=XWfL14-MQGGLQqFgF4Ej_A&genome=hg38"
+//var link="http://127.0.0.1:8080/demo.html?config=https://higlass.4dnucleome.org/api/v1/viewconfs/?d=ZIvQ5_HkQdOfSVHU__o1kQ&genome=hg19"
+
+var preloadedSession = getUrlPara('config', window.location.search);
+var genomeSession = getUrlPara('genome', window.location.search);
+var viewID = 'aa'
+var genomeSize = 'https://nbchromsizes.s3.amazonaws.com/4DNFI823LSII.chrom.sizes'
+
+if (preloadedSession == null) {
+  // Load an existing HiGlass session
+  const hgApi = hglib.viewer(
+    container,
+    'https://higlass.io/api/v1/viewconfs/?d=XWfL14-MQGGLQqFgF4Ej_A&genome=hg38',
+    //'https://higlass.4dnucleome.org/api/v1/viewconfs/?d=ZIvQ5_HkQdOfSVHU__o1kQ',
+    {
+      bounded: true,
+      globalMousePosition: true,
+      sizeMode: 'bounded',
+    }
+  );
+  // directly call
+  setTimeout(draw, 1000, hgApi, viewID, genomeSize);
+
+  // resize 
+  window.addEventListener('resize', function(event) {
+    setTimeout(draw, 1000, hgApi, viewID, genomeSize);
+  }, true);
+} else {
+    // Load session provided by user
+    if (genomeSession == 'mm10') {
+      genomeSize = 'https://nbchromsizes.s3.amazonaws.com/4DNFI3UBJ3HZ.chrom.sizes';
+    } else if (genomeSession == 'hg19') {
+      genomeSize = 'https://nbchromsizes.s3.amazonaws.com/4DNFI823LSII.chrom.sizes'
+    }
+    else {
+      genomeSize = 'https://nbchromsizes.s3.amazonaws.com/4DNFI823LSII.chrom.sizes';
+    }
+    getJSON(preloadedSession.replace('/l/', '/api/v1/viewconfs/'), function(viewConfig){
+    var formatted = JSON.stringify(viewConfig, null, 2);
+    document.getElementById('result').value = formatted;
+    viewID = viewConfig.views[0].uid;
+    console.log(viewID)
+    const hgApi = hglib.viewer(
+      container,
+      viewConfig,
+      {
+        bounded: true,
+        globalMousePosition: true,
+        sizeMode: 'bounded',
+      }
+    );
+    //
+    setTimeout(draw, 1000, hgApi, viewID, genomeSize);
+    //
+    window.addEventListener('resize', function(event) {
+      setTimeout(draw, 1000, hgApi, viewID, genomeSize);
+    }, true);
+  })
+}
+  
+// Draw function
+function draw(hgApi, viewID, genomeSize) {
+    var chromInfo = hglib.ChromosomeInfo(genomeSize)
+    var center = d3.select('.center-track');
+    svgWidth = center.node().clientWidth;
+    svgHeight = center.node().clientHeight;
+    center.selectAll('svg').remove();
+    svg = center.append("svg")
+      .attr('width', svgWidth+'px')
+      .attr('height', svgHeight+'px')
+      .append("g")
+    svg.selectAll('*').remove();
+    // 
+    hglib
+      // Pass in the URL of your chrom sizes
+      .ChromosomeInfo(genomeSize)
+      // Now we can use the chromInfo object to convert
+      .then(chromInfo => {
+        nb_hub.on('update', function (d) {
+          //console.log(d);
+          hgApi.zoomTo(
+            viewID,
+            chromInfo.chrToAbs([d[0].chr, d[0].start]),
+            chromInfo.chrToAbs([d[d.length - 1].chr, d[d.length - 1].end]),
+            chromInfo.chrToAbs([d[0].chr, d[0].start]),
+            chromInfo.chrToAbs([d[d.length - 1].chr, d[d.length - 1].end]),
+            500 // Animation time
+          );
+        });
+        //
+        nb_hub.on('brush', function (d) {
+          const viewDomain = hgApi.getLocation(viewID);
+          const xDomainRef = viewDomain.xDomain[0];
+          const xDomainRange = viewDomain.xDomain[1] - viewDomain.xDomain[0];
+          const bin_list = d.map((r, i) => ({
+            bin_start:
+              (chromInfo.chrToAbs([r.chr, r.start]) - xDomainRef) /
+              xDomainRange,
+            bin_end:
+              (chromInfo.chrToAbs([r.chr, r.end]) - xDomainRef) / xDomainRange,
+          }));
+          const N = bin_list.length;
+          let bin_pair = [];
+          for (let i = 0; i < N; i++) {
+            bin_pair.push({
+              x: bin_list[i].bin_start * svgWidth,
+              y: 0,
+              width: (bin_list[i].bin_end - bin_list[i].bin_start) * svgWidth,
+              height: svgHeight,
+            });
+          }
+          //
+          svg.selectAll('*').remove();
+          svg
+            .selectAll('rect')
+            .data(bin_pair)
+            .enter()
+            .append('rect')
+            .attr('x', (d, i) => d.x)
+            .attr('y', (d, i) => d.y)
+            .attr('width', (d, i) => d.width)
+            .attr('height', (d, i) => d.height)
+            .style('fill', '#636363')
+            .style('fill-opacity', 0.4)
+            .style('stroke', '#252525');
+          //
+        });
+      });
+} // draw function end
+
+// When a user load a JSON file  
+document.getElementById('import').onclick = function () {
+  var files = document.getElementById('selectFiles').files;
+
+  if (files.length <= 0) {
+    return false;
+  }
+
+  var fr = new FileReader();
+
+  fr.onload = function (e) {
+    var viewConfig = JSON.parse(e.target.result);
+    var formatted = JSON.stringify(viewConfig, null, 2);
+    document.getElementById('result').value = formatted;
+    var viewID = viewConfig.views[0].uid;
+    //console.log(viewID);
+
+    const hgApi = hglib.viewer(
+      container,
+      viewConfig,
+      {
+        bounded: true,
+        globalMousePosition: true,
+        sizeMode: 'bounded',
+      }
+    );
+
+    // get the right genome assmbly
+    var genome = document.getElementById("genome")
+    var genomeSize = 'https://nbchromsizes.s3.amazonaws.com/4DNFI823LSII.chrom.sizes';
+    if (genome.value == 'mm10') {
+      genomeSize = 'https://nbchromsizes.s3.amazonaws.com/4DNFI3UBJ3HZ.chrom.sizes';
+    } else if (genome.value == 'hg19') {
+      genomeSize = 'https://nbchromsizes.s3.amazonaws.com/4DNFI823LSII.chrom.sizes'
+    }
+    else {
+      genomeSize = 'https://nbchromsizes.s3.amazonaws.com/4DNFI823LSII.chrom.sizes';
+    }
+    
+    draw(hgApi, viewID, genomeSize);
+    //
+    window.addEventListener('resize', function(event) {
+      setTimeout(draw, 1000, hgApi, viewID, genomeSize);
+    }, true);
+    //
+  };
+  fr.readAsText(files.item(0));
+};
+</script>
+</html>

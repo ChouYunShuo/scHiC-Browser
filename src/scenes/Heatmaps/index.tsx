@@ -1,36 +1,35 @@
-import { Routes, Route } from "react-router-dom";
-import { CssBaseline, ThemeProvider } from "@mui/material";
-import { ColorModeContext, useMode } from "./theme";
-import Topbar from "./scenes/global/Topbar";
-import Sidebar from "./scenes/global/Sidebar";
-import Dashboard from "./scenes/dashboard";
-import Datasets from "./scenes/datasets";
-import Heapmaps from "./scenes/Heatmaps";
+import { useEffect, useState } from "react";
+import Axios from "axios";
+import { TextField, Button, Grid } from "@mui/material";
 
-function App() {
-  const [theme, colorMode] = useMode();
-  //const [isSidebar, setIsSidebar] = useState<boolean>(true);
-  return (
-    <ColorModeContext.Provider value={colorMode}>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <div className="app">
-          <Sidebar />
-          <main className="content">
-            <Topbar />
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/datasets" element={<Datasets />} />
-              <Route path="/heatmaps" element={<Heapmaps />} />
-            </Routes>
-          </main>
-        </div>
-      </ThemeProvider>
-    </ColorModeContext.Provider>
-  );
-}
-/*
-function App() {
+import HeatMap from "../../components/ContactMap2D";
+import { useGetDatasetsQuery } from "../../redux/apiSlice";
+import {
+  updateChrom1,
+  updateChrom2,
+  updateResolution,
+  updateApiCalls,
+  updateAllRes,
+  updateChromLen,
+} from "../../redux/heatmap2DSlice";
+import {
+  getResFromRange,
+  getNewChromZoomIn,
+  getNewChromZoomOut,
+  validateChrom,
+  fetchChromLens,
+} from "../../utils";
+import { useAppDispatch, useAppSelector } from "../../redux/hooks";
+
+type queryType = {
+  chrom1: string;
+  chrom2: string;
+  dataset_name: string;
+  resolution: string;
+  cell_id: string;
+};
+
+function Heapmaps() {
   const dispatch = useAppDispatch();
   const heatmap_state = useAppSelector((state) => state.heatmap2D);
   const map_cnts = heatmap_state.map_cnts;
@@ -184,8 +183,8 @@ function App() {
     </div>
   );
 }
-*/
-export default App;
+
+export default Heapmaps;
 
 //{
 //"file_path": "data/scHiC.h5",
