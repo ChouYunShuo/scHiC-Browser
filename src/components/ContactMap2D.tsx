@@ -25,6 +25,7 @@ import { dispatch as nb_dispatch } from "@nucleome/nb-dispatch";
 
 interface HeatMapProps {
   map_id: number;
+  selected?: string[];
 }
 
 interface NBQuery {
@@ -38,7 +39,7 @@ const initRect = (rect: PIXI.Graphics) => {
   rect.drawRect(0, 0, 0, 0);
   rect.visible = false;
 };
-const HeatMap: React.FC<HeatMapProps> = ({ map_id }) => {
+const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const colorMode = useContext(ColorModeContext);
@@ -81,10 +82,14 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id }) => {
   //const [text, setText] = useState<string>("Scaled value: ");
   const [chrom1pos, setChrom1Pos] = useState<string>("Chrom1 pos: ");
   const [chrom2pos, setChrom2Pos] = useState<string>("Chrom2 pos: ");
+  // const colorScale =
+  //   theme.palette.mode === "dark"
+  //     ? d3.scaleSequential(d3.interpolateViridis).domain([0, 1])
+  //     : d3.scaleSequential(d3.interpolateReds).domain([0, 1]); //interpolateViridis, interpolateReds
   const colorScale =
     theme.palette.mode === "dark"
-      ? d3.scaleSequential(d3.interpolateViridis).domain([0, 1])
-      : d3.scaleSequential(d3.interpolateReds).domain([0, 1]); //interpolateViridis, interpolateReds
+      ? d3.scaleSequentialLog(d3.interpolateViridis).domain([0.1, 1]) // adjust domain for log scale
+      : d3.scaleSequentialLog(d3.interpolateReds).domain([0.1, 1]); // adjust domain for log scale
   const colorScaleMemo = useMemo(() => colorScale, [theme.palette.mode]);
   const cleanupCanvas = useCallback(() => {
     contact2d_container.removeChildren();
@@ -111,14 +116,14 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id }) => {
         chrom2: range2,
         dataset_name: heatMapState.dataset_name,
         resolution: heatMapState.resolution,
-        cell_id: map_id.toString(),
+        cell_id: selected ? selected : map_id.toString(), //Array.from({ length: 100 }, (_, i) => i.toString()), //map_id.toString(),
       });
 
       setHeatMapData(data);
     };
     if (apiCall === true) getData();
     dispatch(updateApiCalls({ call: false, id: map_id }));
-  }, [apiCall]);
+  }, [apiCall, selected]);
 
   useEffect(() => {
     if (!canvasRef.current) {

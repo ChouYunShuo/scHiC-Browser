@@ -18,6 +18,7 @@ import { useGetDatasetsQuery } from "../../redux/apiSlice";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { updateAllRes, updateChromLen } from "../../redux/heatmap2DSlice";
 import { fetchChromLens } from "../../utils";
+
 const Dashboard: React.FC = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
@@ -82,6 +83,26 @@ const Dashboard: React.FC = () => {
             justifyContent="center"
           >
             <HeatMap map_id={1}></HeatMap>
+          </Box>
+          <Box
+            gridColumn="span 6"
+            gridRow="span 3"
+            bgcolor={colors.primary[400]}
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+          >
+            <HeatMap map_id={2}></HeatMap>
+          </Box>
+          <Box
+            gridColumn="span 6"
+            gridRow="span 3"
+            bgcolor={colors.primary[400]}
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+          >
+            <HeatMap map_id={3}></HeatMap>
           </Box>
           {/* <Box
             gridColumn="span 4"

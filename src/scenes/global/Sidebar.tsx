@@ -129,6 +129,13 @@ const Sidebar: React.FC = () => {
               selected={selected}
               setSelected={setSelected}
             />
+            <Item
+              title="All Embeddings"
+              to="/embed"
+              icon={<TableChartIcon />}
+              selected={selected}
+              setSelected={setSelected}
+            />
           </Box>
         </Menu>
       </ProSidebar>

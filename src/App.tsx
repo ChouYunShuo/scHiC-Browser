@@ -6,7 +6,7 @@ import Sidebar from "./scenes/global/Sidebar";
 import Dashboard from "./scenes/dashboard";
 import Datasets from "./scenes/datasets";
 import Heapmaps from "./scenes/Heatmaps";
-
+import Embeds from "./scenes/Embeds";
 function App() {
   const [theme, colorMode] = useMode();
   //const [isSidebar, setIsSidebar] = useState<boolean>(true);
@@ -22,6 +22,7 @@ function App() {
               <Route path="/" element={<Dashboard />} />
               <Route path="/datasets" element={<Datasets />} />
               <Route path="/heatmaps" element={<Heapmaps />} />
+              <Route path="/embed" element={<Embeds />} />
             </Routes>
           </main>
         </div>

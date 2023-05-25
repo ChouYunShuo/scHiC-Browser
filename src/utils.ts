@@ -15,12 +15,18 @@ type queryType = {
   chrom2: string;
   dataset_name: string;
   resolution: string;
-  cell_id: string;
+  cell_id: string | string[];
 };
 type ChromLenQueryType = {
   name: string;
   resolution: string;
   cell_id: string;
+};
+
+type EmbedQueryType = {
+  dataset_name: string;
+  resolution: string;
+  embed_type: string;
 };
 
 export type tickType = {
@@ -40,6 +46,13 @@ export const fetchChromLens = async (simpleQuery: ChromLenQueryType) => {
     .post("http://128.2.220.67:8000/api/chromlens", simpleQuery)
     .then((res) => JSON.parse(res.data));
 };
+
+export const fetchEmbedding = async (simpleQuery: EmbedQueryType) => {
+  return axios
+    .post("http://128.2.220.67:8000/api/embed", simpleQuery)
+    .then((res) => JSON.parse(res.data));
+};
+
 export const chrom2idx = (chrom: string) => {
   let chrom_name = chrom.substring(5);
   if (chrom_name == "X") return 23;

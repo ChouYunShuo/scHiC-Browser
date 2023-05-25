@@ -3,7 +3,6 @@ import * as d3 from "d3";
 import { useTheme, Theme } from "@mui/material";
 import { ScaleSequential } from "d3-scale";
 import React, { useMemo, useRef } from "react";
-import { useAppDispatch, useAppSelector } from "../redux/hooks";
 
 export const createHeatMapFromTexture = (
   data: number[][],
@@ -25,9 +24,23 @@ export const createHeatMapFromTexture = (
     const s_psize = contact_map_size / maxsize;
     for (let i = 0; i < xsize; i++) {
       for (let j = 0; j < ysize; j++) {
-        let fillColor;
-        if (data[i][j]) {
-          fillColor = d3.color(colorScaleMemo(data[i][j]))!.formatHex();
+        // Get the neighbors within the data array boundaries
+        if (i === j || data[i][j]) {
+          let neighbors = [
+            data[i - 1]?.[j],
+            data[i + 1]?.[j],
+            data[i]?.[j - 1],
+            data[i]?.[j + 1],
+          ].filter((value) => value !== undefined && value !== null && value);
+          if(neighbors.length==0) continue;
+
+          // Calculate the average of the neighbors
+          let average = neighbors.reduce((a, b) => a + b, 0) / neighbors.length;
+
+
+          let fillColor = d3
+            .color(colorScaleMemo(data[i][j] || average))!
+            .formatHex();
           ctx.fillStyle = fillColor;
           ctx.fillRect(i * s_psize, j * s_psize, s_psize, s_psize);
         }

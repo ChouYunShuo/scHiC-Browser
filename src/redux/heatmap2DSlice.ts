@@ -21,7 +21,7 @@ type HeatMapStateType = {
 const initialState: HeatMapStateType = {
   chrom1: "chrom2:0-100000000",
   chrom2: "chrom2:0-100000000",
-  dataset_name: "4DN_scHi-C_Kim_10",
+  dataset_name: "Lee_et_al",
   resolution: "500000",
   all_resolution: [],
   chrom_lengths: [],
