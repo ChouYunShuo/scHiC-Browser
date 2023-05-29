@@ -3,10 +3,10 @@ import { tokens } from "../theme";
 
 interface FloatingPanelProps {
   title: string;
-  subtitle: string;
+  // subtitle: string;
 }
 
-const Header: React.FC<FloatingPanelProps> = ({ title, subtitle }) => {
+const Header: React.FC<FloatingPanelProps> = ({ title }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   return (
@@ -19,9 +19,9 @@ const Header: React.FC<FloatingPanelProps> = ({ title, subtitle }) => {
       >
         {title}
       </Typography>
-      <Typography variant="h5" color={colors.greenAccent[400]}>
+      {/* <Typography variant="h5" color={colors.greenAccent[400]}>
         {subtitle}
-      </Typography>
+      </Typography> */}
     </Box>
   );
 };

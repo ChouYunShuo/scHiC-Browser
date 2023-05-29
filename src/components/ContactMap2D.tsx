@@ -410,19 +410,6 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
     },
     [range1, range2]
   );
-  /*
-  function createValueText(rectangle: PIXI.Graphics) {
-    rectangle.interactive = true;
-    // create a text object to display the value
-
-    rectangle.on("mouseover", () => {
-      setText("Scaled value: " + rectangle.name.substring(0, 5));
-    });
-
-    rectangle.on("mouseout", () => {
-      setText("Scaled value: ");
-    });
-  }*/
 
   function pix2Dist(
     chrom1_pos: number,
@@ -441,33 +428,19 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
   }
 
   return (
-    <Box
-      width="100%"
-      height="100%"
-      display="flex"
-      alignItems="center"
-      justifyContent="center"
-    >
+    <Box>
       {heatMapData && (
         <canvas
           style={{
             padding: "2px",
             border: "1px solid rgba(0, 0, 0, 0.2)",
+            width: "100%",
+            height: "100%",
+            objectFit: "contain",
           }}
           ref={canvasRef}
         />
       )}
-      {/* <Paper
-        style={{
-          padding: 8,
-          width: "50%",
-        }}
-      >
-        <Typography variant="body1" gutterBottom>
-          {chrom1pos}
-        </Typography>
-        <Typography variant="body1">{chrom2pos}</Typography>
-      </Paper> */}
     </Box>
   );
 };

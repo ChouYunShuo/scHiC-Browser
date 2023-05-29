@@ -24,23 +24,20 @@ export const createHeatMapFromTexture = (
     const s_psize = contact_map_size / maxsize;
     for (let i = 0; i < xsize; i++) {
       for (let j = 0; j < ysize; j++) {
-        // Get the neighbors within the data array boundaries
-        if (i === j || data[i][j]) {
+        if (data[i][j]) {
+          let fillColor = d3.color(colorScaleMemo(data[i][j]))!.formatHex();
+          ctx.fillStyle = fillColor;
+          ctx.fillRect(i * s_psize, j * s_psize, s_psize, s_psize);
+        } else if (i == j) {
           let neighbors = [
             data[i - 1]?.[j],
             data[i + 1]?.[j],
             data[i]?.[j - 1],
             data[i]?.[j + 1],
           ].filter((value) => value !== undefined && value !== null && value);
-          if(neighbors.length==0) continue;
-
-          // Calculate the average of the neighbors
+          if (neighbors.length == 0) continue;
           let average = neighbors.reduce((a, b) => a + b, 0) / neighbors.length;
-
-
-          let fillColor = d3
-            .color(colorScaleMemo(data[i][j] || average))!
-            .formatHex();
+          let fillColor = d3.color(colorScaleMemo(average))!.formatHex();
           ctx.fillStyle = fillColor;
           ctx.fillRect(i * s_psize, j * s_psize, s_psize, s_psize);
         }

@@ -35,7 +35,7 @@ export type tickType = {
 };
 
 export const fetchMap = async (simpleQuery: queryType) => {
-  return axios.post("http://128.2.220.67:8000/api/query", simpleQuery).then(
+  return axios.post("http://128.2.220.67:8020/api/query", simpleQuery).then(
     (
       res //genome-dev.compbio.cs.cmu.edu
     ) => JSON.parse(res.data)
@@ -43,13 +43,13 @@ export const fetchMap = async (simpleQuery: queryType) => {
 };
 export const fetchChromLens = async (simpleQuery: ChromLenQueryType) => {
   return axios
-    .post("http://128.2.220.67:8000/api/chromlens", simpleQuery)
+    .post("http://128.2.220.67:8020/api/chromlens", simpleQuery)
     .then((res) => JSON.parse(res.data));
 };
 
 export const fetchEmbedding = async (simpleQuery: EmbedQueryType) => {
   return axios
-    .post("http://128.2.220.67:8000/api/embed", simpleQuery)
+    .post("http://128.2.220.67:8020/api/embed", simpleQuery)
     .then((res) => JSON.parse(res.data));
 };
 

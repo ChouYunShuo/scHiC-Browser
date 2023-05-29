@@ -18,6 +18,7 @@ import { useGetDatasetsQuery } from "../../redux/apiSlice";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { updateAllRes, updateChromLen } from "../../redux/heatmap2DSlice";
 import { fetchChromLens } from "../../utils";
+import Embeds from "../../components/Embeddings";
 
 const Dashboard: React.FC = () => {
   const theme = useTheme();
@@ -54,64 +55,44 @@ const Dashboard: React.FC = () => {
     <Box m="20px">
       {/* HEADER */}
       <Box display="flex" justifyContent="space-between" alignItems="center">
-        <Header title="DASHBOARD" subtitle="Welcome to scHiC dashboard" />
+        <Header title="DASHBOARD" />
       </Box>
-      <Box padding={2} display="flex" flexDirection="column">
+      <Box display="flex" flexDirection="column">
         <Box
           display="grid"
           gridTemplateColumns="repeat(12, 1fr)"
-          gridAutoRows="150px"
-          gap="10px"
+          gridAutoRows="20vw"
         >
           {/* ROW 1 */}
           <Box
-            gridColumn="span 6"
-            gridRow="span 3"
+            gridColumn="span 3"
             bgcolor={colors.primary[400]}
             display="flex"
-            alignItems="center"
-            justifyContent="center"
+            justifyContent="end"
           >
-            <HeatMap map_id={0}></HeatMap>
+            <HeatMap map_id={0} />
           </Box>
-          <Box
-            gridColumn="span 6"
-            gridRow="span 3"
-            bgcolor={colors.primary[400]}
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-          >
+          <Box gridColumn="span 3" bgcolor={colors.primary[400]} display="flex">
             <HeatMap map_id={1}></HeatMap>
           </Box>
           <Box
             gridColumn="span 6"
-            gridRow="span 3"
+            gridRow="span 2"
+            bgcolor={colors.primary[400]}
+          >
+            <Embeds></Embeds>
+          </Box>
+          <Box
+            gridColumn="span 3"
             bgcolor={colors.primary[400]}
             display="flex"
-            alignItems="center"
-            justifyContent="center"
+            justifyContent="end"
           >
             <HeatMap map_id={2}></HeatMap>
           </Box>
-          <Box
-            gridColumn="span 6"
-            gridRow="span 3"
-            bgcolor={colors.primary[400]}
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-          >
+          <Box gridColumn="span 3" bgcolor={colors.primary[400]} display="flex">
             <HeatMap map_id={3}></HeatMap>
           </Box>
-          {/* <Box
-            gridColumn="span 4"
-            gridRow="span 3"
-            bgcolor={colors.primary[400]}
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-          ></Box> */}
         </Box>
       </Box>
       <FloatingPanel />

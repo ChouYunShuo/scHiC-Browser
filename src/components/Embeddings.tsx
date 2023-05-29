@@ -1,12 +1,11 @@
 import { useState, useEffect, useRef } from "react";
-import { fetchEmbedding } from "../../utils";
-import { useAppDispatch, useAppSelector } from "../../redux/hooks";
+import { fetchEmbedding } from "../utils";
+import { useAppDispatch, useAppSelector } from "../redux/hooks";
 import * as d3 from "d3";
 import { zoom, ZoomTransform, select } from "d3";
-import { ColorModeContext, tokens } from "../../theme";
-import { Grid, useTheme } from "@mui/material";
-import HeatMap from "../../components/ContactMap2D";
-import { updateApiCalls } from "../../redux/heatmap2DSlice";
+import { ColorModeContext, tokens } from "../theme";
+import { Box, useTheme, Grid } from "@mui/material";
+import { updateApiCalls } from "../redux/heatmap2DSlice";
 interface Datum {
   pc1: number;
   pc2: number;
@@ -15,6 +14,9 @@ interface Datum {
 }
 type RawDatum = [number, number, string];
 
+function vwToPixels(vw: number) {
+  return vw * (window.innerWidth / 100);
+}
 const Embeds: React.FC = () => {
   const [formattedData, setFormattedData] = useState<Datum[]>([]);
   const [selectedCells, setSelectedCells] = useState<string[]>([]);
@@ -23,8 +25,8 @@ const Embeds: React.FC = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const ref = useRef<SVGSVGElement | null>(null);
-  const height = 450;
-  const width = 450;
+  const height = vwToPixels(40);
+  const width = vwToPixels(40);
 
   useEffect(() => {
     const getData = async () => {
@@ -253,20 +255,24 @@ const Embeds: React.FC = () => {
   }, [formattedData, width, height, theme]);
 
   return (
-    <div>
-      <Grid container spacing={4} direction="row" justifyContent="center">
-        <Grid item xs={6}>
-          <Grid container direction="row">
-            <Grid item xs={8}>
-              <svg ref={ref} width={width} height={height} />
-            </Grid>
-            <Grid item xs={3}>
-              <div id="legend-container"></div>
-            </Grid>
-          </Grid>
-        </Grid>
+    <Grid container position="relative">
+      <Grid item xs={12}>
+        <svg
+          ref={ref}
+          width={width}
+          height={height}
+          style={{ border: "1px solid rgba(0, 0, 0, 0.2)" }}
+        />
       </Grid>
-    </div>
+      <Box
+        position="absolute"
+        top={0}
+        right={0}
+        height="50%"
+        id="legend-container"
+        pr={3}
+      ></Box>
+    </Grid>
   );
 };
 

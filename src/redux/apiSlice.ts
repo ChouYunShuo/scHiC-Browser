@@ -10,7 +10,7 @@ type datasetType = {
 
 export const rootApi = createApi({
     reducerPath: "rootApi",
-    baseQuery: fetchBaseQuery({ baseUrl: "http://128.2.220.67:8000/api" }),
+    baseQuery: fetchBaseQuery({ baseUrl: "http://128.2.220.67:8020/api" }),
     endpoints: builder => ({
         getDatasets: builder.query<datasetType[], void>({
             query: () => "/datasets",
