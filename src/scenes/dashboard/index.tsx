@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   Box,
   TextField,
@@ -26,6 +26,8 @@ const Dashboard: React.FC = () => {
   const { data: allDataset, error: error_getDataSet } = useGetDatasetsQuery();
   const heatmap_state = useAppSelector((state) => state.heatmap2D);
   const dispatch = useAppDispatch();
+  const gridRef = useRef();
+  const [dimension, setDimension] = useState<number>(0);
 
   useEffect(() => {
     if (allDataset) {
@@ -37,6 +39,17 @@ const Dashboard: React.FC = () => {
       }
     }
   }, [allDataset]);
+  useEffect(() => {
+    const handleResize = () => {
+      if (gridRef.current) {
+        const width = (gridRef.current as HTMLElement).offsetWidth;
+        setDimension(width);
+      }
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
   useEffect(() => {
     const getData = async () => {
       const chromLens = await fetchChromLens({
@@ -61,7 +74,7 @@ const Dashboard: React.FC = () => {
         <Box
           display="grid"
           gridTemplateColumns="repeat(12, 1fr)"
-          gridAutoRows="20vw"
+          gridAutoRows={`${dimension}px`}
         >
           {/* ROW 1 */}
           <Box
@@ -69,11 +82,12 @@ const Dashboard: React.FC = () => {
             bgcolor={colors.primary[400]}
             display="flex"
             justifyContent="end"
+            ref={gridRef}
           >
             <HeatMap map_id={0} />
           </Box>
           <Box gridColumn="span 3" bgcolor={colors.primary[400]} display="flex">
-            <HeatMap map_id={1}></HeatMap>
+            <HeatMap map_id={1} />
           </Box>
           <Box
             gridColumn="span 6"
@@ -88,10 +102,10 @@ const Dashboard: React.FC = () => {
             display="flex"
             justifyContent="end"
           >
-            <HeatMap map_id={2}></HeatMap>
+            <HeatMap map_id={2} />
           </Box>
           <Box gridColumn="span 3" bgcolor={colors.primary[400]} display="flex">
-            <HeatMap map_id={3}></HeatMap>
+            <HeatMap map_id={3} />
           </Box>
         </Box>
       </Box>

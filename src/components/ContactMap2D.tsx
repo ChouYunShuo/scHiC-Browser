@@ -14,11 +14,8 @@ import {
 } from "../utils";
 
 import { updateApiCalls } from "../redux/heatmap2DSlice";
-import {
-  addHorizontalTicksText,
-  addVerticalTicksText,
-  formatPrecision,
-} from "./ChromTickTrack";
+import { addHorizontalTicksText, addVerticalTicksText } from "./ChromTickTrack";
+import { drawRectWithText } from "./PixiChromText";
 import createHeatMapFromTexture from "./ContactMapTexture";
 // @ts-ignore
 import { dispatch as nb_dispatch } from "@nucleome/nb-dispatch";
@@ -34,11 +31,31 @@ interface NBQuery {
   end: number;
   color: string | null;
 }
+
 const initRect = (rect: PIXI.Graphics) => {
   rect.lineStyle(2, 0xff0000, 1);
   rect.drawRect(0, 0, 0, 0);
   rect.visible = false;
 };
+
+const drawSelectRect = (
+  rect: PIXI.Graphics,
+  x: number,
+  y: number,
+  width: number,
+  height: number
+) => {
+  rect
+    .clear()
+    .lineStyle(2, 0xeeeeee, 1)
+    .beginFill(0xe5e4e2)
+    .drawRect(x, y, width, height)
+    .endFill();
+
+  rect.alpha = 0.3;
+  rect.visible = true;
+};
+
 const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
@@ -57,11 +74,8 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
 
   const dispatch = useAppDispatch();
 
-  //const [color, setColor] = useState(0xff0000);
-
   // Create canvasRef using custome hook
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const heatmapCanvasRef = useRef<HTMLCanvasElement>(null);
   const [contact2d_container, setContainer] = useState<PIXI.Container>(
     new PIXI.Container()
   );
@@ -79,13 +93,6 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
   });
   const transform_xy = app_size - contact_map_size;
 
-  //const [text, setText] = useState<string>("Scaled value: ");
-  const [chrom1pos, setChrom1Pos] = useState<string>("Chrom1 pos: ");
-  const [chrom2pos, setChrom2Pos] = useState<string>("Chrom2 pos: ");
-  // const colorScale =
-  //   theme.palette.mode === "dark"
-  //     ? d3.scaleSequential(d3.interpolateViridis).domain([0, 1])
-  //     : d3.scaleSequential(d3.interpolateReds).domain([0, 1]); //interpolateViridis, interpolateReds
   const colorScale =
     theme.palette.mode === "dark"
       ? d3.scaleSequentialLog(d3.interpolateViridis).domain([0.1, 1]) // adjust domain for log scale
@@ -95,15 +102,6 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
     contact2d_container.removeChildren();
     chrom_dist_container.removeChildren();
   }, []);
-
-  /*const colorScale = d3
-    .scaleLog()
-    .domain([0.001, 0.01, 0.1, 1])
-    //@ts-ignore
-    .range(["yellow", "orange", "red", "black"]); //"white", "yellow", "orange", "red", "black"
-    */
-
-  //const { data: DatasetInfo, error, isLoading } = useGetDatasetQuery(1);
 
   // Connect to nb-dispatch
   var nb_hub = nb_dispatch("update", "brush");
@@ -134,7 +132,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
       width: app_size,
       height: app_size,
       backgroundColor: colors.primary[400],
-      resolution: 1,
+      resolution: 2,
     });
 
     initRect(sltRect);
@@ -150,33 +148,23 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
     // Clean up side effect when the component unmounts
     return () => {
       app.stage.removeChildren();
-      //map.destroy(true);
-      //canvasRef.current?.removeChild(map.view as HTMLCanvasElement);
     };
-  }, []); //theme.palette.mode
+  }, []);
+
   useEffect(() => {
     //add container background
-    const point = new PIXI.Graphics();
-    point.beginFill(PIXI.utils.string2hex(colors.primary[300]));
-    point.drawRect(
-      transform_xy,
-      transform_xy,
-      contact_map_size,
-      contact_map_size
-    );
-    point.endFill();
     const point1 = new PIXI.Graphics();
     point1.beginFill(PIXI.utils.string2hex(colors.primary[400]));
     point1.drawRect(0, 0, app_size, app_size);
-    point.endFill();
     point1.endFill();
-    contact2d_container.addChild(point);
     contact2d_container.addChild(point1);
+
     handleContainerEvent(contact2d_container);
 
     const horizontal_ticks = getTicksAndPosFromRange(range1, contact_map_size);
     const vertical_ticks = getTicksAndPosFromRange(range2, contact_map_size);
 
+    // add heatmap, Text data
     if (heatMapData) {
       if (heatMapData[0]) {
         createHeatMapFromTexture(
@@ -203,120 +191,72 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
 
   function handleContainerEvent(container: PIXI.Container) {
     container.interactive = true;
-    const rect = canvasRef.current?.getBoundingClientRect();
+
     container.on("pointermove", (event: PIXI.FederatedMouseEvent) => {
+      const rect = canvasRef.current?.getBoundingClientRect();
+      const resize_ratio = (rect!.right - rect!.left) / app_size;
       const endX = event.clientX - rect!.left;
       const endY = event.clientY - rect!.top;
 
       const chrom1_len = getChromLenFromPos(
         range1,
-        contact_map_size,
-        event.clientX - rect!.left - transform_xy - 3
+        contact_map_size * resize_ratio,
+        event.clientX - rect!.left - transform_xy * resize_ratio
       );
       const chrom2_len = getChromLenFromPos(
         range2,
-        contact_map_size,
-        event.clientY - rect!.top - transform_xy - 3
+        contact_map_size * resize_ratio,
+        event.clientY - rect!.top - transform_xy * resize_ratio
       );
-      const textChrom1 = new PIXI.Text(
-        "Chr1:" + formatPrecision(Math.trunc(chrom1_len)),
-        {
-          fontFamily: "Arial",
-          fontSize: 10,
-          fill: colors.grey[500],
-        }
+      const { textChrom1, textChrom2 } = drawRectWithText(
+        colors.grey[500],
+        posRect,
+        endX / resize_ratio,
+        endY / resize_ratio,
+        chrom1_len,
+        chrom2_len
       );
-      const textChrom2 = new PIXI.Text(
-        "Chr2:" + formatPrecision(Math.trunc(chrom2_len)),
-        {
-          fontFamily: "Arial",
-          fontSize: 10,
-          fill: colors.grey[500],
-        }
-      );
-
-      posRect.visible = true;
-      posRect.clear();
-      posRect.removeChildren();
-      posRect.lineStyle(2, 0xeeeeee, 1);
-      posRect.beginFill(0xe5e4e2);
-
-      // if (app_size - endX < 100 || app_size - endY < 100) {
-      //   posRect.drawRect(endX - 85, endY - 35, 85, 35);
-      //   textChrom1.x = 5 + endX - 85;
-      //   textChrom1.y = 5 + endY - 35;
-      //   textChrom2.x = 5 + endX - 85;
-      //   textChrom2.y = 20 + endY - 35;
-      // } else {
-
-      posRect.drawRect(endX, endY, 85, 35);
-      textChrom1.x = 5 + endX;
-      textChrom1.y = 5 + endY;
-      textChrom2.x = 5 + endX;
-      textChrom2.y = 20 + endY;
-      // }
-      posRect.alpha = 0.8;
-      posRect.endFill();
-
       posRect.addChild(textChrom1);
       posRect.addChild(textChrom2);
-      //setChrom1Pos("Chrom1 pos: " + formatPrecision(Math.trunc(chrom1_len)));
-      //setChrom2Pos("Chrom2 pos: " + formatPrecision(Math.trunc(chrom2_len)));
     });
     container.on("pointerleave", (event: PIXI.FederatedMouseEvent) => {
       posRect.visible = false;
     });
     container.on("mousedown", (event: PIXI.FederatedMouseEvent) => {
+      const rect = canvasRef.current?.getBoundingClientRect();
+      const resize_ratio = (rect!.right - rect!.left) / app_size;
       isDragging.current = true;
       sltRect.visible = false;
       symRect.visible = false;
 
-      (mousePos.current.x_pos = event.clientX - rect!.left - 3),
-        (mousePos.current.y_pos = event.clientY - rect!.top - 3);
-
-      //console.log(event.clientX - transform_xy - 3);
+      (mousePos.current.x_pos = (event.clientX - rect!.left) / resize_ratio),
+        (mousePos.current.y_pos = (event.clientY - rect!.top) / resize_ratio);
     });
     container.on("mousemove", (event: PIXI.FederatedMouseEvent) => {
+      const rect = canvasRef.current?.getBoundingClientRect();
+      const resize_ratio = (rect!.right - rect!.left) / app_size;
       if (isDragging.current) {
         posRect.visible = false;
-        const endX = event.clientX - rect!.left;
-        const endY = event.clientY - rect!.top;
-        const x = Math.min(mousePos.current.x_pos, endX);
-        const y = Math.min(mousePos.current.y_pos, endY);
-
-        //console.log(mousePos.current.x_pos, endX);
+        const endX = (event.clientX - rect!.left) / resize_ratio;
+        const endY = (event.clientY - rect!.top) / resize_ratio;
         const width = Math.abs(endX - mousePos.current.x_pos);
         const height = Math.abs(endY - mousePos.current.y_pos);
-        sltRect.clear();
-        symRect.clear();
-        sltRect.lineStyle(2, 0xeeeeee, 1);
-        sltRect.beginFill(0xe5e4e2);
-        sltRect.drawRect(x, y, width, height);
-        sltRect.alpha = 0.3;
-        sltRect.endFill();
-        sltRect.visible = true;
-
-        symRect.lineStyle(2, 0xeeeeee, 1);
-        symRect.beginFill(0xe5e4e2);
-        symRect.drawRect(y, x, height, width);
-        symRect.alpha = 0.3;
-        symRect.endFill();
-        symRect.visible = true;
+        const x = Math.min(mousePos.current.x_pos, endX);
+        const y = Math.min(mousePos.current.y_pos, endY);
+        drawSelectRect(sltRect, x, y, width, height);
+        drawSelectRect(symRect, y, x, height, width);
       }
     });
     container.on("mouseup", (event: PIXI.FederatedMouseEvent) => {
+      const rect = canvasRef.current?.getBoundingClientRect();
+      const resize_ratio = (rect!.right - rect!.left) / app_size;
       isDragging.current = false;
 
-      // setTimeout(() => {
-      //   sltRect.visible = false;
-      //   symRect.visible = false;
-      // }, 5000);
-      const endX = event.clientX - rect!.left;
-      const endY = event.clientY - rect!.top;
+      const endX = (event.clientX - rect!.left) / resize_ratio;
+      const endY = (event.clientY - rect!.top) / resize_ratio;
       const x = Math.min(mousePos.current.x_pos, endX);
       const y = Math.min(mousePos.current.y_pos, endY);
 
-      //console.log(mousePos.current.x_pos, endX);
       const width = Math.abs(endX - mousePos.current.x_pos);
       const height = Math.abs(endY - mousePos.current.y_pos);
       const chrom1_start = getChromLenFromPos(
@@ -339,7 +279,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
           y - transform_xy + height
         ) - chrom2_start;
 
-      callNbQuery(chrom1_start, chrom2_start, chrom1_len, chrom2_len);
+      //callNbQuery(chrom1_start, chrom2_start, chrom1_len, chrom2_len);
       event.stopImmediatePropagation();
     });
   }
@@ -410,22 +350,6 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
     },
     [range1, range2]
   );
-
-  function pix2Dist(
-    chrom1_pos: number,
-    chrom2_pos: number,
-    rectangle: PIXI.Graphics
-  ) {
-    rectangle.on("mouseover", () => {
-      setChrom1Pos("Chrom1 pos: " + formatPrecision(Math.trunc(chrom1_pos)));
-      setChrom2Pos("Chrom2 pos: " + formatPrecision(Math.trunc(chrom2_pos)));
-    });
-
-    rectangle.on("mouseout", () => {
-      setChrom1Pos("Chrom1 pos: ");
-      setChrom2Pos("Chrom2 pos: ");
-    });
-  }
 
   return (
     <Box>
