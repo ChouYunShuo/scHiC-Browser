@@ -93,6 +93,8 @@ const Dashboard: React.FC = () => {
             gridColumn="span 6"
             gridRow="span 2"
             bgcolor={colors.primary[400]}
+            display="flex"
+            alignItems="flex-end"
           >
             <Embeds></Embeds>
           </Box>

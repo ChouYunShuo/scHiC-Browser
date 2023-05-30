@@ -198,6 +198,13 @@ export const getNewChromZoomOut = (range1: string, a: number) => {
   }
 };
 
+export function euclideanDistance(
+  [x1, y1]: [number, number],
+  [x2, y2]: [number, number]
+) {
+  return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+}
+
 const binary_search = (arr: number[], val: number) => {
   let start = 0;
   let end = arr.length - 1;
