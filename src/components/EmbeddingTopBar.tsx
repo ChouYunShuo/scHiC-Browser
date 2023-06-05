@@ -1,21 +1,24 @@
 import { useState } from "react";
 
 import { styled } from "@mui/system";
-import { ColorModeContext, tokens } from "../theme";
+import { tokens } from "../theme";
 import { Box, useTheme, Grid, IconButton } from "@mui/material";
 import ZoomInIcon from "@mui/icons-material/ZoomIn";
-import FormatShapesIcon from "@mui/icons-material/FormatShapes";
+import HighlightAltIcon from "@mui/icons-material/HighlightAlt";
 
 const MyStyledButton = styled(IconButton)(({ theme }) => ({
   //backgroundColor: tokens(theme.palette.mode).primary[300],
 }));
 
-type ChildProps = {
+type EmbedTopBarProps = {
   isZoom: boolean;
   handleZoomToggle: () => void;
 };
 
-const EmbedTopBar: React.FC<ChildProps> = ({ isZoom, handleZoomToggle }) => {
+const EmbedTopBar: React.FC<EmbedTopBarProps> = ({
+  isZoom,
+  handleZoomToggle,
+}) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
@@ -42,7 +45,7 @@ const EmbedTopBar: React.FC<ChildProps> = ({ isZoom, handleZoomToggle }) => {
         }}
         onClick={() => isZoom && handleZoomToggle()}
       >
-        <FormatShapesIcon />
+        <HighlightAltIcon />
       </MyStyledButton>
     </Box>
   );

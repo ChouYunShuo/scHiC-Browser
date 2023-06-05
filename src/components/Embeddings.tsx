@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { fetchEmbedding } from "../utils";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
+import { updateApiCalls } from "../redux/heatmap2DSlice";
 import * as d3 from "d3";
 import { zoom, ZoomTransform } from "d3";
 import { ColorModeContext, tokens } from "../theme";
-import { Box, useTheme, Grid, IconButton } from "@mui/material";
-import { updateApiCalls } from "../redux/heatmap2DSlice";
+import { Box, useTheme, Grid } from "@mui/material";
 import EmbedTopBar from "./EmbeddingTopBar";
+import UmapPopUp from "./UmapPopUp";
 import { euclideanDistance } from "../utils";
 
 interface Datum {
@@ -24,6 +25,7 @@ const Embeds: React.FC = () => {
   const [formattedData, setFormattedData] = useState<Datum[]>([]);
   const [selectedCells, setSelectedCells] = useState<string[]>([]);
   const [isZoom, setIsZoom] = useState<boolean>(true);
+  const [isPopup, setIsPopup] = useState<boolean>(false);
   const heatmap_state = useAppSelector((state) => state.heatmap2D);
   const dispatch = useAppDispatch();
   const theme = useTheme();
@@ -58,6 +60,7 @@ const Embeds: React.FC = () => {
 
   useEffect(() => {
     const getData = async () => {
+      console.log("Get Data!");
       const data: RawDatum[] = await fetchEmbedding({
         dataset_name: heatmap_state.dataset_name,
         resolution: heatmap_state.all_resolution[0].toString(),
@@ -72,9 +75,8 @@ const Embeds: React.FC = () => {
         }))
       );
     };
-
-    getData();
-  }, [theme]);
+    if (heatmap_state.all_resolution.length) getData();
+  }, [heatmap_state.all_resolution]);
 
   const handleZoomToggle = () => {
     setIsZoom((prevIsZoom) => !prevIsZoom);
@@ -82,6 +84,9 @@ const Embeds: React.FC = () => {
       lassoRef.current.remove();
       lassoRef.current = null;
     }
+  };
+  const handleVisToggle = () => {
+    setIsPopup((prev) => !prev);
   };
 
   useEffect(() => {
@@ -152,7 +157,6 @@ const Embeds: React.FC = () => {
 
       let currentTransform = d3.zoomTransform(svg.node()!);
       let lassoPath: [number, number][] = [];
-
       // Create a zoom behavior
       const zoomBehavior = zoom()
         .scaleExtent([0.5, 5]) // This defines the range of zoom (0.5x to 5x here)
@@ -206,8 +210,6 @@ const Embeds: React.FC = () => {
         lassoPath.push([x, y]);
 
         const dist = euclideanDistance(lassoPath[0], [x, y]);
-
-        console.log(dist);
         if (dist < lassoThreshold) {
           //lassoPath.push(lassoPath[0]); // close the lasso path
           lassoRef.current.attr("stroke", colors.greenAccent[200]);
@@ -220,7 +222,6 @@ const Embeds: React.FC = () => {
         }
       });
       svg.on("mouseup", function (event) {
-        //console.log("mouseup");
         if (isZoom || !lassoRef.current || lassoPath.length == 0) return;
         const dist = euclideanDistance(
           lassoPath[0],
@@ -230,6 +231,7 @@ const Embeds: React.FC = () => {
           lassoRef.current.remove();
           lassoRef.current = null;
           lassoPath = [];
+          setSelectedCells([]);
           return;
         }
 
@@ -254,13 +256,9 @@ const Embeds: React.FC = () => {
           });
 
         setSelectedCells(selected);
+
         if (selected.length > 0) {
-          dispatch(
-            updateApiCalls({
-              call: true,
-              id: 3,
-            })
-          );
+          setIsPopup(true);
         }
         lassoPath = [];
       });
@@ -268,11 +266,16 @@ const Embeds: React.FC = () => {
         svg.on(".zoom", null);
       };
     }
-  }, [formattedData, width, height, theme, isZoom]);
+  }, [formattedData, theme, isZoom]);
 
   return (
     <Grid container position="relative">
       <EmbedTopBar isZoom={isZoom} handleZoomToggle={handleZoomToggle} />
+      <UmapPopUp
+        isVisible={isPopup}
+        handleVisToggle={handleVisToggle}
+        selectedUmapCells={selectedCells}
+      ></UmapPopUp>
       <svg
         ref={ref}
         width={width}

@@ -3,6 +3,7 @@ import { validateChrom } from "../utils";
 type apiCallType = {
   call: boolean;
   id: number;
+  selectedCells: string[];
 };
 
 type HeatMapStateType = {
@@ -30,10 +31,10 @@ const initialState: HeatMapStateType = {
   pix_size: 2,
   map_cnts: 4,
   apiCalls: [
-    { call: true, id: 0 },
-    { call: true, id: 1 },
-    { call: true, id: 2 },
-    { call: true, id: 3 },
+    { call: true, id: 0, selectedCells: ["0"] },
+    { call: true, id: 1, selectedCells: ["1"] },
+    { call: true, id: 2, selectedCells: ["2"] },
+    { call: true, id: 3, selectedCells: ["3"] },
   ],
 };
 

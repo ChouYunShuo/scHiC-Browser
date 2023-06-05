@@ -68,9 +68,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
   const app_size = heatMapState.app_size;
   const contact_map_size = heatMapState.contact_map_size;
   const psize = heatMapState.pix_size;
-  const apiCall = useAppSelector(
-    (state) => state.heatmap2D.apiCalls[map_id].call
-  );
+  const apiCall = useAppSelector((state) => state.heatmap2D.apiCalls[map_id]);
 
   const dispatch = useAppDispatch();
 
@@ -107,6 +105,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
   var nb_hub = nb_dispatch("update", "brush");
   nb_hub.connect(function (status: any) {});
 
+  // Effect for fetching data
   useEffect(() => {
     const getData = async () => {
       const data = await fetchMap({
@@ -114,14 +113,30 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
         chrom2: range2,
         dataset_name: heatMapState.dataset_name,
         resolution: heatMapState.resolution,
-        cell_id: selected ? selected : map_id.toString(), //Array.from({ length: 100 }, (_, i) => i.toString()), //map_id.toString(),
+        cell_id: apiCall.selectedCells, //Array.from({ length: 100 }, (_, i) => i.toString()), //map_id.toString(),
       });
 
       setHeatMapData(data);
     };
-    if (apiCall === true) getData();
-    dispatch(updateApiCalls({ call: false, id: map_id }));
-  }, [apiCall, selected]);
+
+    if (apiCall.call) getData();
+  }, [
+    apiCall.call,
+    heatMapState.dataset_name,
+    heatMapState.resolution,
+    apiCall.selectedCells,
+  ]);
+
+  // Effect for resetting call flag
+  useEffect(() => {
+    dispatch(
+      updateApiCalls({
+        call: false,
+        id: map_id,
+        selectedCells: apiCall.selectedCells,
+      })
+    );
+  }, [apiCall.call, apiCall.selectedCells, map_id]);
 
   useEffect(() => {
     if (!canvasRef.current) {
