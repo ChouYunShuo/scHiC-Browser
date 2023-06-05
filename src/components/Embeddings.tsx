@@ -54,9 +54,16 @@ const Embeds: React.FC = () => {
     .domain([yExtent[0] - 1, yExtent[1] + 1])
     .range([height, 0]);
 
-  const color: d3.ScaleOrdinal<string, string> = d3
+  const CellTypeColor: d3.ScaleOrdinal<string, string> = d3
     .scaleOrdinal<string>()
     .domain(Array.from(new Set(formattedData.map((d) => d.cellType))))
+    .range(d3.schemeCategory10);
+
+  const CellSelectColor: d3.ScaleOrdinal<string, string> = d3
+    .scaleOrdinal<string>()
+    .domain(
+      Array.from({ length: heatmap_state.map_cnts }, (_, i) => String(i + 1))
+    )
     .range(d3.schemeCategory10);
 
   useEffect(() => {
@@ -109,26 +116,32 @@ const Embeds: React.FC = () => {
     setIsPopup((prev) => !prev);
   };
 
-  const drawSvg = (g: d3.Selection<SVGGElement, unknown, null, undefined>) => {
+  const drawSvg = (
+    g: d3.Selection<SVGGElement, unknown, null, undefined>,
+    updateColorOnly: boolean = false
+  ) => {
     if (ref.current && formattedData.length != 0) {
+      if (!updateColorOnly) {
+        g.selectAll("circle")
+          .data(formattedData)
+          .join("circle")
+          .attr("cx", (d) => xScale(d.pc1))
+          .attr("cy", (d) => yScale(d.pc2))
+          .attr("r", (d) => 1.5);
+      }
       g.selectAll("circle")
         .data(formattedData)
-        .join("circle")
-        .attr("cx", (d) => xScale(d.pc1))
-        .attr("cy", (d) => yScale(d.pc2))
-        .attr("r", (d) => 1.5)
         //@ts-ignore
         .style("fill", function (d: Datum) {
           if (isColorCellSelect) {
             // Assume colorMap is an array or function that can return color based on d.cellType.
             return d.selectMap === "0"
               ? "black"
-              : d3.rgb(color(d.selectMap)).darker(0.5);
+              : d3.rgb(CellSelectColor(d.selectMap));
           } else {
-            return d3.rgb(color(d.cellType)).darker(0.5);
+            return d3.rgb(CellTypeColor(d.cellType)).darker(0.5);
           }
         });
-
       generateLegend();
     }
   };
@@ -156,7 +169,13 @@ const Embeds: React.FC = () => {
       .append("div")
       .style("width", "15px")
       .style("height", "15px")
-      .style("background-color", (d) => color(d))
+      //@ts-ignore
+      .style("background-color", function (d) {
+        if (isColorCellSelect) {
+          return CellSelectColor(d);
+        }
+        return CellTypeColor(d);
+      })
       .style("margin-right", "5px");
     if (isColorCellSelect) {
       legendItems.append("div").text((d) => "Map " + d);
@@ -164,6 +183,20 @@ const Embeds: React.FC = () => {
       legendItems.append("div").text((d) => d);
     }
   };
+  useEffect(() => {
+    if (ref.current && formattedData.length != 0) {
+      const svg = d3.select(ref.current);
+      let g = svg.select("g");
+      if (g.empty()) {
+        //@ts-ignore
+        g = svg.append("g");
+      }
+
+      const updateColorOnly = true;
+      //@ts-ignore
+      drawSvg(g, updateColorOnly);
+    }
+  }, [isColorCellSelect]);
 
   useEffect(() => {
     if (ref.current && formattedData.length != 0) {
@@ -181,19 +214,14 @@ const Embeds: React.FC = () => {
         g.remove(); // Remove the <g> element when the component unmounts
       };
     }
-  }, [formattedData, width, height, theme, isColorCellSelect]);
+  }, [formattedData, width, height]);
   useEffect(() => {
     if (ref.current) {
       const svg = d3.select(ref.current);
       const g = svg.select("g");
-      const zoomBehavior = zoom().on(
-        "zoom",
-        (event: { transform: ZoomTransform }) => {
-          g.attr("transform", event.transform.toString());
-        }
-      );
+      svg.style("background-color", colors.primary[400]);
       //@ts-ignore
-      svg.call(zoomBehavior.transform, d3.zoomIdentity);
+      drawSvg(g);
     }
   }, [theme]);
   useEffect(() => {
@@ -237,9 +265,9 @@ const Embeds: React.FC = () => {
               // Assume colorMap is an array or function that can return color based on d.cellType.
               return d.selectMap === "0"
                 ? "black"
-                : d3.rgb(color(d.selectMap)).darker(0.5);
+                : d3.rgb(CellSelectColor(d.selectMap));
             } else {
-              return d3.rgb(color(d.cellType)).darker(0.5);
+              return d3.rgb(CellTypeColor(d.cellType)).darker(0.5);
             }
           });
 
@@ -308,18 +336,18 @@ const Embeds: React.FC = () => {
                 // Assume colorMap is an array or function that can return color based on d.cellType.
                 return d.selectMap === "0"
                   ? "black"
-                  : d3.rgb(color(d.selectMap)).brighter(1.5);
+                  : d3.rgb(CellSelectColor(d.selectMap));
               } else {
-                return d3.rgb(color(d.cellType)).brighter(1.5);
+                return d3.rgb(CellTypeColor(d.cellType)).brighter(1.5);
               }
             } else {
               if (isColorCellSelect) {
                 // Assume colorMap is an array or function that can return color based on d.cellType.
                 return d.selectMap === "0"
                   ? "black"
-                  : d3.rgb(color(d.selectMap)).darker(0.5);
+                  : d3.rgb(CellSelectColor(d.selectMap));
               } else {
-                return d3.rgb(color(d.cellType)).darker(0.5);
+                return d3.rgb(CellTypeColor(d.cellType)).darker(0.5);
               }
             }
           });
@@ -334,7 +362,7 @@ const Embeds: React.FC = () => {
         svg.on(".zoom", null);
       };
     }
-  }, [formattedData, theme, isZoom]);
+  }, [formattedData, isZoom]);
 
   return (
     <Grid container position="relative">
