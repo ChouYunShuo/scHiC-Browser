@@ -14,6 +14,7 @@ import {
 import { SelectChangeEvent } from "@mui/material/Select";
 import { styled } from "@mui/system";
 import { tokens } from "../theme";
+import { DSVRowString } from "d3";
 const CenteredBox = styled(Box)({
   display: "flex",
   justifyContent: "center",
@@ -57,12 +58,14 @@ const ButtonContainer = styled(Box)({
 type UmapPopUpProps = {
   isVisible: boolean;
   handleVisToggle: () => void;
+  handleMapToggle: (selectedMap: number) => void;
   selectedUmapCells: string[];
 };
 
 const UmapPopUp: React.FC<UmapPopUpProps> = ({
   isVisible,
   handleVisToggle,
+  handleMapToggle,
   selectedUmapCells,
 }) => {
   const theme = useTheme();
@@ -82,6 +85,7 @@ const UmapPopUp: React.FC<UmapPopUpProps> = ({
         selectedCells: selectedUmapCells,
       })
     );
+    handleMapToggle(parseInt(selectedMap) + 1);
     handleVisToggle();
   };
 

@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { fetchEmbedding } from "../utils";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
-import { updateApiCalls } from "../redux/heatmap2DSlice";
 import * as d3 from "d3";
 import { zoom, ZoomTransform } from "d3";
-import { ColorModeContext, tokens } from "../theme";
+import { tokens } from "../theme";
 import { Box, useTheme, Grid } from "@mui/material";
 import EmbedTopBar from "./EmbeddingTopBar";
 import UmapPopUp from "./UmapPopUp";
@@ -15,6 +14,7 @@ interface Datum {
   pc2: number;
   cellType: string;
   cellId: string;
+  selectMap: string;
 }
 type RawDatum = [number, number, string];
 
@@ -25,6 +25,7 @@ const Embeds: React.FC = () => {
   const [formattedData, setFormattedData] = useState<Datum[]>([]);
   const [selectedCells, setSelectedCells] = useState<string[]>([]);
   const [isZoom, setIsZoom] = useState<boolean>(true);
+  const [isColorCellSelect, setIsColorCellSelect] = useState<boolean>(false);
   const [isPopup, setIsPopup] = useState<boolean>(false);
   const heatmap_state = useAppSelector((state) => state.heatmap2D);
   const dispatch = useAppDispatch();
@@ -72,11 +73,27 @@ const Embeds: React.FC = () => {
           pc2: typeof pc2 === "string" ? parseFloat(pc2) : pc2,
           cellType,
           cellId: index.toString(),
+          selectMap: "0",
         }))
       );
     };
     if (heatmap_state.all_resolution.length) getData();
   }, [heatmap_state.all_resolution]);
+
+  const handleContactMapToggle = (selected_map: number) => {
+    formattedData.forEach((cell) => {
+      if (cell.selectMap === String(selected_map)) {
+        cell.selectMap = "0";
+      }
+      if (selectedCells.includes(cell.cellId)) {
+        cell.selectMap = String(selected_map);
+      }
+    });
+    if (ref.current && formattedData.length != 0) {
+      const svg = d3.select(ref.current);
+      drawSvg(svg.select("g"));
+    }
+  };
 
   const handleZoomToggle = () => {
     setIsZoom((prevIsZoom) => !prevIsZoom);
@@ -85,8 +102,67 @@ const Embeds: React.FC = () => {
       lassoRef.current = null;
     }
   };
+  const handleColorToggle = () => {
+    setIsColorCellSelect((prev) => !prev);
+  };
   const handleVisToggle = () => {
     setIsPopup((prev) => !prev);
+  };
+
+  const drawSvg = (g: d3.Selection<SVGGElement, unknown, null, undefined>) => {
+    if (ref.current && formattedData.length != 0) {
+      g.selectAll("circle")
+        .data(formattedData)
+        .join("circle")
+        .attr("cx", (d) => xScale(d.pc1))
+        .attr("cy", (d) => yScale(d.pc2))
+        .attr("r", (d) => 1.5)
+        //@ts-ignore
+        .style("fill", function (d: Datum) {
+          if (isColorCellSelect) {
+            // Assume colorMap is an array or function that can return color based on d.cellType.
+            return d.selectMap === "0"
+              ? "black"
+              : d3.rgb(color(d.selectMap)).darker(0.5);
+          } else {
+            return d3.rgb(color(d.cellType)).darker(0.5);
+          }
+        });
+
+      generateLegend();
+    }
+  };
+  const generateLegend = () => {
+    const legend = d3.select("#legend-container");
+    legend.selectAll("*").remove();
+    let colorData;
+    if (isColorCellSelect) {
+      colorData = Array.from({ length: heatmap_state.map_cnts }, (_, i) =>
+        String(i + 1)
+      );
+    } else {
+      colorData = Array.from(new Set(formattedData.map((d) => d.cellType)));
+    }
+
+    const legendItems = legend
+      .selectAll("div")
+      .data(colorData)
+      .join("div")
+      .style("display", "flex")
+      .style("align-items", "center")
+      .style("margin-bottom", "5px");
+
+    legendItems
+      .append("div")
+      .style("width", "15px")
+      .style("height", "15px")
+      .style("background-color", (d) => color(d))
+      .style("margin-right", "5px");
+    if (isColorCellSelect) {
+      legendItems.append("div").text((d) => "Map " + d);
+    } else {
+      legendItems.append("div").text((d) => d);
+    }
   };
 
   useEffect(() => {
@@ -98,44 +174,14 @@ const Embeds: React.FC = () => {
       // Create a 'g' element inside the SVG
       const g = svg.append("g");
 
-      g.selectAll("circle")
-        .data(formattedData)
-        .join("circle")
-        .attr("cx", (d) => xScale(d.pc1))
-        .attr("cy", (d) => yScale(d.pc2))
-        .attr("r", (d) => 1.5)
-        //@ts-ignore
-        .style("fill", (d: Datum) => d3.rgb(color(d.cellType)).darker(0.5));
-
-      const legend = d3.select("#legend-container");
-      legend.selectAll("*").remove();
-      const uniqueCellTypes = Array.from(
-        new Set(formattedData.map((d) => d.cellType))
-      );
-
-      const legendItems = legend
-        .selectAll("div")
-        .data(uniqueCellTypes)
-        .join("div")
-        .style("display", "flex")
-        .style("align-items", "center")
-        .style("margin-bottom", "5px");
-
-      legendItems
-        .append("div")
-        .style("width", "15px")
-        .style("height", "15px")
-        .style("background-color", (d) => color(d))
-        .style("margin-right", "5px");
-
-      legendItems.append("div").text((d) => d);
+      drawSvg(g);
 
       // Cleanup function
       return () => {
         g.remove(); // Remove the <g> element when the component unmounts
       };
     }
-  }, [formattedData, width, height, theme]);
+  }, [formattedData, width, height, theme, isColorCellSelect]);
   useEffect(() => {
     if (ref.current) {
       const svg = d3.select(ref.current);
@@ -186,7 +232,16 @@ const Embeds: React.FC = () => {
         g.selectAll("circle")
           .attr("r", 1.5)
           //@ts-ignore
-          .style("fill", (d: Datum) => d3.rgb(color(d.cellType)).darker(0.5));
+          .style("fill", function (d: Datum) {
+            if (isColorCellSelect) {
+              // Assume colorMap is an array or function that can return color based on d.cellType.
+              return d.selectMap === "0"
+                ? "black"
+                : d3.rgb(color(d.selectMap)).darker(0.5);
+            } else {
+              return d3.rgb(color(d.cellType)).darker(0.5);
+            }
+          });
 
         lassoPath = [d3.pointer(event)]; // Store the initial mouse position
         // create the lasso path
@@ -249,12 +304,25 @@ const Embeds: React.FC = () => {
           //@ts-ignore
           .style("fill", (d: Datum) => {
             if (selected.includes(d.cellId)) {
-              return d3.rgb(color(d.cellType)).brighter(1.5);
+              if (isColorCellSelect) {
+                // Assume colorMap is an array or function that can return color based on d.cellType.
+                return d.selectMap === "0"
+                  ? "black"
+                  : d3.rgb(color(d.selectMap)).brighter(1.5);
+              } else {
+                return d3.rgb(color(d.cellType)).brighter(1.5);
+              }
             } else {
-              return d3.rgb(color(d.cellType)).darker(0.5);
+              if (isColorCellSelect) {
+                // Assume colorMap is an array or function that can return color based on d.cellType.
+                return d.selectMap === "0"
+                  ? "black"
+                  : d3.rgb(color(d.selectMap)).darker(0.5);
+              } else {
+                return d3.rgb(color(d.cellType)).darker(0.5);
+              }
             }
           });
-
         setSelectedCells(selected);
 
         if (selected.length > 0) {
@@ -270,10 +338,16 @@ const Embeds: React.FC = () => {
 
   return (
     <Grid container position="relative">
-      <EmbedTopBar isZoom={isZoom} handleZoomToggle={handleZoomToggle} />
+      <EmbedTopBar
+        isZoom={isZoom}
+        isCellSelect={isColorCellSelect}
+        handleZoomToggle={handleZoomToggle}
+        handleColorToggle={handleColorToggle}
+      />
       <UmapPopUp
         isVisible={isPopup}
         handleVisToggle={handleVisToggle}
+        handleMapToggle={handleContactMapToggle}
         selectedUmapCells={selectedCells}
       ></UmapPopUp>
       <svg
