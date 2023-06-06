@@ -362,7 +362,7 @@ const Embeds: React.FC = () => {
         svg.on(".zoom", null);
       };
     }
-  }, [formattedData, isZoom]);
+  }, [formattedData, isZoom,isColorCellSelect]);
 
   return (
     <Grid container position="relative">
