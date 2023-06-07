@@ -15,10 +15,9 @@ function App() {
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <div className="app">
-          <Topbar />
-
+          <Sidebar />
           <main className="content">
-            <Sidebar />
+            <Topbar />
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/datasets" element={<Datasets />} />
