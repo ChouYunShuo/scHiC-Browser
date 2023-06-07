@@ -9,14 +9,12 @@ import Heapmaps from "./scenes/Heatmaps";
 import Embeds from "./scenes/Embeds";
 function App() {
   const [theme, colorMode] = useMode();
-  //const [isSidebar, setIsSidebar] = useState<boolean>(true);
   return (
     <ColorModeContext.Provider value={colorMode}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <div className="app">
           <Topbar />
-
           <main className="content">
             <Sidebar />
             <Routes>

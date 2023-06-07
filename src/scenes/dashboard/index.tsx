@@ -67,9 +67,6 @@ const Dashboard: React.FC = () => {
   return (
     <Box m="20px">
       {/* HEADER */}
-      <Box display="flex" justifyContent="space-between" alignItems="center">
-        <Header title="DASHBOARD" />
-      </Box>
       <Box display="flex" flexDirection="column">
         <Box
           display="grid"
@@ -111,7 +108,7 @@ const Dashboard: React.FC = () => {
           </Box>
         </Box>
       </Box>
-      <FloatingPanel />
+      {/* <FloatingPanel /> */}
     </Box>
   );
 };

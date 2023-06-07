@@ -1,144 +1,123 @@
 import React from "react";
 import { useState } from "react";
 import { tokens } from "../../theme";
-import { ProSidebar, Menu, MenuItem } from "react-pro-sidebar";
 import { Box, IconButton, Typography, useTheme } from "@mui/material";
-import { Link } from "react-router-dom";
-import "react-pro-sidebar/dist/css/styles.css";
+import { styled } from "@mui/system";
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
-import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
-import ReceiptOutlinedIcon from "@mui/icons-material/ReceiptOutlined";
-import TableChartIcon from "@mui/icons-material/TableChart";
-interface ItemProps {
-  title: string;
-  to: string;
-  icon: any;
-  selected: string;
-  setSelected: React.Dispatch<React.SetStateAction<string>>;
+import ScatterPlotIcon from "@mui/icons-material/ScatterPlot";
+import LayersIcon from "@mui/icons-material/Layers";
+import DashboardIcon from "@mui/icons-material/Dashboard";
+import HicMapConfig from "./HicMapConfig";
+import UmapConfig from "./UmapConfig";
+
+interface SidebarItemProps {
+  selected?: boolean;
+  aboveSelected?: boolean;
+  belowSelected?: boolean;
+  onClick?: () => void;
 }
 
-const Item: React.FC<ItemProps> = ({
-  title,
-  to,
-  icon,
-  selected,
-  setSelected,
-}) => {
-  const theme = useTheme();
-  const colors = tokens(theme.palette.mode);
-  return (
-    <MenuItem
-      active={selected === title}
-      style={{
-        color: colors.grey[100],
-      }}
-      onClick={() => setSelected(title)}
-      icon={icon}
-    >
-      <Typography>{title}</Typography>
-      <Link to={to} />
-    </MenuItem>
-  );
-};
+const SidebarItem = styled(Box)<SidebarItemProps>(
+  ({ theme, selected, aboveSelected, belowSelected }) => ({
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    width: "100%",
+    paddingTop: 20,
+    paddingBottom: 15,
+    backgroundColor: selected
+      ? tokens(theme.palette.mode).primary[400]
+      : tokens(theme.palette.mode).primary[500],
+    cursor: "pointer",
+    userSelect: "none",
+    borderTopRightRadius: aboveSelected ? 10 : 0,
+    borderBottomRightRadius: belowSelected ? 10 : 0,
+    color: tokens(theme.palette.mode).grey[400],
+    "&:hover": {
+      color: tokens(theme.palette.mode).grey[200], // color of text and icons on hover
+    },
+  })
+);
+
 const Sidebar: React.FC = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [selected, setSelected] = useState("Dashboard");
+  const [selected, setSelected] = useState<number | null>(null);
 
+  const handleItemClick = (id: number) => {
+    if (selected == id) {
+      setSelected(null);
+    } else setSelected(id);
+  };
   return (
-    <Box
-      sx={{
-        "& .pro-sidebar-inner": {
-          background: `${colors.primary[400]} !important`,
-        },
-        "& .pro-icon-wrapper": {
-          backgroundColor: "transparent !important",
-        },
-        "& .pro-inner-item": {
-          padding: "5px 35px 5px 20px !important",
-        },
-        "& .pro-inner-item:hover": {
-          color: "#868dfb !important",
-        },
-        "& .pro-menu-item.active": {
-          color: "#6870fa !important",
-        },
-      }}
-    >
-      <ProSidebar collapsed={isCollapsed}>
-        <Menu iconShape="square">
-          {/* LOGO AND MENU ICON */}
-          <MenuItem
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            icon={isCollapsed ? <MenuOutlinedIcon /> : undefined}
-            style={{
-              margin: "10px 0 20px 0",
-              color: colors.grey[100],
-            }}
-          >
-            {!isCollapsed && (
-              <Box
-                display="flex"
-                justifyContent="space-between"
-                alignItems="center"
-                ml="15px"
-              >
-                <Typography variant="h4" color={colors.grey[100]}>
-                  scHiC browser
-                </Typography>
-                <IconButton onClick={() => setIsCollapsed(!isCollapsed)}>
-                  <MenuOutlinedIcon />
-                </IconButton>
-              </Box>
-            )}
-          </MenuItem>
-          <Box paddingLeft={isCollapsed ? undefined : "10%"}>
-            <Item
-              title="Dashboard"
-              to="/"
-              icon={<HomeOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
-            <Typography
-              variant="h6"
-              color={colors.grey[300]}
-              sx={{ m: "15px 0 5px 20px" }}
-            >
-              Data
-            </Typography>
-            <Item
-              title="All Datasets"
-              to="/datasets"
-              icon={<ReceiptOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
-            <Typography
-              variant="h6"
-              color={colors.grey[300]}
-              sx={{ m: "15px 0 5px 20px" }}
-            >
-              Pages
-            </Typography>
-            <Item
-              title="All Heatmaps"
-              to="/heatmaps"
-              icon={<TableChartIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
-            <Item
-              title="All Embeddings"
-              to="/embed"
-              icon={<TableChartIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
-          </Box>
-        </Menu>
-      </ProSidebar>
+    <Box sx={{ display: "flex", flexDirection: "row", height: "100vh" }}>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          width: 80,
+          height: "100vh",
+          backgroundColor: colors.primary[400],
+          borderRight: selected ? 0 : 1,
+          borderColor: colors.primary[400],
+        }}
+      >
+        <SidebarItem
+          selected={selected === 1}
+          aboveSelected={false}
+          belowSelected={selected === 2}
+          onClick={() => handleItemClick(1)}
+        >
+          <DashboardIcon />
+          Layout
+        </SidebarItem>
+        <SidebarItem
+          selected={selected === 2}
+          belowSelected={selected === 3}
+          aboveSelected={selected === 1}
+          onClick={() => handleItemClick(2)}
+        >
+          <LayersIcon />
+          HiC Map
+        </SidebarItem>
+        <SidebarItem
+          selected={selected === 3}
+          aboveSelected={selected === 2}
+          belowSelected={false}
+          onClick={() => handleItemClick(3)}
+        >
+          <ScatterPlotIcon />
+          Umap
+        </SidebarItem>
+        <Box
+          sx={{
+            width: "100%",
+            height: "100%",
+            backgroundColor: colors.primary[500],
+            borderTopRightRadius: selected === 3 ? 10 : 0,
+          }}
+        ></Box>
+      </Box>
+
+      {selected && (
+        <Box
+          sx={{
+            backgroundColor: colors.primary[400],
+            padding: 2,
+            width: 240,
+          }}
+        >
+          {selected === 2 ? (
+            <HicMapConfig />
+          ) : selected === 3 ? (
+            <UmapConfig />
+          ) : (
+            <Typography variant="h5">Layout Design</Typography>
+          )}
+          {/* Add more content as needed */}
+        </Box>
+      )}
     </Box>
   );
 };

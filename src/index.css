@@ -12,7 +12,12 @@ body,
 
 .app {
   display: flex;
-  position: relative;
+  flex-direction: column;
+  height: 100vh; /* Using 100vh to make sure it occupies the whole viewport height */
+}
+.content {
+  display: flex;
+  flex: 1; /* This allows content to take up the remaining space in the .app container */
 }
 
 ::-webkit-scrollbar {

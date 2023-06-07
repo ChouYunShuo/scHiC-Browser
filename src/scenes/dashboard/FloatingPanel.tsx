@@ -89,6 +89,7 @@ const FloatingPanel: React.FC = () => {
         updateApiCalls({
           call: true,
           id: i,
+          selectedCells: heatmap_state.apiCalls[i].selectedCells,
         })
       );
     console.log("fetched!");
@@ -106,6 +107,7 @@ const FloatingPanel: React.FC = () => {
         updateApiCalls({
           call: true,
           id: i,
+          selectedCells: heatmap_state.apiCalls[i].selectedCells,
         })
       );
     console.log("fetched!");
