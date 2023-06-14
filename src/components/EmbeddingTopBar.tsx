@@ -27,12 +27,10 @@ const EmbedTopBar: React.FC<EmbedTopBarProps> = ({
 
   return (
     <Box
-      top="-6%"
+      margin={1}
       position="absolute"
-      width="90%"
-      height="6%"
       display="flex"
-      justifyContent="flex-end"
+      justifyContent="flex-start"
     >
       <MyStyledButton
         style={{

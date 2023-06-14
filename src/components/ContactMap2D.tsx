@@ -6,19 +6,21 @@ import * as PIXI from "pixi.js";
 import * as d3 from "d3";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
 import {
-  fetchMap,
   getTicksAndPosFromRange,
   getStartPositionAndRange,
   getChromLenFromPos,
   getNbChrom,
+  getScaleFromRange,
 } from "../utils";
-
-import { updateApiCalls } from "../redux/heatmap2DSlice";
+import { useFetchContactMapDataQuery } from "../redux/apiSlice";
 import { addHorizontalTicksText, addVerticalTicksText } from "./ChromTickTrack";
 import { drawRectWithText } from "./PixiChromText";
 import createHeatMapFromTexture from "./ContactMapTexture";
+import LoadingSpinner from "./LoadingPage";
 // @ts-ignore
 import { dispatch as nb_dispatch } from "@nucleome/nb-dispatch";
+import Error404 from "./ErrorPage";
+import ErrorAPI from "./ErrorComponent";
 
 interface HeatMapProps {
   map_id: number;
@@ -61,20 +63,32 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
   const colors = tokens(theme.palette.mode);
   const colorMode = useContext(ColorModeContext);
 
-  const [heatMapData, setHeatMapData] = useState<number[][]>([]);
-  const heatMapState = useAppSelector((state) => state.heatmap2D);
-  let range1 = heatMapState.chrom1;
-  let range2 = heatMapState.chrom2;
-  const app_size = heatMapState.app_size;
-  const contact_map_size = heatMapState.contact_map_size;
-  const psize = heatMapState.pix_size;
+  //const [heatMapData, setHeatMapData] = useState<number[][]>([]);
+  const range1 = useAppSelector(
+    (state) => state.heatmap2D.apiCalls[map_id]?.query.chrom1
+  );
+  const range2 = useAppSelector(
+    (state) => state.heatmap2D.apiCalls[map_id]?.query.chrom2
+  );
+  const app_size = useAppSelector((state) => state.heatmap2D.app_size);
+  const contact_map_size = useAppSelector(
+    (state) => state.heatmap2D.contact_map_size
+  );
+  const psize = useAppSelector((state) => state.heatmap2D.pix_size);
   const apiCall = useAppSelector((state) => state.heatmap2D.apiCalls[map_id]);
-
-  const dispatch = useAppDispatch();
+  const dataset_name = useAppSelector((state) => state.heatmap2D.dataset_name);
+  const resolution = useAppSelector((state) => state.heatmap2D.resolution);
+  const showChromPos = useAppSelector(
+    (state) => state.heatmap2D.apiCalls[map_id].showChromPos
+  );
 
   // Create canvasRef using custome hook
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
   const [contact2d_container, setContainer] = useState<PIXI.Container>(
+    new PIXI.Container()
+  );
+  const [bg_container, setBgContainer] = useState<PIXI.Container>(
     new PIXI.Container()
   );
   const [chrom_dist_container, setChrom_dist_container] =
@@ -98,45 +112,26 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
   const colorScaleMemo = useMemo(() => colorScale, [theme.palette.mode]);
   const cleanupCanvas = useCallback(() => {
     contact2d_container.removeChildren();
+    contact2d_container.removeAllListeners();
     chrom_dist_container.removeChildren();
   }, []);
 
   // Connect to nb-dispatch
-  var nb_hub = nb_dispatch("update", "brush");
-  nb_hub.connect(function (status: any) {});
+  // var nb_hub = nb_dispatch("update", "brush");
+  // nb_hub.connect(function (status: any) {});
 
-  // Effect for fetching data
-  useEffect(() => {
-    const getData = async () => {
-      const data = await fetchMap({
-        chrom1: range1,
-        chrom2: range2,
-        dataset_name: heatMapState.dataset_name,
-        resolution: heatMapState.resolution,
-        cell_id: apiCall.selectedCells, //Array.from({ length: 100 }, (_, i) => i.toString()), //map_id.toString(),
-      });
-
-      setHeatMapData(data);
-    };
-
-    if (apiCall.call) getData();
-  }, [
-    apiCall.call,
-    heatMapState.dataset_name,
-    heatMapState.resolution,
-    apiCall.selectedCells,
-  ]);
-
-  // Effect for resetting call flag
-  useEffect(() => {
-    dispatch(
-      updateApiCalls({
-        call: false,
-        id: map_id,
-        selectedCells: apiCall.selectedCells,
-      })
-    );
-  }, [apiCall.call, apiCall.selectedCells, map_id]);
+  const {
+    data: heatMapData,
+    error,
+    isFetching,
+    isLoading,
+  } = useFetchContactMapDataQuery({
+    chrom1: range1,
+    chrom2: range2,
+    dataset_name: dataset_name,
+    resolution: resolution,
+    cell_id: apiCall.selectedCells,
+  });
 
   useEffect(() => {
     if (!canvasRef.current) {
@@ -146,14 +141,13 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
       view: canvasRef.current,
       width: app_size,
       height: app_size,
-      backgroundColor: colors.primary[400],
       resolution: 2,
     });
 
     initRect(sltRect);
     initRect(symRect);
     initRect(posRect);
-
+    app.stage.addChild(bg_container);
     app.stage.addChild(contact2d_container);
     app.stage.addChild(chrom_dist_container);
     app.stage.addChild(sltRect);
@@ -169,24 +163,31 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
   useEffect(() => {
     //add container background
     const point1 = new PIXI.Graphics();
-    point1.beginFill(PIXI.utils.string2hex(colors.primary[400]));
+    point1.beginFill(new PIXI.Color(colors.primary[400]));
     point1.drawRect(0, 0, app_size, app_size);
     point1.endFill();
-    contact2d_container.addChild(point1);
+    bg_container.addChild(point1);
 
+    const [scaleX, scaleY] = getScaleFromRange(range1, range2);
+    const horizontal_ticks = getTicksAndPosFromRange(
+      range1,
+      contact_map_size,
+      scaleX
+    );
+    const vertical_ticks = getTicksAndPosFromRange(
+      range2,
+      contact_map_size,
+      scaleY
+    );
     handleContainerEvent(contact2d_container);
-
-    const horizontal_ticks = getTicksAndPosFromRange(range1, contact_map_size);
-    const vertical_ticks = getTicksAndPosFromRange(range2, contact_map_size);
-
     // add heatmap, Text data
     if (heatMapData) {
       if (heatMapData[0]) {
         createHeatMapFromTexture(
           heatMapData,
           contact2d_container,
-          heatMapState.app_size,
-          heatMapState.contact_map_size,
+          app_size,
+          contact_map_size,
           colorScaleMemo
         );
         addHorizontalTicksText(
@@ -202,32 +203,34 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
       }
       return cleanupCanvas;
     }
-  }, [heatMapData, psize, theme.palette.mode]);
+  }, [heatMapData, psize, theme.palette.mode, showChromPos]);
 
   function handleContainerEvent(container: PIXI.Container) {
-    container.interactive = true;
-
+    container.eventMode = "dynamic";
     container.on("pointermove", (event: PIXI.FederatedMouseEvent) => {
-      const rect = canvasRef.current?.getBoundingClientRect();
-      const resize_ratio = (rect!.right - rect!.left) / app_size;
-      const endX = event.clientX - rect!.left;
-      const endY = event.clientY - rect!.top;
-
+      if (!showChromPos) {
+        posRect.visible = false;
+        return;
+      }
+      const endX = event.globalX; //- dimensions.diff_x * resize_ratio;
+      const endY = event.globalY; //- dimensions.diff_y * resize_ratio;
+      const [scaleX, scaleY] = getScaleFromRange(range1, range2);
       const chrom1_len = getChromLenFromPos(
         range1,
-        contact_map_size * resize_ratio,
-        event.clientX - rect!.left - transform_xy * resize_ratio
+        contact_map_size * scaleX,
+        event.globalX - transform_xy
       );
       const chrom2_len = getChromLenFromPos(
         range2,
-        contact_map_size * resize_ratio,
-        event.clientY - rect!.top - transform_xy * resize_ratio
+        contact_map_size * scaleY,
+        event.globalY - transform_xy
       );
+      //console.log(dimensions.offsetX, dimensions.offsetY);
       const { textChrom1, textChrom2 } = drawRectWithText(
         colors.grey[500],
         posRect,
-        endX / resize_ratio,
-        endY / resize_ratio,
+        endX,
+        endY,
         chrom1_len,
         chrom2_len
       );
@@ -238,22 +241,20 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
       posRect.visible = false;
     });
     container.on("mousedown", (event: PIXI.FederatedMouseEvent) => {
-      const rect = canvasRef.current?.getBoundingClientRect();
-      const resize_ratio = (rect!.right - rect!.left) / app_size;
       isDragging.current = true;
       sltRect.visible = false;
       symRect.visible = false;
 
-      (mousePos.current.x_pos = (event.clientX - rect!.left) / resize_ratio),
-        (mousePos.current.y_pos = (event.clientY - rect!.top) / resize_ratio);
+      (mousePos.current.x_pos = event.globalX),
+        (mousePos.current.y_pos = event.globalY);
+      // console.log(mousePos.current.x_pos, mousePos.current.y_pos);
+      // console.log(event.globalX, event.globalY);
     });
     container.on("mousemove", (event: PIXI.FederatedMouseEvent) => {
-      const rect = canvasRef.current?.getBoundingClientRect();
-      const resize_ratio = (rect!.right - rect!.left) / app_size;
       if (isDragging.current) {
         posRect.visible = false;
-        const endX = (event.clientX - rect!.left) / resize_ratio;
-        const endY = (event.clientY - rect!.top) / resize_ratio;
+        const endX = event.globalX; //- dimensions.diff_x * resize_ratio;
+        const endY = event.globalY; //- dimensions.diff_y * resize_ratio;
         const width = Math.abs(endX - mousePos.current.x_pos);
         const height = Math.abs(endY - mousePos.current.y_pos);
         const x = Math.min(mousePos.current.x_pos, endX);
@@ -263,12 +264,10 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
       }
     });
     container.on("mouseup", (event: PIXI.FederatedMouseEvent) => {
-      const rect = canvasRef.current?.getBoundingClientRect();
-      const resize_ratio = (rect!.right - rect!.left) / app_size;
       isDragging.current = false;
 
-      const endX = (event.clientX - rect!.left) / resize_ratio;
-      const endY = (event.clientY - rect!.top) / resize_ratio;
+      const endX = event.globalX; //- dimensions.diff_x * resize_ratio;
+      const endY = event.globalY; //- dimensions.diff_y * resize_ratio;
       const x = Math.min(mousePos.current.x_pos, endX);
       const y = Math.min(mousePos.current.y_pos, endY);
 
@@ -365,21 +364,40 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
     },
     [range1, range2]
   );
-
   return (
-    <Box>
-      {heatMapData && (
+    <Box
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        width: "100%",
+        height: "100%",
+        overflow: "hidden",
+        border: "1px solid rgba(0, 0, 0, 0.2)",
+      }}
+    >
+      <Box
+        style={{
+          position: "relative",
+          width: "100%",
+          height: "0",
+          paddingBottom: "100%",
+          display: isLoading || error ? "none" : "block", // Hide canvas when loading
+        }}
+      >
         <canvas
           style={{
-            padding: "2px",
-            border: "1px solid rgba(0, 0, 0, 0.2)",
+            position: "absolute",
+            top: 0,
+            left: 0,
             width: "100%",
             height: "100%",
             objectFit: "contain",
           }}
           ref={canvasRef}
         />
-      )}
+      </Box>
+      {error ? <ErrorAPI /> : (isFetching || isLoading) && <LoadingSpinner />}
     </Box>
   );
 };

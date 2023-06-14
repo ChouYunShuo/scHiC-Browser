@@ -29,18 +29,20 @@ type EmbedQueryType = {
   embed_type: string;
 };
 
+type MoveType = "left" | "right";
+
 export type tickType = {
   chrom_pos: number;
   pix_pos: number;
 };
 
-export const fetchMap = async (simpleQuery: queryType) => {
-  return axios.post("http://128.2.220.67:8020/api/query", simpleQuery).then(
-    (
-      res //genome-dev.compbio.cs.cmu.edu
-    ) => JSON.parse(res.data)
-  );
-};
+// export const fetchMap = async (simpleQuery: queryType) => {
+//   return axios.post("http://128.2.220.67:8020/api/query", simpleQuery).then(
+//     (
+//       res //genome-dev.compbio.cs.cmu.edu
+//     ) => JSON.parse(res.data)
+//   );
+// };
 export const fetchChromLens = async (simpleQuery: ChromLenQueryType) => {
   return axios
     .post("http://128.2.220.67:8020/api/chromlens", simpleQuery)
@@ -64,21 +66,26 @@ export const getNbChrom = (range: string): string => {
   //console.log(chrom)
   return "chr" + chrom;
 };
-export const validateChrom = (range: string): string => {
+
+export const getChromLen = (chrom: string) => {
   const state = store.getState();
+  let chrom_len = selectChromLen(state.heatmap2D).slice();
+  return chrom_len[chrom2idx(chrom)];
+};
+export const validateChrom = (range: string): string => {
   const chrom = range.trim().split(":")[0];
   const raw = range.trim().split(":")[1];
   let lo = Number(raw.split("-")[0]);
   let hi = Number(raw.split("-")[1]);
-  let chrom_len = selectChromLen(state.heatmap2D).slice();
+  let chrom_len = getChromLen(chrom);
 
   lo = Math.max(0, lo);
 
-  hi = Math.min(chrom_len[chrom2idx(chrom)], hi);
+  hi = Math.min(chrom_len, hi);
   //console.log(chrom+':'+lo.toString()+'-'+hi.toString())
-
   return chrom + ":" + lo.toString() + "-" + hi.toString();
 };
+
 export const getStartPositionAndRange = (range: string) => {
   var rawr1 = range.trim().split(":")[1];
   return [
@@ -100,14 +107,37 @@ export const getChromLenFromPos = (
   return Math.min(Math.max(lo, Math.ceil(xScale(pos))), hi);
 };
 
-export const getTicksAndPosFromRange = (range: string, map_size: number) => {
+export const getScaleFromRange = (range1: string, range2: string) => {
+  const raw1 = range1.trim().split(":")[1];
+  const lo1 = Number(raw1.split("-")[0]);
+  const hi1 = Number(raw1.split("-")[1]);
+
+  const raw2 = range2.trim().split(":")[1];
+  const lo2 = Number(raw2.split("-")[0]);
+  const hi2 = Number(raw2.split("-")[1]);
+
+  const scale1 = hi1 - lo1 > hi2 - lo2 ? 1 : (hi1 - lo1) / (hi2 - lo2);
+  const scale2 = hi1 - lo1 > hi2 - lo2 ? (hi2 - lo2) / (hi1 - lo1) : 1;
+
+  return [scale1, scale2];
+};
+
+export const getTicksAndPosFromRange = (
+  range: string,
+  map_size: number,
+  scale: number
+) => {
   const ticks: tickType[] = [];
-  const numTicks = 4;
+  let numTicks;
   const raw = range.trim().split(":")[1];
   const lo = Number(raw.split("-")[0]);
   const hi = Number(raw.split("-")[1]);
+  if (scale === 1) numTicks = 4;
+  else numTicks = 3;
 
-  const xScale = scaleLinear().domain([lo, hi]).range([0, map_size]);
+  const xScale = scaleLinear()
+    .domain([lo, hi])
+    .range([0, scale * map_size]);
   const tick = xScale.ticks(numTicks).filter((tick) => Number.isInteger(tick));
 
   for (let i = 0; i < tick.length; i++) {
@@ -116,6 +146,7 @@ export const getTicksAndPosFromRange = (range: string, map_size: number) => {
       pix_pos: Math.ceil(xScale(tick[i])),
     });
   }
+
   return ticks;
 };
 export const getResFromRange = (range1: string, range2: string) => {
@@ -169,6 +200,7 @@ export const getNewChromZoomIn = (range1: string, a: number) => {
     );
   } catch (err) {
     console.log(err);
+    return range1;
   }
 };
 export const getNewChromZoomOut = (range1: string, a: number) => {
@@ -195,6 +227,56 @@ export const getNewChromZoomOut = (range1: string, a: number) => {
     return validateChrom(chrom_str);
   } catch (err) {
     console.log(err);
+    return range1;
+  }
+};
+
+export const getNewChromeMove = (range1: string, type: MoveType) => {
+  var chrom = range1.trim().split(":")[0];
+  var rawrange = range1.trim().split(":")[1];
+  try {
+    const lo = Number(rawrange.split("-")[0]);
+    const hi = Number(rawrange.split("-")[1]);
+    const move_size = 1 / 4;
+    const range = (hi - lo) * move_size;
+    let chrom_len = getChromLen(chrom);
+    let chrom_str = "";
+    if ((lo === 0 && type === "left") || (hi >= chrom_len && type === "right"))
+      return range1;
+
+    if (type === "left") {
+      if (lo - range <= 0) {
+        chrom_str = chrom + ":0-" + Math.floor(range / move_size).toString();
+      } else {
+        chrom_str =
+          chrom +
+          ":" +
+          Math.floor(lo - range).toString() +
+          "-" +
+          Math.floor(lo + 3 * range).toString();
+      }
+    } else {
+      if (hi + range >= chrom_len) {
+        chrom_str =
+          chrom +
+          ":" +
+          Math.floor(chrom_len - range / move_size).toString() +
+          "-" +
+          chrom_len.toString();
+      } else {
+        chrom_str =
+          chrom +
+          ":" +
+          Math.floor(hi - 3 * range).toString() +
+          "-" +
+          Math.floor(hi + range).toString();
+      }
+    }
+
+    return validateChrom(chrom_str);
+  } catch (err) {
+    console.log(err);
+    return range1;
   }
 };
 

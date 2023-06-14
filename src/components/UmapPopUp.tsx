@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
-import { updateApiCalls } from "../redux/heatmap2DSlice";
+import { updateMapSelectCells } from "../redux/heatmap2DSlice";
 import {
   Box,
   Button,
@@ -13,8 +13,8 @@ import {
 } from "@mui/material";
 import { SelectChangeEvent } from "@mui/material/Select";
 import { styled } from "@mui/system";
+import shouldForwardProp from "@styled-system/should-forward-prop";
 import { tokens } from "../theme";
-import { DSVRowString } from "d3";
 const CenteredBox = styled(Box)({
   display: "flex",
   justifyContent: "center",
@@ -25,6 +25,7 @@ const CenteredBox = styled(Box)({
   left: 0,
   right: 0,
   backgroundColor: "rgba(0, 0, 0, 0.5)",
+  zIndex: 1000,
 });
 
 const InnerBox = styled(Box)(({ theme }) => ({
@@ -33,8 +34,8 @@ const InnerBox = styled(Box)(({ theme }) => ({
   flexDirection: "column",
   justifyContent: "center",
   alignItems: "center",
-  width: "40vw", // Set to desired width
-  height: "40vh", // Set to desired height
+  width: "calc(min(60%, 40vw))", // Set to desired width
+  height: "calc(min(40%, 30vh))", // Set to desired height
   backgroundColor: tokens(theme.palette.mode).primary[400],
   padding: "16px",
   borderRadius: "12px",
@@ -42,24 +43,29 @@ const InnerBox = styled(Box)(({ theme }) => ({
 }));
 
 const TitleContainer = styled(Box)({
-  position: "absolute",
-  top: "10%",
+  marginTop: 2,
 });
-const CellCntContainer = styled(Box)({
-  position: "absolute",
-  bottom: "5%",
-});
-const ButtonContainer = styled(Box)({
-  position: "absolute",
-  right: "16px",
-  bottom: "5%",
-});
+const CellCntContainer = styled(Box)({});
+interface ButtonContainerProps {
+  isMd: boolean;
+}
+const ButtonContainer = styled(Box, {
+  shouldForwardProp,
+})<ButtonContainerProps>(({ theme, isMd }) => ({
+  display: isMd ? "initial" : "flex",
+  ...(isMd && {
+    position: "absolute",
+    right: "2%",
+    bottom: "5%",
+  }),
+}));
 
 type UmapPopUpProps = {
   isVisible: boolean;
   handleVisToggle: () => void;
   handleMapToggle: (selectedMap: number) => void;
   selectedUmapCells: string[];
+  pWidth: number;
 };
 
 const UmapPopUp: React.FC<UmapPopUpProps> = ({
@@ -67,11 +73,14 @@ const UmapPopUp: React.FC<UmapPopUpProps> = ({
   handleVisToggle,
   handleMapToggle,
   selectedUmapCells,
+  pWidth,
 }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const [selectedMap, setSelectedMap] = useState("");
   const dispatch = useAppDispatch();
+  const isMd = pWidth > theme.breakpoints.values.md;
+  const isSm = pWidth > theme.breakpoints.values.sm;
 
   const handleSelectChange = (event: SelectChangeEvent<string>) => {
     setSelectedMap(event.target.value as string);
@@ -79,8 +88,7 @@ const UmapPopUp: React.FC<UmapPopUpProps> = ({
 
   const handleConfirm = () => {
     dispatch(
-      updateApiCalls({
-        call: true,
+      updateMapSelectCells({
         id: parseInt(selectedMap),
         selectedCells: selectedUmapCells,
       })
@@ -96,7 +104,7 @@ const UmapPopUp: React.FC<UmapPopUpProps> = ({
           <InnerBox>
             <TitleContainer>
               <Typography
-                variant="h3"
+                variant={isSm ? "h3" : "body1"}
                 color={colors.grey[100]}
                 fontWeight="bold"
                 sx={{ m: "0 0 5px 0" }}
@@ -132,7 +140,7 @@ const UmapPopUp: React.FC<UmapPopUpProps> = ({
                 You selected {selectedUmapCells.length} cells
               </Typography>
             </CellCntContainer>
-            <ButtonContainer>
+            <ButtonContainer isMd={isMd}>
               <Button
                 variant="outlined"
                 color="error"

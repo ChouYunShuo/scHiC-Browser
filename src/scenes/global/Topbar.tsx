@@ -6,10 +6,9 @@ import { ColorModeContext, tokens } from "../../theme";
 import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
 import DarkModeOutlinedIcon from "@mui/icons-material/DarkModeOutlined";
 import GitHubIcon from "@mui/icons-material/GitHub";
-import logo from "../../assets/scViz_logo.png";
-
+import logoDark from "../../assets/scViz_logo.png";
+import logoLight from "../../assets/scViz_logo_light.png";
 const TopBarTypography = styled(Typography)(({ theme }) => ({
-  variant: "subtitle1",
   color: tokens(theme.palette.mode).grey[200],
   "&:hover": {
     color: tokens(theme.palette.mode).grey[100], // choose a lighter color on hover
@@ -29,22 +28,33 @@ const Topbar: React.FC = () => {
     >
       <Box width="30%" display="flex" alignItems="center" ml={1}>
         <img
-          src={logo}
+          src={theme.palette.mode === "dark" ? logoDark : logoLight}
           alt="Logo"
-          style={{ height: "2em", marginRight: "2em" }}
+          style={{ height: "2em", marginRight: "1em" }}
         />
         <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
-          <TopBarTypography variant="h5" color={colors.grey[100]}>
+          <TopBarTypography variant="h4" color={colors.grey[100]}>
+            CellScope
+          </TopBarTypography>
+          <TopBarTypography
+            variant="h5"
+            color={colors.grey[100]}
+            marginLeft={2}
+          >
             Dashboard
           </TopBarTypography>
-          <TopBarTypography variant="h5" color={colors.grey[100]}>
+          <TopBarTypography
+            variant="h5"
+            marginLeft={1}
+            color={colors.grey[100]}
+          >
             Datasets
           </TopBarTypography>
         </Box>
       </Box>
 
       {/* ICONS */}
-      <Box display="flex" justifyContent="flex-end" width="100%">
+      <Box display="flex" justifyContent="flex-end" flexGrow={1}>
         <IconButton onClick={colorMode.toggleColorMode}>
           {theme.palette.mode === "dark" ? (
             <DarkModeOutlinedIcon />

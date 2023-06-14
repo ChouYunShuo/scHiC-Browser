@@ -77,7 +77,7 @@ export const tokens = (mode: ThemeMode) => ({
         primary: {
           100: "#040509",
           200: "#080b12",
-          300: "#eeeeee", // manually changed
+          300: "#cccccc", // manually changed
           400: "#f2f0f0", // manually changed
           500: "#fcfcfc",
           600: "#1F2A40",

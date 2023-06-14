@@ -15,8 +15,10 @@ export const createHeatMapFromTexture = (
   const heatmapCanvas = document.createElement("canvas");
   const xsize = data.length;
   const ysize = data[0].length;
-  heatmapCanvas.width = contact_map_size;
-  heatmapCanvas.height = contact_map_size;
+  const scaleX = xsize > ysize ? 1 : xsize / ysize;
+  const scaleY = xsize > ysize ? ysize / xsize : 1;
+  heatmapCanvas.width = contact_map_size * scaleX;
+  heatmapCanvas.height = contact_map_size * scaleY;
   const ctx = heatmapCanvas.getContext("2d");
 
   if (ctx) {

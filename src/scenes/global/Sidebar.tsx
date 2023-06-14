@@ -1,15 +1,17 @@
 import React from "react";
 import { useState } from "react";
 import { tokens } from "../../theme";
-import { Box, IconButton, Typography, useTheme } from "@mui/material";
+import { Box, Typography, useTheme } from "@mui/material";
 import { styled } from "@mui/system";
+import shouldForwardProp from "@styled-system/should-forward-prop";
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import ScatterPlotIcon from "@mui/icons-material/ScatterPlot";
 import LayersIcon from "@mui/icons-material/Layers";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import HicMapConfig from "./HicMapConfig";
 import UmapConfig from "./UmapConfig";
-
+import { updateSelectedSidebarItem } from "../../redux/heatmap2DSlice";
+import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 interface SidebarItemProps {
   selected?: boolean;
   aboveSelected?: boolean;
@@ -17,7 +19,7 @@ interface SidebarItemProps {
   onClick?: () => void;
 }
 
-const SidebarItem = styled(Box)<SidebarItemProps>(
+const SidebarItem = styled(Box, { shouldForwardProp })<SidebarItemProps>(
   ({ theme, selected, aboveSelected, belowSelected }) => ({
     display: "flex",
     flexDirection: "column",
@@ -44,20 +46,25 @@ const Sidebar: React.FC = () => {
   const colors = tokens(theme.palette.mode);
   const [selected, setSelected] = useState<number | null>(null);
 
+  const dispatch = useAppDispatch();
   const handleItemClick = (id: number) => {
     if (selected == id) {
       setSelected(null);
-    } else setSelected(id);
+      dispatch(updateSelectedSidebarItem(0));
+    } else {
+      setSelected(id);
+      dispatch(updateSelectedSidebarItem(id));
+    }
   };
   return (
-    <Box sx={{ display: "flex", flexDirection: "row", height: "100vh" }}>
+    <Box sx={{ display: "flex", flexDirection: "row", height: "100%" }}>
       <Box
         sx={{
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           width: 80,
-          height: "100vh",
+          height: "100%",
           backgroundColor: colors.primary[400],
           borderRight: selected ? 0 : 1,
           borderColor: colors.primary[400],
@@ -105,7 +112,7 @@ const Sidebar: React.FC = () => {
           sx={{
             backgroundColor: colors.primary[400],
             padding: 2,
-            width: 240,
+            width: 300,
           }}
         >
           {selected === 2 ? (

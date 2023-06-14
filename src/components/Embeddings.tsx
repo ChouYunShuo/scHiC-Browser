@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { fetchEmbedding } from "../utils";
+import { useFetchEmbedQuery } from "../redux/apiSlice";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
 import * as d3 from "d3";
 import { zoom, ZoomTransform } from "d3";
@@ -8,6 +9,8 @@ import { Box, useTheme, Grid } from "@mui/material";
 import EmbedTopBar from "./EmbeddingTopBar";
 import UmapPopUp from "./UmapPopUp";
 import { euclideanDistance } from "../utils";
+import Error404 from "./ErrorPage";
+import ErrorAPI from "./ErrorComponent";
 
 interface Datum {
   pc1: number;
@@ -28,7 +31,6 @@ const Embeds: React.FC = () => {
   const [isColorCellSelect, setIsColorCellSelect] = useState<boolean>(false);
   const [isPopup, setIsPopup] = useState<boolean>(false);
   const heatmap_state = useAppSelector((state) => state.heatmap2D);
-  const dispatch = useAppDispatch();
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const ref = useRef<SVGSVGElement | null>(null);
@@ -40,8 +42,10 @@ const Embeds: React.FC = () => {
   > | null>(null);
   const lassoThreshold = 50;
 
-  const height = vwToPixels(38);
-  const width = vwToPixels(38);
+  const width = vwToPixels(45);
+  const height = vwToPixels(45);
+  const DivRef = useRef<HTMLDivElement>(null);
+  let currentWidth = DivRef.current ? DivRef.current.offsetWidth : width;
   const xExtent = d3.extent(formattedData, (d) => d.pc1) as [number, number];
   const yExtent = d3.extent(formattedData, (d) => d.pc2) as [number, number];
   const xScale = d3
@@ -66,26 +70,29 @@ const Embeds: React.FC = () => {
     )
     .range(d3.schemeCategory10);
 
+  const {
+    data: rawEmbedData,
+    isLoading,
+    error,
+  } = useFetchEmbedQuery({
+    dataset_name: heatmap_state.dataset_name,
+    resolution: heatmap_state.all_resolution[0]?.toString(),
+    embed_type: "umap",
+  });
+
   useEffect(() => {
-    const getData = async () => {
-      console.log("Get Data!");
-      const data: RawDatum[] = await fetchEmbedding({
-        dataset_name: heatmap_state.dataset_name,
-        resolution: heatmap_state.all_resolution[0].toString(),
-        embed_type: "umap",
-      });
-      setFormattedData(
-        data.map(([pc1, pc2, cellType], index) => ({
-          pc1: typeof pc1 === "string" ? parseFloat(pc1) : pc1,
-          pc2: typeof pc2 === "string" ? parseFloat(pc2) : pc2,
-          cellType,
-          cellId: index.toString(),
-          selectMap: "0",
-        }))
-      );
-    };
-    if (heatmap_state.all_resolution.length) getData();
-  }, [heatmap_state.all_resolution]);
+    if (!isLoading && rawEmbedData) {
+      const formattedData = rawEmbedData.map(([pc1, pc2, cellType], index) => ({
+        pc1: typeof pc1 === "string" ? parseFloat(pc1) : pc1,
+        pc2: typeof pc2 === "string" ? parseFloat(pc2) : pc2,
+        cellType,
+        cellId: index.toString(),
+        selectMap: "0",
+      }));
+
+      setFormattedData(formattedData);
+    }
+  }, [isLoading, rawEmbedData]);
 
   const handleContactMapToggle = (selected_map: number) => {
     formattedData.forEach((cell) => {
@@ -198,7 +205,9 @@ const Embeds: React.FC = () => {
     }
   }, [isColorCellSelect]);
 
+  const hasData = formattedData.length > 0;
   useEffect(() => {
+    //console.log("In embed get data drawSvg");
     if (ref.current && formattedData.length != 0) {
       const svg = d3.select(ref.current);
 
@@ -214,7 +223,7 @@ const Embeds: React.FC = () => {
         g.remove(); // Remove the <g> element when the component unmounts
       };
     }
-  }, [formattedData, width, height]);
+  }, [hasData]);
   useEffect(() => {
     if (ref.current) {
       const svg = d3.select(ref.current);
@@ -362,37 +371,51 @@ const Embeds: React.FC = () => {
         svg.on(".zoom", null);
       };
     }
-  }, [formattedData, isZoom,isColorCellSelect]);
+  }, [formattedData, isZoom, isColorCellSelect]);
 
   return (
-    <Grid container position="relative">
-      <EmbedTopBar
-        isZoom={isZoom}
-        isCellSelect={isColorCellSelect}
-        handleZoomToggle={handleZoomToggle}
-        handleColorToggle={handleColorToggle}
-      />
-      <UmapPopUp
-        isVisible={isPopup}
-        handleVisToggle={handleVisToggle}
-        handleMapToggle={handleContactMapToggle}
-        selectedUmapCells={selectedCells}
-      ></UmapPopUp>
-      <svg
-        ref={ref}
-        width={width}
-        height={height}
-        style={{ border: "1px solid rgba(0, 0, 0, 0.2)" }}
-      />
+    <Box width="100%" height="100%">
+      <Grid
+        container
+        position="relative"
+        width="100%"
+        height="100%"
+        ref={DivRef}
+        style={{
+          overflow: "hidden",
+          display: error ? "none" : "block", // Hide canvas when loadingdisplay= error ? "none" : "block", // Hide canvas when loading
+        }}
+      >
+        <EmbedTopBar
+          isZoom={isZoom}
+          isCellSelect={isColorCellSelect}
+          handleZoomToggle={handleZoomToggle}
+          handleColorToggle={handleColorToggle}
+        />
+        <UmapPopUp
+          isVisible={isPopup}
+          handleVisToggle={handleVisToggle}
+          handleMapToggle={handleContactMapToggle}
+          selectedUmapCells={selectedCells}
+          pWidth={currentWidth}
+        ></UmapPopUp>
+        <svg
+          ref={ref}
+          width="100%"
+          height="100%"
+          style={{ border: "1px solid rgba(0, 0, 0, 0.2)" }}
+        />
 
-      <Box
-        position="absolute"
-        right={0}
-        height="50%"
-        width="10%"
-        id="legend-container"
-      ></Box>
-    </Grid>
+        <Box
+          position="absolute"
+          right={0}
+          paddingTop={1}
+          width="10%"
+          id="legend-container"
+        ></Box>
+      </Grid>
+      {error && <ErrorAPI />}
+    </Box>
   );
 };
 

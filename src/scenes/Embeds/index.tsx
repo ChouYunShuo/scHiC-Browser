@@ -6,7 +6,7 @@ import { zoom, ZoomTransform, select } from "d3";
 import { ColorModeContext, tokens } from "../../theme";
 import { Grid, useTheme } from "@mui/material";
 import HeatMap from "../../components/ContactMap2D";
-import { updateApiCalls } from "../../redux/heatmap2DSlice";
+import { updateMapSelectCells } from "../../redux/heatmap2DSlice";
 interface Datum {
   pc1: number;
   pc2: number;
@@ -167,16 +167,6 @@ const Embeds: React.FC = () => {
           .map((d) => d.cellId);
 
         setSelectedCells(selected);
-        if (selected.length > 0) {
-          dispatch(
-            updateApiCalls({
-              call: true,
-              id: 3,
-            })
-          );
-        }
-
-        console.log(selected);
 
         rect.remove();
         rect = null;
@@ -217,14 +207,6 @@ const Embeds: React.FC = () => {
             });
 
           setSelectedCells(selectedCellIds);
-          if (selectedCellIds.length > 0) {
-            dispatch(
-              updateApiCalls({
-                call: true,
-                id: 3,
-              })
-            );
-          }
         });
 
       const legend = d3.select("#legend-container");
