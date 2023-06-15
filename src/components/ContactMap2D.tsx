@@ -13,6 +13,7 @@ import {
   getScaleFromRange,
 } from "../utils";
 import { useFetchContactMapDataQuery } from "../redux/apiSlice";
+import { updateSelectRect } from "../redux/heatmap2DSlice";
 import { addHorizontalTicksText, addVerticalTicksText } from "./ChromTickTrack";
 import { drawRectWithText } from "./PixiChromText";
 import createHeatMapFromTexture from "./ContactMapTexture";
@@ -40,30 +41,10 @@ const initRect = (rect: PIXI.Graphics) => {
   rect.visible = false;
 };
 
-const drawSelectRect = (
-  rect: PIXI.Graphics,
-  x: number,
-  y: number,
-  width: number,
-  height: number
-) => {
-  rect
-    .clear()
-    .lineStyle(2, 0xeeeeee, 1)
-    .beginFill(0xe5e4e2)
-    .drawRect(x, y, width, height)
-    .endFill();
-
-  rect.alpha = 0.3;
-  rect.visible = true;
-};
-
 const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const colorMode = useContext(ColorModeContext);
-
-  //const [heatMapData, setHeatMapData] = useState<number[][]>([]);
   const range1 = useAppSelector(
     (state) => state.heatmap2D.apiCalls[map_id]?.query.chrom1
   );
@@ -81,10 +62,11 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
   const showChromPos = useAppSelector(
     (state) => state.heatmap2D.apiCalls[map_id].showChromPos
   );
+  const selectRect = useAppSelector((state) => state.heatmap2D.selectRect);
+  const dispatch = useAppDispatch();
 
   // Create canvasRef using custome hook
   const canvasRef = useRef<HTMLCanvasElement>(null);
-
   const [contact2d_container, setContainer] = useState<PIXI.Container>(
     new PIXI.Container()
   );
@@ -163,6 +145,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
   useEffect(() => {
     //add container background
     const point1 = new PIXI.Graphics();
+    //@ts-ignore
     point1.beginFill(new PIXI.Color(colors.primary[400]));
     point1.drawRect(0, 0, app_size, app_size);
     point1.endFill();
@@ -205,7 +188,41 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
     }
   }, [heatMapData, psize, theme.palette.mode, showChromPos]);
 
+  useEffect(() => {
+    if (selectRect.isVisible) {
+      const x = selectRect.startX;
+      const y = selectRect.startY;
+      const width = selectRect.width;
+      const height = selectRect.height;
+      drawSelectRect(sltRect, x, y, width, height);
+      drawSelectRect(symRect, y, x, height, width);
+    } else {
+      sltRect.visible = false;
+      symRect.visible = false;
+    }
+  }, [selectRect]);
+
+  const drawSelectRect = (
+    rect: PIXI.Graphics,
+    x: number,
+    y: number,
+    width: number,
+    height: number
+  ) => {
+    rect
+      .clear()
+      .lineStyle(2, 0xeeeeee, 1)
+      //@ts-ignore
+      .beginFill(new PIXI.Color(colors.grey[100]))
+      .drawRect(x, y, width, height)
+      .endFill();
+
+    rect.alpha = 0.3;
+    rect.visible = true;
+  };
+
   function handleContainerEvent(container: PIXI.Container) {
+    //@ts-ignore
     container.eventMode = "dynamic";
     container.on("pointermove", (event: PIXI.FederatedMouseEvent) => {
       if (!showChromPos) {
@@ -242,13 +259,18 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
     });
     container.on("mousedown", (event: PIXI.FederatedMouseEvent) => {
       isDragging.current = true;
-      sltRect.visible = false;
-      symRect.visible = false;
+      dispatch(
+        updateSelectRect({
+          isVisible: false,
+          startX: 0,
+          startY: 0,
+          width: 0,
+          height: 0,
+        })
+      );
 
       (mousePos.current.x_pos = event.globalX),
         (mousePos.current.y_pos = event.globalY);
-      // console.log(mousePos.current.x_pos, mousePos.current.y_pos);
-      // console.log(event.globalX, event.globalY);
     });
     container.on("mousemove", (event: PIXI.FederatedMouseEvent) => {
       if (isDragging.current) {
@@ -257,41 +279,53 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
         const endY = event.globalY; //- dimensions.diff_y * resize_ratio;
         const width = Math.abs(endX - mousePos.current.x_pos);
         const height = Math.abs(endY - mousePos.current.y_pos);
-        const x = Math.min(mousePos.current.x_pos, endX);
-        const y = Math.min(mousePos.current.y_pos, endY);
-        drawSelectRect(sltRect, x, y, width, height);
-        drawSelectRect(symRect, y, x, height, width);
+        const startX = Math.min(mousePos.current.x_pos, endX);
+        const startY = Math.min(mousePos.current.y_pos, endY);
+        // drawSelectRect(sltRect, x, y, width, height);
+        // drawSelectRect(symRect, y, x, height, width);
+        dispatch(
+          updateSelectRect({ isVisible: true, startX, startY, width, height })
+        );
       }
     });
     container.on("mouseup", (event: PIXI.FederatedMouseEvent) => {
       isDragging.current = false;
-
-      const endX = event.globalX; //- dimensions.diff_x * resize_ratio;
-      const endY = event.globalY; //- dimensions.diff_y * resize_ratio;
-      const x = Math.min(mousePos.current.x_pos, endX);
-      const y = Math.min(mousePos.current.y_pos, endY);
-
-      const width = Math.abs(endX - mousePos.current.x_pos);
-      const height = Math.abs(endY - mousePos.current.y_pos);
-      const chrom1_start = getChromLenFromPos(
-        range1,
-        contact_map_size,
-        x - transform_xy
+      dispatch(
+        updateSelectRect({
+          isVisible: false,
+          startX: 0,
+          startY: 0,
+          width: 0,
+          height: 0,
+        })
       );
-      const chrom2_start = getChromLenFromPos(
-        range2,
-        contact_map_size,
-        y - transform_xy
-      );
-      const chrom1_len =
-        getChromLenFromPos(range1, contact_map_size, x - transform_xy + width) -
-        chrom1_start;
-      const chrom2_len =
-        getChromLenFromPos(
-          range2,
-          contact_map_size,
-          y - transform_xy + height
-        ) - chrom2_start;
+
+      // const endX = event.globalX; //- dimensions.diff_x * resize_ratio;
+      // const endY = event.globalY; //- dimensions.diff_y * resize_ratio;
+      // const x = Math.min(mousePos.current.x_pos, endX);
+      // const y = Math.min(mousePos.current.y_pos, endY);
+
+      // const width = Math.abs(endX - mousePos.current.x_pos);
+      // const height = Math.abs(endY - mousePos.current.y_pos);
+      // const chrom1_start = getChromLenFromPos(
+      //   range1,
+      //   contact_map_size,
+      //   x - transform_xy
+      // );
+      // const chrom2_start = getChromLenFromPos(
+      //   range2,
+      //   contact_map_size,
+      //   y - transform_xy
+      // );
+      // const chrom1_len =
+      //   getChromLenFromPos(range1, contact_map_size, x - transform_xy + width) -
+      //   chrom1_start;
+      // const chrom2_len =
+      //   getChromLenFromPos(
+      //     range2,
+      //     contact_map_size,
+      //     y - transform_xy + height
+      //   ) - chrom2_start;
 
       //callNbQuery(chrom1_start, chrom2_start, chrom1_len, chrom2_len);
       event.stopImmediatePropagation();

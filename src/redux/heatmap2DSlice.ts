@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { validateChrom } from "../utils";
+import { number } from "prop-types";
 
 type chromQueryType = {
   chrom1: string;
@@ -13,6 +13,14 @@ type apiCallType = {
   showChromPos: boolean;
 };
 
+type selectRectType = {
+  isVisible: boolean;
+  startX: number;
+  startY: number;
+  width: number;
+  height: number;
+};
+
 type HeatMapStateType = {
   dataset_name: string;
   resolution: string;
@@ -24,11 +32,26 @@ type HeatMapStateType = {
   map_cnts: number;
   apiCalls: apiCallType[];
   selectedSidebarItem: number | null;
+  selectRect: selectRectType;
 };
 const initMapQuery = {
   chrom1: "chrom2:0-100000000",
   chrom2: "chrom2:0-100000000",
 };
+const initApiCalls = [
+  { id: 0, selectedCells: ["0"], query: initMapQuery, showChromPos: false },
+  { id: 1, selectedCells: ["1"], query: initMapQuery, showChromPos: false },
+  { id: 2, selectedCells: ["2"], query: initMapQuery, showChromPos: false },
+  { id: 3, selectedCells: ["3"], query: initMapQuery, showChromPos: false },
+];
+const initSelectRect = {
+  isVisible: false,
+  startX: 0,
+  startY: 0,
+  width: 0,
+  height: 0,
+};
+
 const initialState: HeatMapStateType = {
   dataset_name: "Lee_et_al_10", //Ramani
   resolution: "500000",
@@ -38,13 +61,9 @@ const initialState: HeatMapStateType = {
   contact_map_size: 400,
   pix_size: 2,
   map_cnts: 4,
-  apiCalls: [
-    { id: 0, selectedCells: ["0"], query: initMapQuery, showChromPos: false },
-    { id: 1, selectedCells: ["1"], query: initMapQuery, showChromPos: false },
-    { id: 2, selectedCells: ["2"], query: initMapQuery, showChromPos: false },
-    { id: 3, selectedCells: ["3"], query: initMapQuery, showChromPos: false },
-  ],
+  apiCalls: initApiCalls,
   selectedSidebarItem: null,
+  selectRect: initSelectRect,
 };
 
 const heatMap2DSlice = createSlice({
@@ -89,6 +108,9 @@ const heatMap2DSlice = createSlice({
     updateSelectedSidebarItem: (state, action: PayloadAction<number>) => {
       state.selectedSidebarItem = action.payload;
     },
+    updateSelectRect: (state, action: PayloadAction<selectRectType>) => {
+      state.selectRect = action.payload;
+    },
   },
 });
 
@@ -102,6 +124,7 @@ export const {
   updateChromLen,
   updateAllRes,
   updateSelectedSidebarItem,
+  updateSelectRect,
 } = heatMap2DSlice.actions;
 export const selectAppSize = (state: HeatMapStateType) => state.app_size;
 export const selectPixSize = (state: HeatMapStateType) => state.pix_size;
