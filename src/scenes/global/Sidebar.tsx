@@ -34,9 +34,9 @@ const SidebarItem = styled(Box, { shouldForwardProp })<SidebarItemProps>(
     userSelect: "none",
     borderTopRightRadius: aboveSelected ? 10 : 0,
     borderBottomRightRadius: belowSelected ? 10 : 0,
-    color: tokens(theme.palette.mode).grey[400],
+    color: tokens(theme.palette.mode).text[300],
     "&:hover": {
-      color: tokens(theme.palette.mode).grey[200], // color of text and icons on hover
+      color: tokens(theme.palette.mode).text[100], // color of text and icons on hover
     },
   })
 );
@@ -67,7 +67,7 @@ const Sidebar: React.FC = () => {
           height: "100%",
           backgroundColor: colors.primary[400],
           borderRight: selected ? 0 : 1,
-          borderColor: colors.primary[400],
+          borderColor: colors.border[100],
         }}
       >
         <SidebarItem

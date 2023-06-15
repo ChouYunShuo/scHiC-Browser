@@ -5,12 +5,14 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
+
 import { Box, useTheme } from "@mui/material";
 import _ from "lodash";
 import { Responsive, WidthProvider } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 
+import Sidebar from "../global/Sidebar";
 import { tokens } from "../../theme";
 import HeatMap from "../../components/ContactMap2D";
 import { useGetDatasetsQuery } from "../../redux/apiSlice";
@@ -194,28 +196,30 @@ const Dashboard: React.FC<Props> = (props) => {
     });
   }, [layouts, theme]);
   return (
-    <Box ref={gridRef} flexGrow={1} m="20px">
-      <ResponsiveReactGridLayout
-        {...props}
-        rowHeight={rowHeight}
-        //style={{ background: "#f0f0f0" }}
-        layouts={layouts}
-        measureBeforeMount={false}
-        useCSSTransforms={mounted}
-        //@ts-ignore
-        compactType={compactType}
-        preventCollision={!compactType}
-        onLayoutChange={onLayoutChange}
-        onBreakpointChange={onBreakpointChange}
-        onCompactTypeChange={onCompactTypeChange}
-        onResize={onResize}
-        // onDrop={onDrop}
-        isBounded={true}
-        isDroppable
-        draggableHandle=".dragHandle"
-      >
-        {generateDOM}
-      </ResponsiveReactGridLayout>
+    <Box width="100%" height="100%">
+      <Box ref={gridRef} flexGrow={1} m="20px">
+        <ResponsiveReactGridLayout
+          {...props}
+          rowHeight={rowHeight}
+          //style={{ background: "#f0f0f0" }}
+          layouts={layouts}
+          measureBeforeMount={false}
+          useCSSTransforms={mounted}
+          //@ts-ignore
+          compactType={compactType}
+          preventCollision={!compactType}
+          onLayoutChange={onLayoutChange}
+          onBreakpointChange={onBreakpointChange}
+          onCompactTypeChange={onCompactTypeChange}
+          onResize={onResize}
+          // onDrop={onDrop}
+          isBounded={true}
+          isDroppable
+          draggableHandle=".dragHandle"
+        >
+          {generateDOM}
+        </ResponsiveReactGridLayout>
+      </Box>
     </Box>
   );
 };

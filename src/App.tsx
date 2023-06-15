@@ -5,7 +5,7 @@ import Topbar from "./scenes/global/Topbar";
 import Sidebar from "./scenes/global/Sidebar";
 import Dashboard from "./scenes/dashboard";
 import Datasets from "./scenes/datasets";
-import Embeds from "./scenes/Embeds";
+
 function App() {
   const [theme, colorMode] = useMode();
   return (
@@ -15,13 +15,20 @@ function App() {
         <div className="app">
           <Topbar />
           <main className="content">
-            <Sidebar />
             <Routes>
-              {/* @ts-ignore */}
-              <Route path="/" element={<Dashboard />} />
+              <Route
+                path="/"
+                element={
+                  <>
+                    <Sidebar />
+                    {/* @ts-ignore */}
+                    <Dashboard />
+                  </>
+                }
+              />
               <Route path="/datasets" element={<Datasets />} />
               {/* <Route path="/heatmaps" element={<Heapmaps />} /> */}
-              <Route path="/embed" element={<Embeds />} />
+              {/* <Route path="/embed" element={<Embeds />} /> */}
             </Routes>
           </main>
         </div>
