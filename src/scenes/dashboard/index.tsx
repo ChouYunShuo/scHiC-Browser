@@ -20,7 +20,7 @@ import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { updateAllRes, updateChromLen } from "../../redux/heatmap2DSlice";
 import { fetchChromLens } from "../../utils";
 import Embeds from "../../components/Embeddings";
-import GridLayoutTopbar from "../../components/GridLayoutTopbar";
+import GridLayoutCellTopbar from "../../components/GridLayoutCellTopbar";
 
 interface Props {
   domElements: any[];
@@ -188,7 +188,7 @@ const Dashboard: React.FC<Props> = (props) => {
           overflow="hidden"
           key={i}
         >
-          <GridLayoutTopbar id={i} type={i === 4 ? "scatter" : "cmap"} />
+          <GridLayoutCellTopbar id={i} type={i === 4 ? "scatter" : "cmap"} />
 
           {i === 4 ? <Embeds /> : <HeatMap map_id={i} />}
         </Box>

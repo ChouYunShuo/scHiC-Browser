@@ -2,15 +2,19 @@ import { useState } from "react";
 import { Box, Typography, IconButton } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { useTheme } from "@mui/system";
+
 import { tokens } from "../theme";
-import GridLayoutCMapSetting from "./GridLayoutSetting";
+import GridLayoutCMapSetting from "./GridLayoutCellSetting";
 
 type GridLayoutTopbarProps = {
   id: number;
   type: string;
 };
 
-const GridLayoutTopbar: React.FC<GridLayoutTopbarProps> = ({ id, type }) => {
+const GridLayoutCellTopbar: React.FC<GridLayoutTopbarProps> = ({
+  id,
+  type,
+}) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const [open, setOpen] = useState(false);
@@ -38,7 +42,15 @@ const GridLayoutTopbar: React.FC<GridLayoutTopbarProps> = ({ id, type }) => {
           </Typography>
         </Box>
         <Box display="flex" justifyContent="flex-end" flexGrow={1}>
-          <IconButton onClick={handleShowToggle}>
+          <IconButton
+            onClick={handleShowToggle}
+            sx={{
+              borderRadius: 1,
+              "&:hover": {
+                backgroundColor: colors.border[100],
+              },
+            }}
+          >
             <MoreVertIcon />
           </IconButton>
         </Box>
@@ -54,4 +66,4 @@ const GridLayoutTopbar: React.FC<GridLayoutTopbarProps> = ({ id, type }) => {
   );
 };
 
-export default GridLayoutTopbar;
+export default GridLayoutCellTopbar;

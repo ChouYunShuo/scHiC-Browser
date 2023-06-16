@@ -9,6 +9,7 @@ import { Box, useTheme, Grid } from "@mui/material";
 import EmbedTopBar from "./EmbeddingTopBar";
 import UmapPopUp from "./UmapPopUp";
 import { euclideanDistance } from "../utils";
+import LoadingSpinner from "./LoadingPage";
 import Error404 from "./ErrorPage";
 import ErrorAPI from "./ErrorComponent";
 
@@ -73,6 +74,7 @@ const Embeds: React.FC = () => {
   const {
     data: rawEmbedData,
     isLoading,
+    isFetching,
     error,
   } = useFetchEmbedQuery({
     dataset_name: heatmap_state.dataset_name,
@@ -408,13 +410,18 @@ const Embeds: React.FC = () => {
 
         <Box
           position="absolute"
+          top={0}
           right={0}
           paddingTop={1}
           width="10%"
           id="legend-container"
         ></Box>
       </Grid>
-      {error && <ErrorAPI />}
+      {isFetching || isLoading ? (
+        <LoadingSpinner />
+      ) : error ? (
+        <ErrorAPI />
+      ) : null}
     </Box>
   );
 };

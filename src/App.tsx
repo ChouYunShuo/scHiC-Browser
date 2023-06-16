@@ -1,10 +1,10 @@
 import { Routes, Route } from "react-router-dom";
-import { CssBaseline, ThemeProvider } from "@mui/material";
+import { CssBaseline, ThemeProvider, Box } from "@mui/material";
 import { ColorModeContext, useMode } from "./theme";
 import Topbar from "./scenes/global/Topbar";
 import Sidebar from "./scenes/global/Sidebar";
 import Dashboard from "./scenes/dashboard";
-import Datasets from "./scenes/datasets";
+import DataPage from "./scenes/datasets";
 
 function App() {
   const [theme, colorMode] = useMode();
@@ -13,9 +13,12 @@ function App() {
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <div className="app">
-          <Topbar />
-          <main className="content">
+          <Box position="fixed" top={0} width="100%" zIndex={10}>
+            <Topbar />
+          </Box>
+          <Box className="content" marginTop="60px">
             <Routes>
+              {/* @ts-ignore */}
               <Route
                 path="/"
                 element={
@@ -26,11 +29,11 @@ function App() {
                   </>
                 }
               />
-              <Route path="/datasets" element={<Datasets />} />
+              <Route path="/datasets" element={<DataPage />} />
               {/* <Route path="/heatmaps" element={<Heapmaps />} /> */}
               {/* <Route path="/embed" element={<Embeds />} /> */}
             </Routes>
-          </main>
+          </Box>
         </div>
       </ThemeProvider>
     </ColorModeContext.Provider>

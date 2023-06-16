@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
 import { styled } from "@mui/system";
@@ -6,13 +6,11 @@ import { Box, IconButton, useTheme, Typography } from "@mui/material";
 import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
 import DarkModeOutlinedIcon from "@mui/icons-material/DarkModeOutlined";
 import GitHubIcon from "@mui/icons-material/GitHub";
-
 import { ColorModeContext, tokens } from "../../theme";
 import logoDark from "../../assets/scViz_logo.png";
 import logoLight from "../../assets/scViz_logo_light.png";
 
 const TopBarTypography = styled(Typography)(({ theme }) => ({
-  color: tokens(theme.palette.mode).text[200],
   fontWeight: 600,
   "&:hover": {
     color: tokens(theme.palette.mode).text[100], // choose a lighter color on hover
@@ -20,7 +18,7 @@ const TopBarTypography = styled(Typography)(({ theme }) => ({
   },
 }));
 
-type ItemType = "Dashboard" | "Datasets";
+type ItemType = "Dashboard" | "Datasets" | "";
 interface ItemProps {
   title: ItemType;
   to: string;
@@ -39,7 +37,7 @@ const UnderLine: React.FC = () => {
         left: 0,
         right: 0,
         height: "1px",
-        bgcolor: colors.grey[100],
+        bgcolor: colors.text[100],
         zIndex: 100,
       }}
     ></Box>
@@ -55,15 +53,21 @@ const Item: React.FC<ItemProps> = ({ title, to, selected, handleSelect }) => {
       onClick={() => handleSelect(title)}
       style={{
         textDecoration: "none",
-        color: colors.grey[100],
         position: "relative",
       }}
     >
-      <TopBarTypography variant="h5" color={colors.grey[100]}>
+      <TopBarTypography
+        variant="h5"
+        color={
+          selected.toLowerCase() === title.toLowerCase()
+            ? colors.text[100]
+            : colors.text[200]
+        }
+      >
         {title}
       </TopBarTypography>
 
-      {selected === title && <UnderLine />}
+      {selected.toLowerCase() === title.toLowerCase() && <UnderLine />}
     </Link>
   );
 };
@@ -72,14 +76,22 @@ const Topbar: React.FC = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const colorMode = useContext(ColorModeContext);
-  const [selected, setSelected] = useState<ItemType>("Dashboard");
+  const [selected, setSelected] = useState<ItemType>("");
+
+  useEffect(() => {
+    const currentPath = window.location.pathname.slice(1); // Remove the initial '/'
+    if (currentPath === "") setSelected("Dashboard" as ItemType);
+    else setSelected(currentPath as ItemType);
+  }, []);
 
   const handleSelect = (title: ItemType) => {
     setSelected(title);
   };
   return (
     <Box
+      height="60px"
       display="flex"
+      bgcolor={colors.primary[500]}
       p={1}
       sx={{ borderBottom: 2, borderColor: colors.border[100] }}
     >

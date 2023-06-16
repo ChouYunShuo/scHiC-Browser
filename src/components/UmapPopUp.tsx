@@ -151,7 +151,7 @@ const UmapPopUp: React.FC<UmapPopUpProps> = ({
               </Button>
               <Button
                 variant="outlined"
-                color="secondary"
+                color="success"
                 onClick={handleConfirm}
               >
                 Confirm

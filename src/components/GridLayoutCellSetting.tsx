@@ -47,8 +47,9 @@ const GridLayoutCMapSetting: React.FC<ComponentProps> = ({
         borderRadius: 1,
         backgroundColor: colors.primary[400],
         width: "80%", // you may adjust this as needed
-        color: "white", // for text color
+        color: colors.text[100], // for text color
         zIndex: 100,
+        boxShadow: 3,
       }}
     >
       <ClickAwayListener onClickAway={handleClickAway}>

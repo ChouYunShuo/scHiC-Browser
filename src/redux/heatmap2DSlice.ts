@@ -53,7 +53,7 @@ const initSelectRect = {
 };
 
 const initialState: HeatMapStateType = {
-  dataset_name: "Lee_et_al_10", //Ramani
+  dataset_name: "Lee_et_al", //Ramani
   resolution: "500000",
   all_resolution: [],
   chrom_lengths: [],
