@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Box, Typography, IconButton } from "@mui/material";
+import { styled, Box, Typography, IconButton } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { useTheme } from "@mui/system";
 
@@ -10,7 +10,12 @@ type GridLayoutTopbarProps = {
   id: number;
   type: string;
 };
-
+const GrabBox = styled(Box)({
+  cursor: "grab",
+  "&:active": {
+    cursor: "grabbing",
+  },
+});
 const GridLayoutCellTopbar: React.FC<GridLayoutTopbarProps> = ({
   id,
   type,
@@ -25,7 +30,7 @@ const GridLayoutCellTopbar: React.FC<GridLayoutTopbarProps> = ({
 
   return (
     <Box display="flex" flexDirection="column">
-      <Box display="flex" className="dragHandle" sx={{ cursor: "grab" }}>
+      <GrabBox display="flex" className="dragHandle">
         <Box display="flex" alignItems="center" paddingX={1}>
           <Typography
             variant="h5"
@@ -54,7 +59,7 @@ const GridLayoutCellTopbar: React.FC<GridLayoutTopbarProps> = ({
             <MoreVertIcon />
           </IconButton>
         </Box>
-      </Box>
+      </GrabBox>
       {open && type === "cmap" && (
         <GridLayoutCMapSetting
           map_id={id}

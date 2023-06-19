@@ -10,13 +10,6 @@ import {
 import store from "./redux/store";
 import { apiEndpoint } from "./redux/apiSlice";
 
-type queryType = {
-  chrom1: string;
-  chrom2: string;
-  dataset_name: string;
-  resolution: string;
-  cell_id: string | string[];
-};
 type ChromLenQueryType = {
   name: string;
   resolution: string;
@@ -36,13 +29,6 @@ export type tickType = {
   pix_pos: number;
 };
 
-// export const fetchMap = async (simpleQuery: queryType) => {
-//   return axios.post("http://128.2.220.67:8020/api/query", simpleQuery).then(
-//     (
-//       res //genome-dev.compbio.cs.cmu.edu
-//     ) => JSON.parse(res.data)
-//   );
-// };
 export const fetchChromLens = async (simpleQuery: ChromLenQueryType) => {
   return axios
     .post(`http://${apiEndpoint}/api/chromlens`, simpleQuery)
