@@ -43,13 +43,13 @@ export const fetchMap = async (simpleQuery: queryType) => {
 };
 export const fetchChromLens = async (simpleQuery: ChromLenQueryType) => {
   return axios
-    .post("http://128.2.220.67:8020/api/chromlens", simpleQuery)
+    .post("http://128.2.220.67:8081/api/chromlens", simpleQuery)
     .then((res) => JSON.parse(res.data));
 };
 
 export const fetchEmbedding = async (simpleQuery: EmbedQueryType) => {
   return axios
-    .post("http://128.2.220.67:8020/api/embed", simpleQuery)
+    .post("http://128.2.220.67:8081/api/embed", simpleQuery)
     .then((res) => JSON.parse(res.data));
 };
 
