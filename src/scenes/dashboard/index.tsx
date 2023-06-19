@@ -73,6 +73,7 @@ const Dashboard: React.FC<Props> = (props) => {
     }
   }, [allDataset, session]);
 
+<<<<<<< HEAD
   useEffect(() => {
     const loadConfigAndLayout = async () => {
       try {
@@ -100,6 +101,22 @@ const Dashboard: React.FC<Props> = (props) => {
         }
       } catch (error) {
         console.error("Error loading config:", error);
+=======
+  const handleResize = () => {
+    // console.log("In handleResize init");
+    const Resize = () => {
+      if (gridRef.current) {
+        const width = (gridRef.current as HTMLElement).offsetWidth;
+        if (width > 1200) {
+          setRowHeight(width / 12);
+        } else if (width > 750) {
+          setRowHeight(width / 8);
+        } else if (width > 480) {
+          setRowHeight(width / 4);
+        } else {
+          setRowHeight(width / 2);
+        }
+>>>>>>> fix:make grid-layout responsive to different screen size
       }
     };
     if (!isLoading && session) {
@@ -107,13 +124,30 @@ const Dashboard: React.FC<Props> = (props) => {
     }
   }, [session, isLoading, dispatch]);
 
+<<<<<<< HEAD
   const handleResize = () => {
     const Resize = () => {
+=======
+    setTimeout(() => {
+      Resize();
+    }, 100);
+  }; // Re-run effect when window width changes
+
+  useEffect(() => {
+    // console.log("In handleResize", heatmap_state.selectedSidebarItem);
+    if (heatmap_state.selectedSidebarItem == null) return;
+
+    const handleResize = () => {
+>>>>>>> fix:make grid-layout responsive to different screen size
       if (gridRef.current) {
         const width = (gridRef.current as HTMLElement).offsetWidth;
         if (width > 1200) {
           setRowHeight(width / 12);
+<<<<<<< HEAD
         } else if (width > 750) {
+=======
+        } else if (width > 768) {
+>>>>>>> fix:make grid-layout responsive to different screen size
           setRowHeight(width / 8);
         } else if (width > 480) {
           setRowHeight(width / 4);
@@ -143,6 +177,32 @@ const Dashboard: React.FC<Props> = (props) => {
       getData();
   }, [session]);
 
+<<<<<<< HEAD
+=======
+  const [layouts, setLayouts] = useState<{ [index: string]: any[] }>({
+    lg: [
+      { x: 0, y: 0, w: 3, h: 3, i: "0" },
+      { x: 3, y: 0, w: 3, h: 3, i: "1" },
+      { x: 0, y: 3, w: 3, h: 3, i: "2" },
+      { x: 3, y: 3, w: 3, h: 3, i: "3" },
+      { x: 6, y: 0, w: 6, h: 6, i: "4" },
+    ],
+    md: [
+      { x: 0, y: 0, w: 2, h: 2, i: "0" },
+      { x: 2, y: 0, w: 2, h: 2, i: "1" },
+      { x: 0, y: 2, w: 2, h: 2, i: "2" },
+      { x: 2, y: 2, w: 2, h: 2, i: "3" },
+      { x: 4, y: 0, w: 4, h: 4, i: "4" },
+    ],
+    xs: [
+      { x: 0, y: 0, w: 2, h: 2, i: "0" },
+      { x: 2, y: 0, w: 2, h: 2, i: "1" },
+      { x: 0, y: 2, w: 2, h: 2, i: "2" },
+      { x: 2, y: 2, w: 2, h: 2, i: "3" },
+      { x: 0, y: 4, w: 4, h: 4, i: "4" },
+    ],
+  });
+>>>>>>> fix:make grid-layout responsive to different screen size
   const [currentBreakpoint, setCurrentBreakpoint] = useState<string>("lg");
   const [compactType, setCompactType] = useState<string | null>("vertical");
   const [mounted, setMounted] = useState(false);
@@ -179,7 +239,11 @@ const Dashboard: React.FC<Props> = (props) => {
   //@ts-ignore
   const onLayoutChange = (layout, layouts) => {
     handleResize();
+<<<<<<< HEAD
     dispatch(updateGridLayout({ ...layouts }));
+=======
+    setLayouts({ ...layouts });
+>>>>>>> fix:make grid-layout responsive to different screen size
   };
   //@ts-ignore
   const onResize = (layout, oldLayoutItem, layoutItem, placeholder) => {};

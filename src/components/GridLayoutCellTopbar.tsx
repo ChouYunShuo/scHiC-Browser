@@ -30,6 +30,7 @@ const GridLayoutCellTopbar: React.FC<GridLayoutTopbarProps> = ({
 
   return (
     <Box display="flex" flexDirection="column">
+<<<<<<< HEAD
       <Box display="flex">
         <GrabBox
           className="dragHandle"
@@ -38,6 +39,10 @@ const GridLayoutCellTopbar: React.FC<GridLayoutTopbarProps> = ({
           alignItems="center"
           paddingX={1}
         >
+=======
+      <GrabBox display="flex" className="dragHandle">
+        <Box display="flex" alignItems="center" paddingX={1}>
+>>>>>>> fix:make grid-layout responsive to different screen size
           <Typography
             variant="h5"
             color={colors.grey[100]}
@@ -67,7 +72,7 @@ const GridLayoutCellTopbar: React.FC<GridLayoutTopbarProps> = ({
             </IconButton>
           </div>
         </Box>
-      </Box>
+      </GrabBox>
       {open && type === "cmap" && (
         <GridLayoutCMapSetting
           map_id={id}
