@@ -12,7 +12,6 @@ import { Responsive, WidthProvider } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 
-import Sidebar from "../global/Sidebar";
 import { tokens } from "../../theme";
 import HeatMap from "../../components/ContactMap2D";
 import { useGetDatasetsQuery } from "../../redux/apiSlice";
@@ -57,20 +56,28 @@ const Dashboard: React.FC<Props> = (props) => {
     }
   }, [allDataset]);
 
-  useEffect(() => {
+  const handleResize = () => {
     // console.log("In handleResize init");
-    const handleResize = () => {
+    const Resize = () => {
       if (gridRef.current) {
         const width = (gridRef.current as HTMLElement).offsetWidth;
-        // console.log(Math.floor(width / 12));
-        setRowHeight(width / 12);
+        if (width > 1200) {
+          setRowHeight(width / 12);
+        } else if (width > 750) {
+          setRowHeight(width / 8);
+        } else if (width > 480) {
+          setRowHeight(width / 4);
+        } else {
+          setRowHeight(width / 2);
+        }
       }
     };
 
     setTimeout(() => {
-      handleResize();
+      Resize();
     }, 100);
-  }, []); // Re-run effect when window width changes
+  }; // Re-run effect when window width changes
+
   useEffect(() => {
     // console.log("In handleResize", heatmap_state.selectedSidebarItem);
     if (heatmap_state.selectedSidebarItem == null) return;
@@ -78,8 +85,15 @@ const Dashboard: React.FC<Props> = (props) => {
     const handleResize = () => {
       if (gridRef.current) {
         const width = (gridRef.current as HTMLElement).offsetWidth;
-        //onsole.log(Math.floor(width / 12));
-        setRowHeight(width / 12);
+        if (width > 1200) {
+          setRowHeight(width / 12);
+        } else if (width > 768) {
+          setRowHeight(width / 8);
+        } else if (width > 480) {
+          setRowHeight(width / 4);
+        } else {
+          setRowHeight(width / 2);
+        }
       }
     };
 
@@ -113,6 +127,20 @@ const Dashboard: React.FC<Props> = (props) => {
       { x: 0, y: 3, w: 3, h: 3, i: "2" },
       { x: 3, y: 3, w: 3, h: 3, i: "3" },
       { x: 6, y: 0, w: 6, h: 6, i: "4" },
+    ],
+    md: [
+      { x: 0, y: 0, w: 2, h: 2, i: "0" },
+      { x: 2, y: 0, w: 2, h: 2, i: "1" },
+      { x: 0, y: 2, w: 2, h: 2, i: "2" },
+      { x: 2, y: 2, w: 2, h: 2, i: "3" },
+      { x: 4, y: 0, w: 4, h: 4, i: "4" },
+    ],
+    xs: [
+      { x: 0, y: 0, w: 2, h: 2, i: "0" },
+      { x: 2, y: 0, w: 2, h: 2, i: "1" },
+      { x: 0, y: 2, w: 2, h: 2, i: "2" },
+      { x: 2, y: 2, w: 2, h: 2, i: "3" },
+      { x: 0, y: 4, w: 4, h: 4, i: "4" },
     ],
   });
   const [currentBreakpoint, setCurrentBreakpoint] = useState<string>("lg");
@@ -152,7 +180,7 @@ const Dashboard: React.FC<Props> = (props) => {
   };
   //@ts-ignore
   const onLayoutChange = (layout, layouts) => {
-    console.log("In onLayoutChange");
+    handleResize();
     setLayouts({ ...layouts });
   };
   //@ts-ignore
@@ -226,7 +254,7 @@ const Dashboard: React.FC<Props> = (props) => {
 Dashboard.defaultProps = {
   className: "layout",
   onLayoutChange: (layout: any, layouts: any) => {},
-  cols: { lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 },
+  cols: { lg: 12, md: 8, sm: 8, xs: 4, xxs: 2 },
   breakpoints: { lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 },
   containerPadding: [0, 0],
 };

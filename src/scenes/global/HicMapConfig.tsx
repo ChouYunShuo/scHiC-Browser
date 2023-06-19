@@ -249,7 +249,7 @@ const HicMapConfig: React.FC = () => {
         <Box>
           <Button
             variant="outlined"
-            color="secondary"
+            color="success"
             onClick={handleUpdateQueryChrom}
           >
             Send
