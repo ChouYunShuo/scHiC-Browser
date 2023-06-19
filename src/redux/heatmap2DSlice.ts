@@ -1,5 +1,4 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { number } from "prop-types";
 
 type chromQueryType = {
   chrom1: string;
@@ -70,22 +69,22 @@ const heatMap2DSlice = createSlice({
   name: "heatmap2D",
   initialState,
   reducers: {
-    updateResolution: (state, action: PayloadAction<string>) => {
+    updateResolution: (state:HeatMapStateType, action: PayloadAction<string>) => {
       state.resolution = action.payload;
     },
-    updateDataset: (state, action: PayloadAction<string>) => {
+    updateDataset: (state:HeatMapStateType, action: PayloadAction<string>) => {
       state.dataset_name = action.payload;
     },
 
     updateMapSelectCells: (
-      state,
+      state:HeatMapStateType,
       action: PayloadAction<{ id: number; selectedCells: string[] }>
     ) => {
       state.apiCalls[action.payload.id].selectedCells =
         action.payload.selectedCells;
     },
     updateMapShowChromPos: (
-      state,
+      state:HeatMapStateType,
       action: PayloadAction<{ id: number; showChromPos: boolean }>
     ) => {
       state.apiCalls[action.payload.id].showChromPos =
@@ -93,22 +92,22 @@ const heatMap2DSlice = createSlice({
     },
 
     updateApiChromQuery: (
-      state,
+      state:HeatMapStateType,
       action: PayloadAction<{ id: number; query: chromQueryType }>
     ) => {
       state.apiCalls[action.payload.id].query = action.payload.query;
     },
-    updateChromLen: (state, action: PayloadAction<number[]>) => {
+    updateChromLen: (state:HeatMapStateType, action: PayloadAction<number[]>) => {
       state.chrom_lengths = action.payload;
     },
-    updateAllRes: (state, action: PayloadAction<string>) => {
+    updateAllRes: (state:HeatMapStateType, action: PayloadAction<string>) => {
       const numbersArr = action.payload.split(",").map(Number);
       state.all_resolution = numbersArr;
     },
-    updateSelectedSidebarItem: (state, action: PayloadAction<number>) => {
+    updateSelectedSidebarItem: (state:HeatMapStateType, action: PayloadAction<number>) => {
       state.selectedSidebarItem = action.payload;
     },
-    updateSelectRect: (state, action: PayloadAction<selectRectType>) => {
+    updateSelectRect: (state:HeatMapStateType, action: PayloadAction<selectRectType>) => {
       state.selectRect = action.payload;
     },
   },

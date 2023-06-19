@@ -29,16 +29,16 @@ type RawDatum = [number, number, string];
 
 export const rootApi = createApi({
   reducerPath: "rootApi",
-  baseQuery: fetchBaseQuery({ baseUrl: "http://128.2.220.67:8020/api" }),
+  baseQuery: fetchBaseQuery({ baseUrl: "http://128.2.220.67:8081/api" }),
   endpoints: (builder) => ({
     getDatasets: builder.query<datasetType[], void>({
       query: () => "/datasets",
     }),
     getDataset: builder.query<datasetType, number>({
-      query: (pk) => `/datasets/${pk}/`,
+      query: (pk: number) => `/datasets/${pk}/`,
     }),
     fetchContactMapData: builder.query<number[][], ContactMapRequest>({
-      query: (payload) => ({
+      query: (payload: ContactMapRequest) => ({
         url: `/query`,
         method: "POST",
         body: payload,
@@ -48,7 +48,7 @@ export const rootApi = createApi({
       },
     }),
     fetchChromLen: builder.query<number[], ChromLenQueryRequest>({
-      query: (payload) => ({
+      query: (payload: ChromLenQueryRequest) => ({
         url: `/chromlens`,
         method: "POST",
         body: payload,
