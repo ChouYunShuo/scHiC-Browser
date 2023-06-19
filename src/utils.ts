@@ -8,7 +8,7 @@ import {
   selectChromLen,
 } from "./redux/heatmap2DSlice";
 import store from "./redux/store";
-import { useGetDatasetsQuery } from "./redux/apiSlice";
+import { apiEndpoint } from "./redux/apiSlice";
 
 type queryType = {
   chrom1: string;
@@ -45,13 +45,13 @@ export type tickType = {
 // };
 export const fetchChromLens = async (simpleQuery: ChromLenQueryType) => {
   return axios
-    .post("http://128.2.220.67:8020/api/chromlens", simpleQuery)
+    .post(`http://${apiEndpoint}/api/chromlens`, simpleQuery)
     .then((res) => JSON.parse(res.data));
 };
 
 export const fetchEmbedding = async (simpleQuery: EmbedQueryType) => {
   return axios
-    .post("http://128.2.220.67:8020/api/embed", simpleQuery)
+    .post(`http://${apiEndpoint}/api/embed`, simpleQuery)
     .then((res) => JSON.parse(res.data));
 };
 

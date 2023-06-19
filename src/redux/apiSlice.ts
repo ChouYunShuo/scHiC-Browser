@@ -1,5 +1,7 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
+export const apiEndpoint = "128.2.220.67:8080";
+
 type datasetType = {
   name: string;
   description: string;
@@ -29,7 +31,7 @@ type RawDatum = [number, number, string];
 
 export const rootApi = createApi({
   reducerPath: "rootApi",
-  baseQuery: fetchBaseQuery({ baseUrl: "http://128.2.220.67:8020/api" }),
+  baseQuery: fetchBaseQuery({ baseUrl: `http://${apiEndpoint}/api` }),
   endpoints: (builder) => ({
     getDatasets: builder.query<datasetType[], void>({
       query: () => "/datasets",
