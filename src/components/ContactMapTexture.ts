@@ -1,15 +1,14 @@
 import * as PIXI from "pixi.js";
 import * as d3 from "d3";
-import { useTheme, Theme } from "@mui/material";
 import { ScaleSequential } from "d3-scale";
-import React, { useMemo, useRef } from "react";
 
 export const createHeatMapFromTexture = (
   data: number[][],
   container: PIXI.Container,
   app_size: number,
   contact_map_size: number,
-  colorScaleMemo: ScaleSequential<string>
+  colorScaleMemo: ScaleSequential<string>,
+  bgcolor: string
 ) => {
   const transform_xy = app_size - contact_map_size;
   const heatmapCanvas = document.createElement("canvas");
@@ -27,9 +26,12 @@ export const createHeatMapFromTexture = (
     for (let i = 0; i < xsize; i++) {
       for (let j = 0; j < ysize; j++) {
         if (data[i][j]) {
-          let fillColor = d3.color(colorScaleMemo(data[i][j]))!.formatHex();
-          ctx.fillStyle = fillColor;
-          ctx.fillRect(i * s_psize, j * s_psize, s_psize, s_psize);
+          const color = d3.color(colorScaleMemo(data[i][j]));
+          if (color) {
+            const fillColor = color.formatHex();
+            ctx.fillStyle = fillColor;
+            ctx.fillRect(i * s_psize, j * s_psize, s_psize, s_psize);
+          }
         } else if (i == j) {
           let neighbors = [
             data[i - 1]?.[j],
@@ -39,8 +41,14 @@ export const createHeatMapFromTexture = (
           ].filter((value) => value !== undefined && value !== null && value);
           if (neighbors.length == 0) continue;
           let average = neighbors.reduce((a, b) => a + b, 0) / neighbors.length;
-          let fillColor = d3.color(colorScaleMemo(average))!.formatHex();
-          ctx.fillStyle = fillColor;
+          const color = d3.color(colorScaleMemo(average));
+          if (color) {
+            const fillColor = color.formatHex();
+            ctx.fillStyle = fillColor;
+            ctx.fillRect(i * s_psize, j * s_psize, s_psize, s_psize);
+          }
+        } else {
+          ctx.fillStyle = bgcolor;
           ctx.fillRect(i * s_psize, j * s_psize, s_psize, s_psize);
         }
       }
@@ -50,6 +58,8 @@ export const createHeatMapFromTexture = (
     const heatmapSprite = new PIXI.Sprite(heatmapTexture);
     heatmapSprite.position.set(transform_xy, transform_xy);
     container.addChild(heatmapSprite);
+  } else {
+    console.error("Could not get 2D context from canvas");
   }
 };
 

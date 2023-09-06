@@ -6,9 +6,9 @@ import {
   selectPixSize,
   selectAllRes,
   selectChromLen,
-} from "./redux/heatmap2DSlice";
-import store from "./redux/store";
-import { apiEndpoint } from "./redux/apiSlice";
+} from "../redux/heatmap2DSlice";
+import store from "../redux/store";
+import { apiEndpoint } from "../redux/apiSlice";
 
 type ChromLenQueryType = {
   name: string;
@@ -110,7 +110,8 @@ export const getScaleFromRange = (range1: string, range2: string) => {
 
 export const getTicksAndPosFromRange = (
   range: string,
-  map_size: number,
+  start_pos: number,
+  end_pos: number,
   scale: number
 ) => {
   const ticks: tickType[] = [];
@@ -121,12 +122,11 @@ export const getTicksAndPosFromRange = (
   if (scale === 1) numTicks = 4;
   else numTicks = 3;
 
-  const xScale = scaleLinear()
-    .domain([lo, hi])
-    .range([0, scale * map_size]);
+  const xScale = scaleLinear().domain([lo, hi]).range([start_pos, end_pos]);
   const tick = xScale.ticks(numTicks).filter((tick) => Number.isInteger(tick));
 
   for (let i = 0; i < tick.length; i++) {
+    if (tick[i] == 0) continue;
     ticks.push({
       chrom_pos: tick[i],
       pix_pos: Math.ceil(xScale(tick[i])),
@@ -166,6 +166,14 @@ export const getResFromRange = (range1: string, range2: string) => {
   }
 };
 
+export const getNewChromFromNewPos = (
+  range1: string,
+  newStart: number,
+  newEnd: number
+) => {
+  var chrom = range1.trim().split(":")[0];
+  return chrom + ":" + newStart.toString() + "-" + newEnd.toString();
+};
 export const getNewChromZoomIn = (range1: string, a: number) => {
   //range input: 0-40000000
   var chrom = range1.trim().split(":")[0];

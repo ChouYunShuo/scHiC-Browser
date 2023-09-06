@@ -1,10 +1,4 @@
-import React, {
-  useEffect,
-  useState,
-  useRef,
-  useCallback,
-  useMemo,
-} from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 
 import { Box, useTheme } from "@mui/material";
 import _ from "lodash";
@@ -17,8 +11,9 @@ import HeatMap from "../../components/ContactMap2D";
 import { useGetDatasetsQuery } from "../../redux/apiSlice";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { updateAllRes, updateChromLen } from "../../redux/heatmap2DSlice";
-import { fetchChromLens } from "../../utils";
+import { fetchChromLens } from "../../utils/utils";
 import Embeds from "../../components/Embeddings";
+import Spatials from "../../components/Spatials";
 import GridLayoutCellTopbar from "../../components/GridLayoutCellTopbar";
 
 interface Props {
@@ -126,14 +121,16 @@ const Dashboard: React.FC<Props> = (props) => {
       { x: 3, y: 0, w: 3, h: 3, i: "1" },
       { x: 0, y: 3, w: 3, h: 3, i: "2" },
       { x: 3, y: 3, w: 3, h: 3, i: "3" },
-      { x: 6, y: 0, w: 6, h: 6, i: "4" },
+      { x: 6, y: 0, w: 6, h: 3, i: "4" },
+      { x: 6, y: 3, w: 6, h: 3, i: "5" },
     ],
     md: [
       { x: 0, y: 0, w: 2, h: 2, i: "0" },
       { x: 2, y: 0, w: 2, h: 2, i: "1" },
       { x: 0, y: 2, w: 2, h: 2, i: "2" },
       { x: 2, y: 2, w: 2, h: 2, i: "3" },
-      { x: 4, y: 0, w: 4, h: 4, i: "4" },
+      { x: 4, y: 0, w: 4, h: 2, i: "4" },
+      { x: 4, y: 2, w: 4, h: 2, i: "5" },
     ],
     xs: [
       { x: 0, y: 0, w: 2, h: 2, i: "0" },
@@ -141,6 +138,7 @@ const Dashboard: React.FC<Props> = (props) => {
       { x: 0, y: 2, w: 2, h: 2, i: "2" },
       { x: 2, y: 2, w: 2, h: 2, i: "3" },
       { x: 0, y: 4, w: 4, h: 4, i: "4" },
+      { x: 0, y: 8, w: 4, h: 4, i: "5" },
     ],
   });
   const [currentBreakpoint, setCurrentBreakpoint] = useState<string>("lg");
@@ -216,9 +214,18 @@ const Dashboard: React.FC<Props> = (props) => {
           overflow="hidden"
           key={i}
         >
-          <GridLayoutCellTopbar id={i} type={i === 4 ? "scatter" : "cmap"} />
+          <GridLayoutCellTopbar
+            id={i}
+            type={i === 4 ? "scatter" : i === 5 ? "spatial" : "cmap"}
+          />
 
-          {i === 4 ? <Embeds /> : <HeatMap map_id={i} />}
+          {i === 4 ? (
+            <Embeds />
+          ) : i === 5 ? (
+            <Spatials />
+          ) : (
+            <HeatMap map_id={i} />
+          )}
         </Box>
       );
     });

@@ -3,6 +3,7 @@ import { useContext } from "react";
 import { ColorModeContext, tokens } from "../theme";
 import { Box, useTheme } from "@mui/material";
 import * as PIXI from "pixi.js";
+import { Viewport } from "pixi-viewport";
 import * as d3 from "d3";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
 import {
@@ -11,17 +12,21 @@ import {
   getChromLenFromPos,
   getNbChrom,
   getScaleFromRange,
-} from "../utils";
+  getNewChromFromNewPos,
+  getNewChromZoomOut,
+} from "../utils/utils";
 import { useFetchContactMapDataQuery } from "../redux/apiSlice";
-import { updateSelectRect } from "../redux/heatmap2DSlice";
+import { updateSelectRect, updateApiChromQuery } from "../redux/heatmap2DSlice";
 import { addHorizontalTicksText, addVerticalTicksText } from "./ChromTickTrack";
 import { drawRectWithText } from "./PixiChromText";
 import createHeatMapFromTexture from "./ContactMapTexture";
 import LoadingSpinner from "./LoadingPage";
 // @ts-ignore
 import { dispatch as nb_dispatch } from "@nucleome/nb-dispatch";
-import Error404 from "./ErrorPage";
 import ErrorAPI from "./ErrorComponent";
+import { DragEvent } from "pixi-viewport/dist/types";
+import debounce from "lodash.debounce";
+import { initRect, drawSelectRect, createGraphics } from "../utils/heatmap";
 
 interface HeatMapProps {
   map_id: number;
@@ -35,10 +40,9 @@ interface NBQuery {
   color: string | null;
 }
 
-const initRect = (rect: PIXI.Graphics) => {
-  rect.lineStyle(2, 0xff0000, 1);
-  rect.drawRect(0, 0, 0, 0);
-  rect.visible = false;
+type ChromPos = {
+  start: number;
+  end: number;
 };
 
 const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
@@ -51,6 +55,9 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
   const range2 = useAppSelector(
     (state) => state.heatmap2D.apiCalls[map_id]?.query.chrom2
   );
+  // const [localRange1, setLocalRange1] = useState(range1);
+  // const [localRange2, setLocalRange2] = useState(range2);
+
   const app_size = useAppSelector((state) => state.heatmap2D.app_size);
   const contact_map_size = useAppSelector(
     (state) => state.heatmap2D.contact_map_size
@@ -61,6 +68,9 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
   const resolution = useAppSelector((state) => state.heatmap2D.resolution);
   const showChromPos = useAppSelector(
     (state) => state.heatmap2D.apiCalls[map_id].showChromPos
+  );
+  const isSelectRegionEvent = useAppSelector(
+    (state) => state.heatmap2D.apiCalls[map_id].selectRegion
   );
   const selectRect = useAppSelector((state) => state.heatmap2D.selectRect);
   const dispatch = useAppDispatch();
@@ -80,12 +90,26 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
   const [symRect, setSymRect] = useState<PIXI.Graphics>(new PIXI.Graphics());
   const [posRect, setPosRect] = useState<PIXI.Graphics>(new PIXI.Graphics());
 
+  const [allowViewport, setAllowViewport] = useState(true);
+  const viewportRef = useRef<Viewport | null>(null);
+
   const isDragging = useRef(false);
   const mousePos = useRef({
     x_pos: 0,
     y_pos: 0,
   });
   const transform_xy = app_size - contact_map_size;
+  const range1Ref = useRef<string>(range1);
+  const range2Ref = useRef<string>(range2);
+  // const topCornerRef = useRef<PIXI.Point>(new PIXI.Point(0, 0));
+  // const bottomCornerRef = useRef<PIXI.Point>(
+  //   new PIXI.Point(contact_map_size, contact_map_size)
+  // );
+
+  const [mapTopCorner, setMapTopCorner] = useState(new PIXI.Point(0, 0));
+  const [mapbottomCorner, setMapBottomCorner] = useState(
+    new PIXI.Point(contact_map_size, contact_map_size)
+  );
 
   const colorScale =
     theme.palette.mode === "dark"
@@ -97,11 +121,14 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
     contact2d_container.removeAllListeners();
     chrom_dist_container.removeChildren();
   }, []);
+  const cleanupTicks = useCallback(() => {
+    chrom_dist_container.removeChildren();
+  }, []);
 
   // Connect to nb-dispatch
   // var nb_hub = nb_dispatch("update", "brush");
   // nb_hub.connect(function (status: any) {});
-
+  console.log(range1, range2);
   const {
     data: heatMapData,
     error,
@@ -116,53 +143,261 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
   });
 
   useEffect(() => {
+    range1Ref.current = range1;
+    range2Ref.current = range2;
+  }, [range1, range2]);
+
+  useEffect(() => {
     if (!canvasRef.current) {
       return;
     }
-    const app = new PIXI.Application({
-      view: canvasRef.current,
-      width: app_size,
-      height: app_size,
-      resolution: 2,
-    });
 
-    initRect(sltRect);
-    initRect(symRect);
-    initRect(posRect);
-    app.stage.addChild(bg_container);
-    app.stage.addChild(contact2d_container);
-    app.stage.addChild(chrom_dist_container);
-    app.stage.addChild(sltRect);
-    app.stage.addChild(symRect);
-    app.stage.addChild(posRect);
+    // Initialize PIXI application and viewport
+    const { app, viewport } = initializePixiAppAndViewport();
+    viewportRef.current = viewport;
 
-    // Clean up side effect when the component unmounts
+    // Initialize rectangles and add them to the stage
+    initializeRectsAndAddToStage(app);
+
+    // Add event listeners to the viewport
+    addViewportEventListeners(viewport);
+
+    // Cleanup function to remove all children from the stage
     return () => {
       app.stage.removeChildren();
     };
+
+    function initializePixiAppAndViewport() {
+      const app = new PIXI.Application({
+        view: canvasRef.current!,
+        width: app_size,
+        height: app_size,
+        resolution: 2,
+      });
+
+      const viewport = new Viewport({
+        screenWidth: app_size,
+        screenHeight: app_size,
+        worldWidth: contact_map_size,
+        worldHeight: contact_map_size,
+        passiveWheel: false,
+        events: app.renderer.events,
+      });
+
+      return { app, viewport };
+    }
+
+    function initializeRectsAndAddToStage(app: PIXI.Application) {
+      [sltRect, symRect, posRect].forEach(initRect);
+
+      app.stage.addChild(bg_container);
+      app.stage.addChild(viewport);
+      viewport.addChild(contact2d_container);
+      app.stage.addChild(chrom_dist_container);
+      app.stage.addChild(sltRect);
+      app.stage.addChild(symRect);
+      app.stage.addChild(posRect);
+    }
+
+    function addViewportEventListeners(viewport: Viewport) {
+      viewport.drag().wheel();
+
+      viewport.on("zoomed-end", (e: Viewport) => {
+        const mapTLCorner = new PIXI.Point(0, 0);
+        const mapBRCorner = new PIXI.Point(contact_map_size, contact_map_size);
+        const worldTLPosition = e.toGlobal(mapTLCorner);
+        const worldBRPosition = e.toGlobal(mapBRCorner);
+
+        setMapTopCorner(worldTLPosition);
+        setMapBottomCorner(worldBRPosition);
+        handleZoomedEnd(e);
+      });
+      viewport.on("drag-end", (e: DragEvent) => {
+        const mapTLCorner = new PIXI.Point(0, 0);
+        const mapBRCorner = new PIXI.Point(contact_map_size, contact_map_size);
+        const worldTLPosition = e.viewport.toGlobal(mapTLCorner);
+        const worldBRPosition = e.viewport.toGlobal(mapBRCorner);
+
+        setMapTopCorner(worldTLPosition);
+        setMapBottomCorner(worldBRPosition);
+        handleDragEnd(e);
+      });
+    }
+
+    function handleDragEnd(e: DragEvent) {
+      if (viewportRef.current) {
+        viewportRef.current.setZoom(1); // Reset zoom to 1
+      }
+      handleMapShift(e.viewport);
+    }
+
+    function handleZoomedEnd(e: Viewport) {
+      if (e.x === 0 && e.y === 0) {
+        console.log("Viewport is at (0, 0), returning early.");
+        return;
+      }
+      if (e.scale.x < 1) {
+        handleZoomOut(e);
+        return;
+      }
+      handleZoomIn(e);
+    }
+
+    function handleZoomOut(e: Viewport) {
+      const newChrom1 = getNewChromZoomOut(range1, 1 / e.scale.x);
+      const newChrom2 = getNewChromZoomOut(range2, 1 / e.scale.y);
+      range1Ref.current = newChrom1;
+      range2Ref.current = newChrom2;
+      //debounceUpdateZoomOut(newChrom1, newChrom2);
+    }
+    function handleMapShift(e: Viewport) {
+      const { worldPoint, worldPoint1 } = getCornerPoints(e);
+      const chrom1_start = getChromLenFromPos(
+        range1,
+        contact_map_size,
+        worldPoint.x - transform_xy
+      );
+      const chrom2_start = getChromLenFromPos(
+        range2,
+        contact_map_size,
+        worldPoint.y - transform_xy
+      );
+      const chrom1_end = getChromLenFromPos(
+        range1,
+        contact_map_size,
+        worldPoint1.x - transform_xy
+      );
+      const chrom2_end = getChromLenFromPos(
+        range2,
+        contact_map_size,
+        worldPoint1.y - transform_xy
+      );
+
+      const newChrom1 = getNewChromFromNewPos(range1, chrom1_start, chrom1_end);
+      const newChrom2 = getNewChromFromNewPos(range2, chrom2_start, chrom2_end);
+      range1Ref.current = newChrom1;
+      range2Ref.current = newChrom2;
+    }
+
+    function handleZoomIn(e: Viewport) {
+      const { worldPoint, worldPoint1 } = getCornerPoints(e);
+      const chrom1_start = getChromLenFromPos(
+        range1Ref.current,
+        contact_map_size,
+        worldPoint.x - transform_xy
+      );
+      const chrom2_start = getChromLenFromPos(
+        range2Ref.current,
+        contact_map_size,
+        worldPoint.y - transform_xy
+      );
+      const chrom1_end = getChromLenFromPos(
+        range1Ref.current,
+        contact_map_size,
+        worldPoint1.x - transform_xy
+      );
+      const chrom2_end = getChromLenFromPos(
+        range2Ref.current,
+        contact_map_size,
+        worldPoint1.y - transform_xy
+      );
+
+      const newChrom1 = getNewChromFromNewPos(
+        range1Ref.current,
+        chrom1_start,
+        chrom1_end
+      );
+      const newChrom2 = getNewChromFromNewPos(
+        range2Ref.current,
+        chrom2_start,
+        chrom2_end
+      );
+      range1Ref.current = newChrom1;
+      range2Ref.current = newChrom2;
+      //debounceUpdateZoomIn(chrom1_start, chrom1_end, chrom2_start, chrom2_end);
+    }
+
+    function getCornerPoints(e: Viewport) {
+      const devicePoint = new PIXI.Point(transform_xy, transform_xy);
+      const devicePoint1 = new PIXI.Point(
+        transform_xy + contact_map_size,
+        transform_xy + contact_map_size
+      );
+
+      const worldPoint = e.toLocal(devicePoint);
+      const worldPoint1 = e.toLocal(devicePoint1);
+
+      return { worldPoint, worldPoint1 };
+    }
+
+    function debounceUpdateZoomOut(newChrom1: string, newChrom2: string) {
+      debounce(() => {
+        dispatch(
+          updateApiChromQuery({
+            id: map_id,
+            query: { chrom1: newChrom1, chrom2: newChrom2 },
+          })
+        );
+      }, 1000)();
+    }
+
+    function debounceUpdateZoomIn(
+      chrom1_start: number,
+      chrom1_end: number,
+      chrom2_start: number,
+      chrom2_end: number
+    ) {
+      debounce(() => {
+        const newChrom1 = getNewChromFromNewPos(
+          range1Ref.current,
+          chrom1_start,
+          chrom1_end
+        );
+        const newChrom2 = getNewChromFromNewPos(
+          range2Ref.current,
+          chrom2_start,
+          chrom2_end
+        );
+        // range1Ref.current = newChrom1;
+        // range2Ref.current = newChrom2;
+
+        dispatch(
+          updateApiChromQuery({
+            id: map_id,
+            query: { chrom1: newChrom1, chrom2: newChrom2 },
+          })
+        );
+      }, 1000)();
+    }
   }, []);
 
   useEffect(() => {
-    //add container background
-    const point1 = new PIXI.Graphics();
-    //@ts-ignore
-    point1.beginFill(new PIXI.Color(colors.primary[400]));
-    point1.drawRect(0, 0, app_size, app_size);
-    point1.endFill();
+    const point1 = createGraphics(
+      colors.primary[400],
+      0,
+      0,
+      app_size,
+      app_size
+    );
+    const point2 = createGraphics(
+      colors.primary[400],
+      0,
+      0,
+      transform_xy,
+      app_size
+    );
+    const point3 = createGraphics(
+      colors.primary[400],
+      0,
+      0,
+      app_size,
+      transform_xy
+    );
     bg_container.addChild(point1);
+    bg_container.addChild(point2);
+    chrom_dist_container.addChild(point3);
+    chrom_dist_container.addChild(point2);
 
-    const [scaleX, scaleY] = getScaleFromRange(range1, range2);
-    const horizontal_ticks = getTicksAndPosFromRange(
-      range1,
-      contact_map_size,
-      scaleX
-    );
-    const vertical_ticks = getTicksAndPosFromRange(
-      range2,
-      contact_map_size,
-      scaleY
-    );
-    handleContainerEvent(contact2d_container);
     // add heatmap, Text data
     if (heatMapData) {
       if (heatMapData[0]) {
@@ -171,8 +406,75 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
           contact2d_container,
           app_size,
           contact_map_size,
-          colorScaleMemo
+          colorScaleMemo,
+          colors.primary[400]
         );
+        handleTickUpdate();
+      }
+      if (viewportRef.current) {
+        viewportRef.current.setZoom(1); // Reset zoom to 1
+        viewportRef.current.moveCorner(-mapTopCorner.x, -mapTopCorner.y);
+      }
+      return cleanupCanvas;
+    }
+  }, [heatMapData, psize, theme.palette.mode]);
+  useEffect(() => {
+    handleTickUpdate();
+    return cleanupTicks;
+  }, [mapTopCorner, mapbottomCorner]);
+
+  const handleTickUpdate = () => {
+    const point1 = createGraphics(
+      colors.primary[400],
+      0,
+      0,
+      app_size,
+      app_size
+    );
+    const point2 = createGraphics(
+      colors.primary[400],
+      0,
+      0,
+      transform_xy,
+      app_size
+    );
+    const point3 = createGraphics(
+      colors.primary[400],
+      0,
+      0,
+      app_size,
+      transform_xy
+    );
+    bg_container.addChild(point1);
+    bg_container.addChild(point2);
+    chrom_dist_container.addChild(point3);
+    chrom_dist_container.addChild(point2);
+    if (heatMapData) {
+      const [scaleX, scaleY] = getScaleFromRange(
+        range1Ref.current,
+        range2Ref.current
+      );
+
+      const hStart = mapTopCorner.x > 0 ? mapTopCorner.x : 0;
+      const hEnd = mapbottomCorner.x < 400 ? mapbottomCorner.x : 400;
+      const vStart = mapTopCorner.y > 0 ? mapTopCorner.y : 0;
+      const vEnd = mapbottomCorner.y < 400 ? mapbottomCorner.y : 400;
+
+      const horizontal_ticks = getTicksAndPosFromRange(
+        range1Ref.current,
+        hStart,
+        hEnd,
+        scaleX
+      );
+      const vertical_ticks = getTicksAndPosFromRange(
+        range2Ref.current,
+        vStart,
+        vEnd,
+        scaleY
+      );
+
+      // Add Text data
+      if (heatMapData[0]) {
         addHorizontalTicksText(
           horizontal_ticks,
           chrom_dist_container,
@@ -184,9 +486,20 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
           colors.grey[100]
         );
       }
-      return cleanupCanvas;
     }
-  }, [heatMapData, psize, theme.palette.mode, showChromPos]);
+  };
+  useEffect(() => {
+    handleContainerEvent(contact2d_container);
+    if (viewportRef.current) {
+      if (isSelectRegionEvent) {
+        viewportRef.current.plugins.pause("drag");
+        viewportRef.current.plugins.pause("wheel");
+      } else {
+        viewportRef.current.plugins.resume("drag");
+        viewportRef.current.plugins.resume("wheel");
+      }
+    }
+  }, [showChromPos, isSelectRegionEvent]);
 
   useEffect(() => {
     if (selectRect.isVisible) {
@@ -202,27 +515,10 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
     }
   }, [selectRect]);
 
-  const drawSelectRect = (
-    rect: PIXI.Graphics,
-    x: number,
-    y: number,
-    width: number,
-    height: number
-  ) => {
-    rect
-      .clear()
-      .lineStyle(2, 0xeeeeee, 1)
-      //@ts-ignore
-      .beginFill(new PIXI.Color(colors.grey[100]))
-      .drawRect(x, y, width, height)
-      .endFill();
-
-    rect.alpha = 0.3;
-    rect.visible = true;
-  };
-
   function handleContainerEvent(container: PIXI.Container) {
     //@ts-ignore
+    container.removeAllListeners();
+
     container.eventMode = "dynamic";
     container.on("pointermove", (event: PIXI.FederatedMouseEvent) => {
       if (!showChromPos) {
@@ -257,6 +553,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
     container.on("pointerleave", (event: PIXI.FederatedMouseEvent) => {
       posRect.visible = false;
     });
+    if (!isSelectRegionEvent) return;
     container.on("mousedown", (event: PIXI.FederatedMouseEvent) => {
       isDragging.current = true;
       dispatch(

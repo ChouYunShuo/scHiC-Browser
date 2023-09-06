@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { fetchEmbedding } from "../../utils";
+import { fetchEmbedding } from "../../utils/utils";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import * as d3 from "d3";
 import { zoom, ZoomTransform, select } from "d3";

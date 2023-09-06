@@ -28,7 +28,7 @@ import {
   getNewChromZoomIn,
   getNewChromZoomOut,
   validateChrom,
-} from "../../utils";
+} from "../../utils/utils";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import ControlButtons from "../../components/MapControlButtons";
 import AddIcon from "@mui/icons-material/Add";

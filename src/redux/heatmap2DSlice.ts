@@ -11,6 +11,7 @@ type apiCallType = {
   selectedCells: string[];
   query: chromQueryType;
   showChromPos: boolean;
+  selectRegion: boolean;
 };
 
 type selectRectType = {
@@ -39,10 +40,34 @@ const initMapQuery = {
   chrom2: "chrom2:0-100000000",
 };
 const initApiCalls = [
-  { id: 0, selectedCells: ["0"], query: initMapQuery, showChromPos: false },
-  { id: 1, selectedCells: ["1"], query: initMapQuery, showChromPos: false },
-  { id: 2, selectedCells: ["2"], query: initMapQuery, showChromPos: false },
-  { id: 3, selectedCells: ["3"], query: initMapQuery, showChromPos: false },
+  {
+    id: 0,
+    selectedCells: ["0"],
+    query: initMapQuery,
+    showChromPos: false,
+    selectRegion: false,
+  },
+  {
+    id: 1,
+    selectedCells: ["1"],
+    query: initMapQuery,
+    showChromPos: false,
+    selectRegion: false,
+  },
+  {
+    id: 2,
+    selectedCells: ["2"],
+    query: initMapQuery,
+    showChromPos: false,
+    selectRegion: false,
+  },
+  {
+    id: 3,
+    selectedCells: ["3"],
+    query: initMapQuery,
+    showChromPos: false,
+    selectRegion: false,
+  },
 ];
 const initSelectRect = {
   isVisible: false,
@@ -91,6 +116,13 @@ const heatMap2DSlice = createSlice({
       state.apiCalls[action.payload.id].showChromPos =
         action.payload.showChromPos;
     },
+    updateMapSelectRegion: (
+      state,
+      action: PayloadAction<{ id: number; selectRegion: boolean }>
+    ) => {
+      state.apiCalls[action.payload.id].selectRegion =
+        action.payload.selectRegion;
+    },
 
     updateApiChromQuery: (
       state,
@@ -120,6 +152,7 @@ export const {
   updateDataset,
   updateMapSelectCells,
   updateMapShowChromPos,
+  updateMapSelectRegion,
   updateApiChromQuery,
   updateChromLen,
   updateAllRes,

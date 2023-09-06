@@ -43,6 +43,7 @@ const GridLayoutCellTopbar: React.FC<GridLayoutTopbarProps> = ({
             }}
           >
             {type === "scatter" ? `Scatter Plot(Umap)` : null}
+            {type === "spatial" ? `Spatial Coords` : null}
             {type === "cmap" ? `Contact Map ${id + 1}` : null}
           </Typography>
         </Box>

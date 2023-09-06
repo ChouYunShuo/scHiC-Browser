@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { fetchEmbedding } from "../utils";
+import { fetchEmbedding } from "../utils/utils";
 import { useFetchEmbedQuery } from "../redux/apiSlice";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
 import * as d3 from "d3";
@@ -8,7 +8,7 @@ import { tokens } from "../theme";
 import { Box, useTheme, Grid } from "@mui/material";
 import EmbedTopBar from "./EmbeddingTopBar";
 import UmapPopUp from "./UmapPopUp";
-import { euclideanDistance } from "../utils";
+import { euclideanDistance } from "../utils/utils";
 import LoadingSpinner from "./LoadingPage";
 import Error404 from "./ErrorPage";
 import ErrorAPI from "./ErrorComponent";
