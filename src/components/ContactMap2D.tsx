@@ -105,7 +105,8 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
   // const bottomCornerRef = useRef<PIXI.Point>(
   //   new PIXI.Point(contact_map_size, contact_map_size)
   // );
-
+  // const mapTopCornerRef = useRef<PIXI.Point>(new PIXI.Point(0, 0))
+  // const mapbottomCornerRef = useRef<PIXI.Point>( new PIXI.Point(contact_map_size, contact_map_size))
   const [mapTopCorner, setMapTopCorner] = useState(new PIXI.Point(0, 0));
   const [mapbottomCorner, setMapBottomCorner] = useState(
     new PIXI.Point(contact_map_size, contact_map_size)
@@ -128,7 +129,6 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
   // Connect to nb-dispatch
   // var nb_hub = nb_dispatch("update", "brush");
   // nb_hub.connect(function (status: any) {});
-  console.log(range1, range2);
   const {
     data: heatMapData,
     error,
@@ -225,10 +225,10 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
     }
 
     function handleDragEnd(e: DragEvent) {
-      if (viewportRef.current) {
-        viewportRef.current.setZoom(1); // Reset zoom to 1
-      }
       handleMapShift(e.viewport);
+      // if (viewportRef.current) {
+      //   viewportRef.current.setZoom(1); // Reset zoom to 1
+      // }
     }
 
     function handleZoomedEnd(e: Viewport) {
@@ -244,37 +244,47 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
     }
 
     function handleZoomOut(e: Viewport) {
-      const newChrom1 = getNewChromZoomOut(range1, 1 / e.scale.x);
-      const newChrom2 = getNewChromZoomOut(range2, 1 / e.scale.y);
+      const newChrom1 = getNewChromZoomOut(range1Ref.current, 1 / e.scale.x);
+      const newChrom2 = getNewChromZoomOut(range2Ref.current, 1 / e.scale.y);
       range1Ref.current = newChrom1;
       range2Ref.current = newChrom2;
-      //debounceUpdateZoomOut(newChrom1, newChrom2);
+      debounceUpdateZoomOut(newChrom1, newChrom2);
     }
     function handleMapShift(e: Viewport) {
       const { worldPoint, worldPoint1 } = getCornerPoints(e);
       const chrom1_start = getChromLenFromPos(
-        range1,
+        range1Ref.current,
         contact_map_size,
         worldPoint.x - transform_xy
       );
       const chrom2_start = getChromLenFromPos(
-        range2,
+        range2Ref.current,
         contact_map_size,
         worldPoint.y - transform_xy
       );
       const chrom1_end = getChromLenFromPos(
-        range1,
+        range1Ref.current,
         contact_map_size,
         worldPoint1.x - transform_xy
       );
       const chrom2_end = getChromLenFromPos(
-        range2,
+        range2Ref.current,
         contact_map_size,
         worldPoint1.y - transform_xy
       );
 
-      const newChrom1 = getNewChromFromNewPos(range1, chrom1_start, chrom1_end);
-      const newChrom2 = getNewChromFromNewPos(range2, chrom2_start, chrom2_end);
+      const newChrom1 = getNewChromFromNewPos(
+        range1Ref.current,
+        chrom1_start,
+        chrom1_end
+      );
+      const newChrom2 = getNewChromFromNewPos(
+        range2Ref.current,
+        chrom2_start,
+        chrom2_end
+      );
+      console.log(range1, newChrom1);
+      console.log(range2, newChrom2);
       range1Ref.current = newChrom1;
       range2Ref.current = newChrom2;
     }
@@ -459,8 +469,8 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
       const hEnd = mapbottomCorner.x < 400 ? mapbottomCorner.x : 400;
       const vStart = mapTopCorner.y > 0 ? mapTopCorner.y : 0;
       const vEnd = mapbottomCorner.y < 400 ? mapbottomCorner.y : 400;
-      console.log(range1Ref.current, hStart, hEnd, scaleX);
-      console.log(range2Ref.current, vStart, vEnd, scaleY);
+      // console.log(range1Ref.current, hStart, hEnd, scaleX);
+      // console.log(range2Ref.current, vStart, vEnd, scaleY);
       const horizontal_ticks = getTicksAndPosFromRange(
         range1Ref.current,
         hStart,
@@ -473,8 +483,6 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
         vEnd,
         scaleY
       );
-      console.log(horizontal_ticks);
-      console.log(vertical_ticks);
 
       // Add Text data
       if (heatMapData[0]) {
