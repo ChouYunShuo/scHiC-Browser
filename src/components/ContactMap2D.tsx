@@ -459,7 +459,8 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
       const hEnd = mapbottomCorner.x < 400 ? mapbottomCorner.x : 400;
       const vStart = mapTopCorner.y > 0 ? mapTopCorner.y : 0;
       const vEnd = mapbottomCorner.y < 400 ? mapbottomCorner.y : 400;
-
+      console.log(range1Ref.current, hStart, hEnd, scaleX);
+      console.log(range2Ref.current, vStart, vEnd, scaleY);
       const horizontal_ticks = getTicksAndPosFromRange(
         range1Ref.current,
         hStart,
@@ -472,6 +473,8 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
         vEnd,
         scaleY
       );
+      console.log(horizontal_ticks);
+      console.log(vertical_ticks);
 
       // Add Text data
       if (heatMapData[0]) {

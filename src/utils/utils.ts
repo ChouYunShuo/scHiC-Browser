@@ -123,7 +123,7 @@ export const getTicksAndPosFromRange = (
   else numTicks = 3;
 
   const xScale = scaleLinear().domain([lo, hi]).range([start_pos, end_pos]);
-  const tick = xScale.ticks(numTicks).filter((tick) => Number.isInteger(tick));
+  const tick = xScale.ticks(5).filter((tick) => Number.isInteger(tick));
 
   for (let i = 0; i < tick.length; i++) {
     if (tick[i] == 0) continue;
