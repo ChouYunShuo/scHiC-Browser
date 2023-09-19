@@ -101,10 +101,10 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
   const transform_xy = app_size - contact_map_size;
   const range1Ref = useRef<string>(range1);
   const range2Ref = useRef<string>(range2);
-  // const topCornerRef = useRef<PIXI.Point>(new PIXI.Point(0, 0));
-  // const bottomCornerRef = useRef<PIXI.Point>(
-  //   new PIXI.Point(contact_map_size, contact_map_size)
-  // );
+  const topCornerRef = useRef<PIXI.Point>(new PIXI.Point(0, 0));
+  const bottomCornerRef = useRef<PIXI.Point>(
+    new PIXI.Point(contact_map_size, contact_map_size)
+  );
   // const mapTopCornerRef = useRef<PIXI.Point>(new PIXI.Point(0, 0))
   // const mapbottomCornerRef = useRef<PIXI.Point>( new PIXI.Point(contact_map_size, contact_map_size))
   const [mapTopCorner, setMapTopCorner] = useState(new PIXI.Point(0, 0));
@@ -162,11 +162,6 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
     // Add event listeners to the viewport
     addViewportEventListeners(viewport);
 
-    // Cleanup function to remove all children from the stage
-    return () => {
-      app.stage.removeChildren();
-    };
-
     function initializePixiAppAndViewport() {
       const app = new PIXI.Application({
         view: canvasRef.current!,
@@ -207,21 +202,34 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
         const mapBRCorner = new PIXI.Point(contact_map_size, contact_map_size);
         const worldTLPosition = e.toGlobal(mapTLCorner);
         const worldBRPosition = e.toGlobal(mapBRCorner);
-
+        // console.log(worldTLPosition, worldBRPosition);
+        // console.log(e.corner);
+        topCornerRef.current = worldTLPosition;
+        bottomCornerRef.current = worldBRPosition;
         setMapTopCorner(worldTLPosition);
         setMapBottomCorner(worldBRPosition);
+
         handleZoomedEnd(e);
       });
       viewport.on("drag-end", (e: DragEvent) => {
         const mapTLCorner = new PIXI.Point(0, 0);
         const mapBRCorner = new PIXI.Point(contact_map_size, contact_map_size);
+
         const worldTLPosition = e.viewport.toGlobal(mapTLCorner);
         const worldBRPosition = e.viewport.toGlobal(mapBRCorner);
+        //console.log(worldTLPosition, worldBRPosition);
+        topCornerRef.current = worldTLPosition;
+        bottomCornerRef.current = worldBRPosition;
 
         setMapTopCorner(worldTLPosition);
         setMapBottomCorner(worldBRPosition);
-        handleDragEnd(e);
+
+        //handleDragEnd(e);
       });
+      return () => {
+        viewport.off("zoomed-end");
+        viewport.off("drag-end");
+      };
     }
 
     function handleDragEnd(e: DragEvent) {
@@ -237,59 +245,59 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
         return;
       }
       if (e.scale.x < 1) {
-        handleZoomOut(e);
+        debouncedhandleZoomOut(e);
+        return;
+      } else if (e.scale.x > 1) {
+        debouncedHandleZoomIn(e);
         return;
       }
-      handleZoomIn(e);
     }
-
-    function handleZoomOut(e: Viewport) {
+    const debouncedhandleZoomOut = debounce((e: Viewport) => {
       const newChrom1 = getNewChromZoomOut(range1Ref.current, 1 / e.scale.x);
       const newChrom2 = getNewChromZoomOut(range2Ref.current, 1 / e.scale.y);
       range1Ref.current = newChrom1;
       range2Ref.current = newChrom2;
-      debounceUpdateZoomOut(newChrom1, newChrom2);
-    }
+
+      dispatch(
+        updateApiChromQuery({
+          id: map_id,
+          query: { chrom1: newChrom1, chrom2: newChrom2 },
+        })
+      );
+    }, 1000);
+
     function handleMapShift(e: Viewport) {
       const { worldPoint, worldPoint1 } = getCornerPoints(e);
       const chrom1_start = getChromLenFromPos(
-        range1Ref.current,
+        range1,
         contact_map_size,
         worldPoint.x - transform_xy
       );
       const chrom2_start = getChromLenFromPos(
-        range2Ref.current,
+        range2,
         contact_map_size,
         worldPoint.y - transform_xy
       );
       const chrom1_end = getChromLenFromPos(
-        range1Ref.current,
+        range1,
         contact_map_size,
         worldPoint1.x - transform_xy
       );
       const chrom2_end = getChromLenFromPos(
-        range2Ref.current,
+        range2,
         contact_map_size,
         worldPoint1.y - transform_xy
       );
 
-      const newChrom1 = getNewChromFromNewPos(
-        range1Ref.current,
-        chrom1_start,
-        chrom1_end
-      );
-      const newChrom2 = getNewChromFromNewPos(
-        range2Ref.current,
-        chrom2_start,
-        chrom2_end
-      );
-      console.log(range1, newChrom1);
-      console.log(range2, newChrom2);
+      const newChrom1 = getNewChromFromNewPos(range1, chrom1_start, chrom1_end);
+      const newChrom2 = getNewChromFromNewPos(range2, chrom2_start, chrom2_end);
+      // console.log(range1, newChrom1);
+      // console.log(range2, newChrom2);
       range1Ref.current = newChrom1;
       range2Ref.current = newChrom2;
     }
 
-    function handleZoomIn(e: Viewport) {
+    const debouncedHandleZoomIn = debounce((e: Viewport) => {
       const { worldPoint, worldPoint1 } = getCornerPoints(e);
       const chrom1_start = getChromLenFromPos(
         range1Ref.current,
@@ -312,26 +320,25 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
         worldPoint1.y - transform_xy
       );
 
-      const newChrom1 = getNewChromFromNewPos(
-        range1Ref.current,
-        chrom1_start,
-        chrom1_end
-      );
-      const newChrom2 = getNewChromFromNewPos(
-        range2Ref.current,
-        chrom2_start,
-        chrom2_end
-      );
+      const newChrom1 = getNewChromFromNewPos(range1, chrom1_start, chrom1_end);
+      const newChrom2 = getNewChromFromNewPos(range2, chrom2_start, chrom2_end);
+      console.log(newChrom1, newChrom2);
       range1Ref.current = newChrom1;
       range2Ref.current = newChrom2;
-      //debounceUpdateZoomIn(chrom1_start, chrom1_end, chrom2_start, chrom2_end);
-    }
+
+      dispatch(
+        updateApiChromQuery({
+          id: map_id,
+          query: { chrom1: newChrom1, chrom2: newChrom2 },
+        })
+      );
+    }, 1000);
 
     function getCornerPoints(e: Viewport) {
       const devicePoint = new PIXI.Point(transform_xy, transform_xy);
       const devicePoint1 = new PIXI.Point(
-        transform_xy + contact_map_size,
-        transform_xy + contact_map_size
+        contact_map_size + transform_xy,
+        contact_map_size + transform_xy
       );
 
       const worldPoint = e.toLocal(devicePoint);
@@ -340,46 +347,13 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
       return { worldPoint, worldPoint1 };
     }
 
-    function debounceUpdateZoomOut(newChrom1: string, newChrom2: string) {
-      debounce(() => {
-        dispatch(
-          updateApiChromQuery({
-            id: map_id,
-            query: { chrom1: newChrom1, chrom2: newChrom2 },
-          })
-        );
-      }, 1000)();
-    }
-
-    function debounceUpdateZoomIn(
-      chrom1_start: number,
-      chrom1_end: number,
-      chrom2_start: number,
-      chrom2_end: number
-    ) {
-      debounce(() => {
-        const newChrom1 = getNewChromFromNewPos(
-          range1Ref.current,
-          chrom1_start,
-          chrom1_end
-        );
-        const newChrom2 = getNewChromFromNewPos(
-          range2Ref.current,
-          chrom2_start,
-          chrom2_end
-        );
-        // range1Ref.current = newChrom1;
-        // range2Ref.current = newChrom2;
-
-        dispatch(
-          updateApiChromQuery({
-            id: map_id,
-            query: { chrom1: newChrom1, chrom2: newChrom2 },
-          })
-        );
-      }, 1000)();
-    }
+    // Cleanup function to remove all children from the stage
+    return () => {
+      app.stage.removeChildren();
+    };
   }, []);
+
+  const UpdateChrom = (newChrom1: string, newChrom2: string) => {};
 
   useEffect(() => {
     const point1 = createGraphics(
@@ -423,7 +397,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
       }
       if (viewportRef.current) {
         viewportRef.current.setZoom(1); // Reset zoom to 1
-        viewportRef.current.moveCorner(-mapTopCorner.x, -mapTopCorner.y);
+        viewportRef.current.moveCorner(0, 0);
       }
       return cleanupCanvas;
     }
@@ -460,25 +434,26 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
     chrom_dist_container.addChild(point3);
     chrom_dist_container.addChild(point2);
     if (heatMapData) {
-      const [scaleX, scaleY] = getScaleFromRange(
-        range1Ref.current,
-        range2Ref.current
-      );
+      const [scaleX, scaleY] = getScaleFromRange(range1, range2);
 
-      const hStart = mapTopCorner.x > 0 ? mapTopCorner.x : 0;
-      const hEnd = mapbottomCorner.x < 400 ? mapbottomCorner.x : 400;
-      const vStart = mapTopCorner.y > 0 ? mapTopCorner.y : 0;
-      const vEnd = mapbottomCorner.y < 400 ? mapbottomCorner.y : 400;
+      // const hStart = mapTopCorner.x; //> 0 ? mapTopCorner.x : 0;
+      // const hEnd = mapbottomCorner.x; // < 400 ? mapbottomCorner.x : 400;
+      // const vStart = mapTopCorner.y; //> 0 ? mapTopCorner.y : 0;
+      // const vEnd = mapbottomCorner.y; //< 400 ? mapbottomCorner.y : 400;
+      const hStart = topCornerRef.current.x;
+      const hEnd = bottomCornerRef.current.x;
+      const vStart = topCornerRef.current.y;
+      const vEnd = bottomCornerRef.current.y;
       // console.log(range1Ref.current, hStart, hEnd, scaleX);
       // console.log(range2Ref.current, vStart, vEnd, scaleY);
       const horizontal_ticks = getTicksAndPosFromRange(
-        range1Ref.current,
+        range1,
         hStart,
         hEnd,
         scaleX
       );
       const vertical_ticks = getTicksAndPosFromRange(
-        range2Ref.current,
+        range2,
         vStart,
         vEnd,
         scaleY
