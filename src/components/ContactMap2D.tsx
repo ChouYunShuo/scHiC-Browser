@@ -202,8 +202,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
         const mapBRCorner = new PIXI.Point(contact_map_size, contact_map_size);
         const worldTLPosition = e.toGlobal(mapTLCorner);
         const worldBRPosition = e.toGlobal(mapBRCorner);
-        // console.log(worldTLPosition, worldBRPosition);
-        // console.log(e.corner);
+
         topCornerRef.current = worldTLPosition;
         bottomCornerRef.current = worldBRPosition;
         setMapTopCorner(worldTLPosition);
@@ -217,26 +216,16 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
 
         const worldTLPosition = e.viewport.toGlobal(mapTLCorner);
         const worldBRPosition = e.viewport.toGlobal(mapBRCorner);
-        //console.log(worldTLPosition, worldBRPosition);
         topCornerRef.current = worldTLPosition;
         bottomCornerRef.current = worldBRPosition;
 
         setMapTopCorner(worldTLPosition);
         setMapBottomCorner(worldBRPosition);
-
-        //handleDragEnd(e);
       });
       return () => {
         viewport.off("zoomed-end");
         viewport.off("drag-end");
       };
-    }
-
-    function handleDragEnd(e: DragEvent) {
-      handleMapShift(e.viewport);
-      // if (viewportRef.current) {
-      //   viewportRef.current.setZoom(1); // Reset zoom to 1
-      // }
     }
 
     function handleZoomedEnd(e: Viewport) {
@@ -266,37 +255,6 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
       );
     }, 1000);
 
-    function handleMapShift(e: Viewport) {
-      const { worldPoint, worldPoint1 } = getCornerPoints(e);
-      const chrom1_start = getChromLenFromPos(
-        range1,
-        contact_map_size,
-        worldPoint.x - transform_xy
-      );
-      const chrom2_start = getChromLenFromPos(
-        range2,
-        contact_map_size,
-        worldPoint.y - transform_xy
-      );
-      const chrom1_end = getChromLenFromPos(
-        range1,
-        contact_map_size,
-        worldPoint1.x - transform_xy
-      );
-      const chrom2_end = getChromLenFromPos(
-        range2,
-        contact_map_size,
-        worldPoint1.y - transform_xy
-      );
-
-      const newChrom1 = getNewChromFromNewPos(range1, chrom1_start, chrom1_end);
-      const newChrom2 = getNewChromFromNewPos(range2, chrom2_start, chrom2_end);
-      // console.log(range1, newChrom1);
-      // console.log(range2, newChrom2);
-      range1Ref.current = newChrom1;
-      range2Ref.current = newChrom2;
-    }
-
     const debouncedHandleZoomIn = debounce((e: Viewport) => {
       const { worldPoint, worldPoint1 } = getCornerPoints(e);
       const chrom1_start = getChromLenFromPos(
@@ -322,7 +280,6 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
 
       const newChrom1 = getNewChromFromNewPos(range1, chrom1_start, chrom1_end);
       const newChrom2 = getNewChromFromNewPos(range2, chrom2_start, chrom2_end);
-      console.log(newChrom1, newChrom2);
       range1Ref.current = newChrom1;
       range2Ref.current = newChrom2;
 
@@ -352,8 +309,6 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
       app.stage.removeChildren();
     };
   }, []);
-
-  const UpdateChrom = (newChrom1: string, newChrom2: string) => {};
 
   useEffect(() => {
     const point1 = createGraphics(
@@ -435,17 +390,11 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
     chrom_dist_container.addChild(point2);
     if (heatMapData) {
       const [scaleX, scaleY] = getScaleFromRange(range1, range2);
-
-      // const hStart = mapTopCorner.x; //> 0 ? mapTopCorner.x : 0;
-      // const hEnd = mapbottomCorner.x; // < 400 ? mapbottomCorner.x : 400;
-      // const vStart = mapTopCorner.y; //> 0 ? mapTopCorner.y : 0;
-      // const vEnd = mapbottomCorner.y; //< 400 ? mapbottomCorner.y : 400;
       const hStart = topCornerRef.current.x;
       const hEnd = bottomCornerRef.current.x;
       const vStart = topCornerRef.current.y;
       const vEnd = bottomCornerRef.current.y;
-      // console.log(range1Ref.current, hStart, hEnd, scaleX);
-      // console.log(range2Ref.current, vStart, vEnd, scaleY);
+
       const horizontal_ticks = getTicksAndPosFromRange(
         range1,
         hStart,
