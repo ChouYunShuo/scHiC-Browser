@@ -92,7 +92,25 @@ export const getChromLenFromPos = (
   const xScale = scaleLinear().domain([0, map_size]).range([lo, hi]);
   return Math.min(Math.max(lo, Math.ceil(xScale(pos))), hi);
 };
+export const calculateRange = (start: number, end: number) => end - start;
 
+export const adjustChromValues = (
+  chrom1_start: number,
+  chrom1_end: number,
+  chrom2_start: number,
+  chrom2_end: number
+) => {
+  const chrom1_range = calculateRange(chrom1_start, chrom1_end);
+  const chrom2_range = calculateRange(chrom2_start, chrom2_end);
+
+  if (chrom1_range > chrom2_range) {
+    chrom2_end = chrom2_start + chrom1_range;
+  } else if (chrom2_range > chrom1_range) {
+    chrom1_end = chrom1_start + chrom2_range;
+  }
+
+  return { chrom1_start, chrom1_end, chrom2_start, chrom2_end };
+};
 export const getScaleFromRange = (range1: string, range2: string) => {
   const raw1 = range1.trim().split(":")[1];
   const lo1 = Number(raw1.split("-")[0]);

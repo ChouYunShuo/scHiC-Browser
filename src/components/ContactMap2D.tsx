@@ -14,6 +14,7 @@ import {
   getScaleFromRange,
   getNewChromFromNewPos,
   getNewChromZoomOut,
+  adjustChromValues,
 } from "../utils/utils";
 import { useFetchContactMapDataQuery } from "../redux/apiSlice";
 import { updateSelectRect, updateApiChromQuery } from "../redux/heatmap2DSlice";
@@ -257,29 +258,46 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
 
     const debouncedHandleZoomIn = debounce((e: Viewport) => {
       const { worldPoint, worldPoint1 } = getCornerPoints(e);
-      const chrom1_start = getChromLenFromPos(
+
+      let chrom1_start = getChromLenFromPos(
         range1Ref.current,
         contact_map_size,
         worldPoint.x - transform_xy
       );
-      const chrom2_start = getChromLenFromPos(
+      let chrom2_start = getChromLenFromPos(
         range2Ref.current,
         contact_map_size,
         worldPoint.y - transform_xy
       );
-      const chrom1_end = getChromLenFromPos(
+      let chrom1_end = getChromLenFromPos(
         range1Ref.current,
         contact_map_size,
         worldPoint1.x - transform_xy
       );
-      const chrom2_end = getChromLenFromPos(
+      let chrom2_end = getChromLenFromPos(
         range2Ref.current,
         contact_map_size,
         worldPoint1.y - transform_xy
       );
 
-      const newChrom1 = getNewChromFromNewPos(range1, chrom1_start, chrom1_end);
-      const newChrom2 = getNewChromFromNewPos(range2, chrom2_start, chrom2_end);
+      const adjustedChromValues = adjustChromValues(
+        chrom1_start,
+        chrom1_end,
+        chrom2_start,
+        chrom2_end
+      );
+
+      const newChrom1 = getNewChromFromNewPos(
+        range1Ref.current,
+        adjustedChromValues.chrom1_start,
+        adjustedChromValues.chrom1_end
+      );
+      const newChrom2 = getNewChromFromNewPos(
+        range2Ref.current,
+        adjustedChromValues.chrom2_start,
+        adjustedChromValues.chrom2_end
+      );
+
       range1Ref.current = newChrom1;
       range2Ref.current = newChrom2;
 
@@ -389,23 +407,26 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
     chrom_dist_container.addChild(point3);
     chrom_dist_container.addChild(point2);
     if (heatMapData) {
-      const [scaleX, scaleY] = getScaleFromRange(range1, range2);
+      const [scaleX, scaleY] = getScaleFromRange(
+        range1Ref.current,
+        range2Ref.current
+      );
       const hStart = topCornerRef.current.x;
       const hEnd = bottomCornerRef.current.x;
       const vStart = topCornerRef.current.y;
       const vEnd = bottomCornerRef.current.y;
 
       const horizontal_ticks = getTicksAndPosFromRange(
-        range1,
+        range1Ref.current,
         hStart,
         hEnd,
-        scaleX
+        1
       );
       const vertical_ticks = getTicksAndPosFromRange(
-        range2,
+        range2Ref.current,
         vStart,
         vEnd,
-        scaleY
+        1
       );
 
       // Add Text data
