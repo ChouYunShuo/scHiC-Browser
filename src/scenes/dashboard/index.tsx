@@ -232,7 +232,7 @@ const Dashboard: React.FC<Props> = (props) => {
   }, [layouts, theme]);
   return (
     <Box width="100%" height="100%">
-      <Box ref={gridRef} flexGrow={1} m="20px">
+      <Box ref={gridRef} flexGrow={1} mx="10px">
         <ResponsiveReactGridLayout
           {...props}
           rowHeight={rowHeight}

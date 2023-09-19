@@ -22,18 +22,19 @@ interface SidebarItemProps {
 const SidebarItem = styled(Box, { shouldForwardProp })<SidebarItemProps>(
   ({ theme, selected, aboveSelected, belowSelected }) => ({
     display: "flex",
-    flexDirection: "column",
+    flexDirection: "row",
+    justifyContent: "center",
     alignItems: "center",
+    gap: 2,
     width: "100%",
-    paddingTop: 20,
-    paddingBottom: 15,
+    height: "100%",
     backgroundColor: selected
       ? tokens(theme.palette.mode).primary[400]
       : tokens(theme.palette.mode).primary[500],
     cursor: "pointer",
     userSelect: "none",
-    borderTopRightRadius: aboveSelected ? 10 : 0,
-    borderBottomRightRadius: belowSelected ? 10 : 0,
+    borderTopLeftRadius: aboveSelected ? 10 : 0,
+    borderTopRightRadius: belowSelected ? 10 : 0,
     color: tokens(theme.palette.mode).text[300],
     "&:hover": {
       color: tokens(theme.palette.mode).text[100], // color of text and icons on hover
@@ -57,17 +58,23 @@ const Sidebar: React.FC = () => {
     }
   };
   return (
-    <Box sx={{ display: "flex", flexDirection: "row", height: "100%" }}>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        width: "100%",
+        borderBottom: 1,
+        borderColor: colors.primary[400],
+      }}
+    >
       <Box
         sx={{
           display: "flex",
-          flexDirection: "column",
           alignItems: "center",
-          width: 80,
-          height: "100%",
+          justifyContent: "start",
+          width: "25%",
+          height: "30px",
           backgroundColor: colors.primary[400],
-          borderRight: selected ? 0 : 1,
-          borderColor: colors.border[100],
         }}
       >
         <SidebarItem
@@ -102,12 +109,12 @@ const Sidebar: React.FC = () => {
             width: "100%",
             height: "100%",
             backgroundColor: colors.primary[500],
-            borderTopRightRadius: selected === 3 ? 10 : 0,
+            borderTopLeftRadius: selected === 3 ? 10 : 0,
           }}
         ></Box>
       </Box>
 
-      {selected && (
+      {/* {selected && (
         <Box
           sx={{
             backgroundColor: colors.primary[400],
@@ -122,9 +129,9 @@ const Sidebar: React.FC = () => {
           ) : (
             <Typography variant="h5">Layout Design</Typography>
           )}
-          {/* Add more content as needed */}
+          {/* Add more content as needed }
         </Box>
-      )}
+      )} */}
     </Box>
   );
 };
