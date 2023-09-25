@@ -10,7 +10,7 @@ export const createHeatMapFromTexture = (
   colorScaleMemo: ScaleSequential<string>,
   bgcolor: string
 ) => {
-  const transform_xy = app_size - contact_map_size;
+  const transform_xy = (app_size - contact_map_size)/2;
   const heatmapCanvas = document.createElement("canvas");
   const xsize = data.length;
   const ysize = data[0].length;

@@ -82,7 +82,7 @@ const initialState: HeatMapStateType = {
   resolution: "500000",
   all_resolution: [],
   chrom_lengths: [],
-  app_size: 450,
+  app_size: 500,
   contact_map_size: 400,
   pix_size: 2,
   map_cnts: 4,

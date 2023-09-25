@@ -19,6 +19,7 @@ import {
 import { useFetchContactMapDataQuery } from "../redux/apiSlice";
 import { updateSelectRect, updateApiChromQuery } from "../redux/heatmap2DSlice";
 import { addHorizontalTicksText, addVerticalTicksText } from "./ChromTickTrack";
+import { drawLinePlot } from "./SignalTrack1D";
 import { drawRectWithText } from "./PixiChromText";
 import createHeatMapFromTexture from "./ContactMapTexture";
 import LoadingSpinner from "./LoadingPage";
@@ -99,7 +100,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
     x_pos: 0,
     y_pos: 0,
   });
-  const transform_xy = app_size - contact_map_size;
+  const transform_xy = (app_size - contact_map_size) / 2;
   const range1Ref = useRef<string>(range1);
   const range2Ref = useRef<string>(range2);
   const topCornerRef = useRef<PIXI.Point>(new PIXI.Point(0, 0));
@@ -336,26 +337,10 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
       app_size,
       app_size
     );
-    const point2 = createGraphics(
-      colors.primary[400],
-      0,
-      0,
-      transform_xy,
-      app_size
-    );
-    const point3 = createGraphics(
-      colors.primary[400],
-      0,
-      0,
-      app_size,
-      transform_xy
-    );
     bg_container.addChild(point1);
-    bg_container.addChild(point2);
-    chrom_dist_container.addChild(point3);
-    chrom_dist_container.addChild(point2);
 
     // add heatmap, Text data
+    handleTickUpdate();
     if (heatMapData) {
       if (heatMapData[0]) {
         createHeatMapFromTexture(
@@ -366,7 +351,6 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
           colorScaleMemo,
           colors.primary[400]
         );
-        handleTickUpdate();
       }
       if (viewportRef.current) {
         viewportRef.current.setZoom(1); // Reset zoom to 1
@@ -375,37 +359,55 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
       return cleanupCanvas;
     }
   }, [heatMapData, psize, theme.palette.mode]);
+
+  //update ticks in real-time
   useEffect(() => {
     handleTickUpdate();
+    handleSignal1dUpdate();
     return cleanupTicks;
   }, [mapTopCorner, mapbottomCorner]);
-
-  const handleTickUpdate = () => {
-    const point1 = createGraphics(
-      colors.primary[400],
-      0,
-      0,
+  const handleSignal1dUpdate = () => {
+    const signal1Rect = createGraphics(
+      colors.primary[100],
+      transform_xy,
+      transform_xy + contact_map_size,
       app_size,
       app_size
     );
-    const point2 = createGraphics(
+    const signal2Rect = createGraphics(
+      colors.primary[100],
+      transform_xy + contact_map_size,
+      transform_xy,
+      app_size,
+      transform_xy + contact_map_size
+    );
+
+    chrom_dist_container.addChild(signal1Rect);
+    chrom_dist_container.addChild(signal2Rect);
+    if (heatMapData) {
+      drawLinePlot(chrom_dist_container);
+    }
+  };
+
+  const handleTickUpdate = () => {
+    const chrom1Rect = createGraphics(
       colors.primary[400],
       0,
       0,
       transform_xy,
       app_size
     );
-    const point3 = createGraphics(
+    const chrom2Rect = createGraphics(
       colors.primary[400],
       0,
       0,
       app_size,
       transform_xy
     );
-    bg_container.addChild(point1);
-    bg_container.addChild(point2);
-    chrom_dist_container.addChild(point3);
-    chrom_dist_container.addChild(point2);
+
+    chrom_dist_container.addChild(chrom1Rect);
+    chrom_dist_container.addChild(chrom2Rect);
+
     if (heatMapData) {
       const [scaleX, scaleY] = getScaleFromRange(
         range1Ref.current,
@@ -444,6 +446,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
       }
     }
   };
+
   useEffect(() => {
     handleContainerEvent(contact2d_container);
     if (viewportRef.current) {
