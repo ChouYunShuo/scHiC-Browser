@@ -8,6 +8,11 @@ type datasetType = {
   resolutions: string;
   cells: number;
 };
+type TestMapRequest = {
+  chrom1: string;
+  chrom2: string;
+  resolution: string;
+};
 type ContactMapRequest = {
   chrom1: string;
   chrom2: string;
@@ -57,6 +62,16 @@ export const rootApi = createApi({
     fetchContactMapData: builder.query<number[][], ContactMapRequest>({
       query: (payload) => ({
         url: `/query`,
+        method: "POST",
+        body: payload,
+      }),
+      transformResponse: (response: string, meta, arg) => {
+        return JSON.parse(response);
+      },
+    }),
+    fetchTestMapData: builder.query<number[][], TestMapRequest>({
+      query: (payload) => ({
+        url: `/test`,
         method: "POST",
         body: payload,
       }),
@@ -115,4 +130,5 @@ export const {
   useFetchChromLenQuery,
   useFetchEmbedQuery,
   useFetchSpatialQuery,
+  useFetchTestMapDataQuery,
 } = rootApi;

@@ -10,7 +10,7 @@ export const createHeatMapFromTexture = (
   colorScaleMemo: ScaleSequential<string>,
   bgcolor: string
 ) => {
-  const transform_xy = (app_size - contact_map_size)/2;
+  const transform_xy = (app_size - contact_map_size) / 2;
   const heatmapCanvas = document.createElement("canvas");
   const xsize = data.length;
   const ysize = data[0].length;
@@ -27,21 +27,6 @@ export const createHeatMapFromTexture = (
       for (let j = 0; j < ysize; j++) {
         if (data[i][j]) {
           const color = d3.color(colorScaleMemo(data[i][j]));
-          if (color) {
-            const fillColor = color.formatHex();
-            ctx.fillStyle = fillColor;
-            ctx.fillRect(i * s_psize, j * s_psize, s_psize, s_psize);
-          }
-        } else if (i == j) {
-          let neighbors = [
-            data[i - 1]?.[j],
-            data[i + 1]?.[j],
-            data[i]?.[j - 1],
-            data[i]?.[j + 1],
-          ].filter((value) => value !== undefined && value !== null && value);
-          if (neighbors.length == 0) continue;
-          let average = neighbors.reduce((a, b) => a + b, 0) / neighbors.length;
-          const color = d3.color(colorScaleMemo(average));
           if (color) {
             const fillColor = color.formatHex();
             ctx.fillStyle = fillColor;

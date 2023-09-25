@@ -181,6 +181,7 @@ export const getResFromRange = (range1: string, range2: string) => {
     return res[bindex];
   } catch (err) {
     console.log(err);
+    return 500000;
   }
 };
 
@@ -236,7 +237,8 @@ export const getNewChromZoomOut = (range1: string, a: number) => {
         Math.floor(mid - range).toString() +
         "-" +
         Math.floor(mid + range).toString();
-    return validateChrom(chrom_str);
+
+    return chrom_str;
   } catch (err) {
     console.log(err);
     return range1;

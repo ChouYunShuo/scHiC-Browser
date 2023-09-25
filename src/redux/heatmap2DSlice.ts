@@ -29,6 +29,7 @@ type HeatMapStateType = {
   chrom_lengths: number[];
   app_size: number;
   contact_map_size: number;
+  transfrom_xy: number;
   pix_size: number;
   map_cnts: number;
   apiCalls: apiCallType[];
@@ -80,10 +81,13 @@ const initSelectRect = {
 const initialState: HeatMapStateType = {
   dataset_name: "Lee_et_al", //Ramani
   resolution: "500000",
-  all_resolution: [],
+  all_resolution: [
+    10000, 100000, 1000000, 25000, 250000, 2500000, 5000, 50000, 500000,
+  ],
   chrom_lengths: [],
-  app_size: 500,
+  app_size: 450,
   contact_map_size: 400,
+  transfrom_xy: 50,
   pix_size: 2,
   map_cnts: 4,
   apiCalls: initApiCalls,

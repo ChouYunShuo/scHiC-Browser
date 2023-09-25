@@ -45,9 +45,9 @@ const Dashboard: React.FC<Props> = (props) => {
       const dataset_name = heatmap_state.dataset_name;
       const key = "name";
       const d_index = allDataset.findIndex((obj) => obj[key] === dataset_name);
-      if (d_index != -1) {
-        dispatch(updateAllRes(allDataset[d_index].resolutions));
-      }
+      // if (d_index != -1) {
+      //   dispatch(updateAllRes(allDataset[d_index].resolutions));
+      // }
     }
   }, [allDataset]);
 
