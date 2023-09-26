@@ -22,7 +22,7 @@ import {
 } from "../redux/apiSlice";
 import { updateSelectRect, updateApiChromQuery } from "../redux/heatmap2DSlice";
 import { addHorizontalTicksText, addVerticalTicksText } from "./ChromTickTrack";
-import { drawLinePlot } from "./SignalTrack1D";
+import { drawVerticalTrack, drawHorizontalTrack } from "./SignalTrack1D";
 import { drawRectWithText } from "./PixiChromText";
 import createHeatMapFromTexture from "./ContactMapTexture";
 import LoadingSpinner from "./LoadingPage";
@@ -155,12 +155,11 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
     resolution: resolution,
     cell_id: apiCall.selectedCells,
   });
-
   const {
-    data: sigData,
-    error: sigError,
-    isFetching: sigIsFetching,
-    isLoading: sigIsLoading,
+    data: sig1Data,
+    error: sig1Error,
+    isFetching: sig1IsFetching,
+    isLoading: sig1IsLoading,
   } = useFetchTrackDataQuery({
     type: "insulation",
     chrom1: range1,
@@ -168,7 +167,18 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
     resolution: resolution,
     cell_id: apiCall.selectedCells,
   });
-  console.log(sigData);
+  const {
+    data: sig2Data,
+    error: sig2Error,
+    isFetching: sig2IsFetching,
+    isLoading: sig2IsLoading,
+  } = useFetchTrackDataQuery({
+    type: "insulation",
+    chrom1: range2,
+    dataset_name: dataset_name,
+    resolution: resolution,
+    cell_id: apiCall.selectedCells,
+  });
 
   useEffect(() => {
     range1Ref.current = range1;
@@ -367,6 +377,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
 
     // add heatmap, Text data
     handleTickUpdate();
+    handleSignal1dUpdate();
     if (heatMapData) {
       if (heatMapData[0]) {
         createHeatMapFromTexture(
@@ -391,17 +402,18 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
     handleTickUpdate();
     handleSignal1dUpdate();
     return cleanupTicks;
-  }, [mapTopCorner, mapbottomCorner]);
+  }, [mapTopCorner, mapbottomCorner, theme.palette.mode]);
+
   const handleSignal1dUpdate = () => {
     const signal1Rect = createGraphics(
-      colors.primary[100],
+      colors.primary[400],
       transform_xy,
       transform_xy + contact_map_size,
       contact_map_size,
       transform_xy
     );
     const signal2Rect = createGraphics(
-      colors.primary[100],
+      colors.primary[400],
       transform_xy + contact_map_size,
       transform_xy,
       transform_xy,
@@ -410,9 +422,35 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
 
     chrom_dist_container.addChild(signal1Rect);
     chrom_dist_container.addChild(signal2Rect);
+
     if (heatMapData) {
-      drawLinePlot(chrom_dist_container);
+      if (!sig1IsLoading && sig1Data) {
+        drawVerticalTrack(
+          sig1Data,
+          contact_map_size,
+          transform_xy,
+          chrom_dist_container,
+          theme.palette.mode
+        );
+      }
+      if (!sig2IsLoading && sig2Data) {
+        drawHorizontalTrack(
+          sig2Data,
+          contact_map_size,
+          transform_xy,
+          chrom_dist_container,
+          theme.palette.mode
+        );
+      }
     }
+    const cornerRect = createGraphics(
+      colors.primary[400],
+      transform_xy + contact_map_size,
+      transform_xy + contact_map_size,
+      transform_xy,
+      transform_xy
+    );
+    chrom_dist_container.addChild(cornerRect);
   };
 
   const handleTickUpdate = () => {
