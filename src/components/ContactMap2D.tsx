@@ -16,7 +16,10 @@ import {
   getNewChromZoomOut,
   adjustChromValues,
 } from "../utils/utils";
-import { useFetchContactMapDataQuery } from "../redux/apiSlice";
+import {
+  useFetchContactMapDataQuery,
+  useFetchTrackDataQuery,
+} from "../redux/apiSlice";
 import { updateSelectRect, updateApiChromQuery } from "../redux/heatmap2DSlice";
 import { addHorizontalTicksText, addVerticalTicksText } from "./ChromTickTrack";
 import { drawLinePlot } from "./SignalTrack1D";
@@ -48,17 +51,19 @@ type ChromPos = {
 };
 
 const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
+  //The color theme of the project
+
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const colorMode = useContext(ColorModeContext);
+
+  // load data from redux slice
   const range1 = useAppSelector(
     (state) => state.heatmap2D.apiCalls[map_id]?.query.chrom1
   );
   const range2 = useAppSelector(
     (state) => state.heatmap2D.apiCalls[map_id]?.query.chrom2
   );
-  // const [localRange1, setLocalRange1] = useState(range1);
-  // const [localRange2, setLocalRange2] = useState(range2);
 
   const app_size = useAppSelector((state) => state.heatmap2D.app_size);
   const contact_map_size = useAppSelector(
@@ -77,7 +82,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
   const selectRect = useAppSelector((state) => state.heatmap2D.selectRect);
   const dispatch = useAppDispatch();
 
-  // Create canvasRef using custome hook
+  // pixi related variables
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [contact2d_container, setContainer] = useState<PIXI.Container>(
     new PIXI.Container()
@@ -92,6 +97,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
   const [symRect, setSymRect] = useState<PIXI.Graphics>(new PIXI.Graphics());
   const [posRect, setPosRect] = useState<PIXI.Graphics>(new PIXI.Graphics());
 
+  //pixi event
   const [allowViewport, setAllowViewport] = useState(true);
   const viewportRef = useRef<Viewport | null>(null);
 
@@ -100,6 +106,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
     x_pos: 0,
     y_pos: 0,
   });
+  // contact map panning/zooming related
   const transform_xy = (app_size - contact_map_size) / 2;
   const range1Ref = useRef<string>(range1);
   const range2Ref = useRef<string>(range2);
@@ -107,13 +114,16 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
   const bottomCornerRef = useRef<PIXI.Point>(
     new PIXI.Point(contact_map_size, contact_map_size)
   );
-  // const mapTopCornerRef = useRef<PIXI.Point>(new PIXI.Point(0, 0))
-  // const mapbottomCornerRef = useRef<PIXI.Point>( new PIXI.Point(contact_map_size, contact_map_size))
+
   const [mapTopCorner, setMapTopCorner] = useState(new PIXI.Point(0, 0));
   const [mapbottomCorner, setMapBottomCorner] = useState(
     new PIXI.Point(contact_map_size, contact_map_size)
   );
 
+  // switch for displaying 1d signal track
+  const [display1dTrack, setDisplay1dTrack] = useState(false);
+
+  // pixi contact map color scale
   const colorScale =
     theme.palette.mode === "dark"
       ? d3.scaleSequentialLog(d3.interpolateViridis).domain([0.1, 1]) // adjust domain for log scale
@@ -131,6 +141,8 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
   // Connect to nb-dispatch
   // var nb_hub = nb_dispatch("update", "brush");
   // nb_hub.connect(function (status: any) {});
+
+  // fetch data from rtk apis
   const {
     data: heatMapData,
     error,
@@ -143,6 +155,20 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
     resolution: resolution,
     cell_id: apiCall.selectedCells,
   });
+
+  const {
+    data: sigData,
+    error: sigError,
+    isFetching: sigIsFetching,
+    isLoading: sigIsLoading,
+  } = useFetchTrackDataQuery({
+    type: "insulation",
+    chrom1: range1,
+    dataset_name: dataset_name,
+    resolution: resolution,
+    cell_id: apiCall.selectedCells,
+  });
+  console.log(sigData);
 
   useEffect(() => {
     range1Ref.current = range1;
@@ -371,15 +397,15 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
       colors.primary[100],
       transform_xy,
       transform_xy + contact_map_size,
-      app_size,
-      app_size
+      contact_map_size,
+      transform_xy
     );
     const signal2Rect = createGraphics(
       colors.primary[100],
       transform_xy + contact_map_size,
       transform_xy,
-      app_size,
-      transform_xy + contact_map_size
+      transform_xy,
+      contact_map_size
     );
 
     chrom_dist_container.addChild(signal1Rect);

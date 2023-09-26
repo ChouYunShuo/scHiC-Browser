@@ -21,7 +21,7 @@ type TrackRequest = {
   chrom1: string;
   dataset_name: string;
   resolution: string;
-  cell_id: string;
+  cell_id: string | string[];
 };
 
 type ChromLenQueryRequest = {

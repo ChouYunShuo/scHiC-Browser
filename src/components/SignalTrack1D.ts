@@ -6,9 +6,9 @@ type PointType = {
 };
 
 export const drawLinePlot = (container: PIXI.Container) => {
-  const raw_xpoints = generateData(20);
+  const raw_xpoints = generateYData(20);
   const points = normalizeAndMapPoints(raw_xpoints, 450, 500, 50, 500);
-  console.log(points);
+  //console.log(points);
   const line = new PIXI.Graphics();
   line.lineStyle(2, 0x000000); // 2px width, black color
   line.moveTo(points[0].x, points[0].y);
