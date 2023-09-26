@@ -27,7 +27,6 @@ import {
   updateResolution,
 } from "../redux/heatmap2DSlice";
 import { addHorizontalTicksText, addVerticalTicksText } from "./ChromTickTrack";
-import { drawLinePlot } from "./SignalTrack1D";
 import { drawRectWithText } from "./PixiChromText";
 import createHeatMapFromTexture from "./ContactMapTexture";
 import LoadingSpinner from "./LoadingPage";
