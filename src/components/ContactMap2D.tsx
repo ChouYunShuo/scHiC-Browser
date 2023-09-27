@@ -514,7 +514,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
   useEffect(() => {
     handleContainerEvent(contact2d_container);
     if (viewportRef.current) {
-      if (isSelectRegionEvent) {
+      if (isSelectRegionEvent || showChromPos) {
         viewportRef.current.plugins.pause("drag");
         viewportRef.current.plugins.pause("wheel");
       } else {
@@ -530,8 +530,8 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
       const y = selectRect.startY;
       const width = selectRect.width;
       const height = selectRect.height;
-      drawSelectRect(sltRect, x, y, width, height);
-      drawSelectRect(symRect, y, x, height, width);
+      drawSelectRect(sltRect, x, y, width, height, colors.grey[100]);
+      drawSelectRect(symRect, y, x, height, width, colors.grey[100]);
     } else {
       sltRect.visible = false;
       symRect.visible = false;

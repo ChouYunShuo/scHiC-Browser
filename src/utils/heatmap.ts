@@ -10,13 +10,14 @@ export const drawSelectRect = (
   x: number,
   y: number,
   width: number,
-  height: number
+  height: number,
+  color: string
 ) => {
   rect
     .clear()
     .lineStyle(2, 0xeeeeee, 1)
     //@ts-ignore
-    .beginFill(new PIXI.Color(colors.grey[100]))
+    .beginFill(new PIXI.Color(color))
     .drawRect(x, y, width, height)
     .endFill();
 
