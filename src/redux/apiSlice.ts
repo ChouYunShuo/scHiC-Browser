@@ -32,8 +32,17 @@ type ChromLenQueryRequest = {
 
 type EmbedQueryRequest = {
   dataset_name: string;
-  resolution: string;
   embed_type: string;
+};
+
+type MetaQueryRequest = {
+  dataset_name: string;
+  meta_type: string;
+};
+
+type GeneExprQueryRequest = {
+  dataset_name: string;
+  gene_idx: string;
 };
 
 type SpatialQueryRequest = {
@@ -42,7 +51,7 @@ type SpatialQueryRequest = {
   gene_name: string;
 };
 
-type RawDatum = [number, number, string];
+type RawDatum = [number, number];
 type SpatialDatum = [number, number, number];
 export const rootApi = createApi({
   reducerPath: "rootApi",
@@ -104,6 +113,26 @@ export const rootApi = createApi({
         return JSON.parse(response);
       },
     }),
+    fetchMeta: builder.query<string[], MetaQueryRequest>({
+      query: (payload) => ({
+        url: `/meta`,
+        method: "POST",
+        body: payload,
+      }),
+      transformResponse: (response: string, meta, arg) => {
+        return JSON.parse(response);
+      },
+    }),
+    fetchGeneExpr: builder.query<number[], GeneExprQueryRequest>({
+      query: (payload) => ({
+        url: `/gene_expr`,
+        method: "POST",
+        body: payload,
+      }),
+      transformResponse: (response: string, meta, arg) => {
+        return JSON.parse(response);
+      },
+    }),
   }),
 });
 
@@ -115,4 +144,6 @@ export const {
   useFetchChromLenQuery,
   useFetchEmbedQuery,
   useFetchSpatialQuery,
+  useFetchMetaQuery,
+  useFetchGeneExprQuery,
 } = rootApi;

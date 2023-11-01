@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { fetchEmbedding } from "../utils/utils";
-import { useFetchEmbedQuery } from "../redux/apiSlice";
+import { useFetchEmbedQuery, useFetchMetaQuery } from "../redux/apiSlice";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
 import * as d3 from "d3";
 import { zoom, ZoomTransform } from "d3";
@@ -10,7 +9,6 @@ import EmbedTopBar from "./EmbeddingTopBar";
 import UmapPopUp from "./UmapPopUp";
 import { euclideanDistance } from "../utils/utils";
 import LoadingSpinner from "./LoadingPage";
-import Error404 from "./ErrorPage";
 import ErrorAPI from "./ErrorComponent";
 
 interface Datum {
@@ -20,7 +18,6 @@ interface Datum {
   cellId: string;
   selectMap: string;
 }
-type RawDatum = [number, number, string];
 
 function vwToPixels(vw: number) {
   return vw * (window.innerWidth / 100);
@@ -78,23 +75,34 @@ const Embeds: React.FC = () => {
     error,
   } = useFetchEmbedQuery({
     dataset_name: heatmap_state.dataset_name,
-    resolution: heatmap_state.all_resolution[0]?.toString(),
     embed_type: "umap",
+  });
+  const {
+    data: cell_label,
+    isLoading: isLabelLoading,
+    isFetching: isLabelFetching,
+    error: labelError,
+  } = useFetchMetaQuery({
+    dataset_name: heatmap_state.dataset_name,
+    meta_type: "label",
   });
 
   useEffect(() => {
-    if (!isLoading && rawEmbedData) {
-      const formattedData = rawEmbedData.map(([pc1, pc2, cellType], index) => ({
-        pc1: typeof pc1 === "string" ? parseFloat(pc1) : pc1,
-        pc2: typeof pc2 === "string" ? parseFloat(pc2) : pc2,
-        cellType,
-        cellId: index.toString(),
-        selectMap: "0",
-      }));
+    if (!isLoading && rawEmbedData && !isLabelLoading && cell_label) {
+      const formattedData = rawEmbedData.map(([pc1, pc2], index) => {
+        const label = cell_label?.[index] ?? "N/A";
+        return {
+          pc1: typeof pc1 === "string" ? parseFloat(pc1) : pc1,
+          pc2: typeof pc2 === "string" ? parseFloat(pc2) : pc2,
+          cellType: label,
+          cellId: index.toString(),
+          selectMap: "0",
+        };
+      });
 
       setFormattedData(formattedData);
     }
-  }, [isLoading, rawEmbedData]);
+  }, [isLoading, rawEmbedData, cell_label]);
 
   const handleContactMapToggle = (selected_map: number) => {
     formattedData.forEach((cell) => {
