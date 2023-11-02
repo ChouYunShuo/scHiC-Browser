@@ -42,17 +42,15 @@ type MetaQueryRequest = {
 
 type GeneExprQueryRequest = {
   dataset_name: string;
-  gene_idx: string;
+  index: string;
 };
 
 type SpatialQueryRequest = {
   dataset_name: string;
-  resolution: string;
-  gene_name: string;
 };
 
 type RawDatum = [number, number];
-type SpatialDatum = [number, number, number];
+
 export const rootApi = createApi({
   reducerPath: "rootApi",
   baseQuery: fetchBaseQuery({ baseUrl: `http://${apiEndpoint}/api` }),
@@ -103,7 +101,7 @@ export const rootApi = createApi({
         return JSON.parse(response);
       },
     }),
-    fetchSpatial: builder.query<SpatialDatum[], SpatialQueryRequest>({
+    fetchSpatial: builder.query<RawDatum[], SpatialQueryRequest>({
       query: (payload) => ({
         url: `/spatial`,
         method: "POST",

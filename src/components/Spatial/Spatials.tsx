@@ -1,20 +1,23 @@
 import { useState, useEffect, useRef } from "react";
-import { useFetchSpatialQuery } from "../redux/apiSlice";
-import { useAppSelector } from "../redux/hooks";
+import {
+  useFetchSpatialQuery,
+  useFetchGeneExprQuery,
+} from "../../redux/apiSlice";
+import { useAppSelector } from "../../redux/hooks";
 import * as d3 from "d3";
 import { zoom, ZoomTransform } from "d3";
-import { tokens } from "../theme";
+import { tokens } from "../../theme";
 import { Box, useTheme, Grid } from "@mui/material";
 
-import LoadingSpinner from "./LoadingPage";
-import ErrorAPI from "./ErrorComponent";
+import LoadingSpinner from "../LoadingPage";
+import ErrorAPI from "../ErrorComponent";
+import SpatialTopBar from "./SpatialTopBar";
 
 interface Datum {
   x: number;
   y: number;
   expr: number;
 }
-type RawDatum = [number, number, number];
 
 function vwToPixels(vw: number) {
   return vw * (window.innerWidth / 100);
@@ -32,6 +35,8 @@ const Spatials: React.FC = () => {
   const DivRef = useRef<HTMLDivElement>(null);
   const xExtent = d3.extent(formattedData, (d) => d.x) as [number, number];
   const yExtent = d3.extent(formattedData, (d) => d.y) as [number, number];
+  const [isColorCellSelect, setIsColorCellSelect] = useState<boolean>(false);
+
   const xScale = d3
     .scaleLinear()
     .domain([xExtent[0] - 1, xExtent[1] + 1])
@@ -49,8 +54,15 @@ const Spatials: React.FC = () => {
     error,
   } = useFetchSpatialQuery({
     dataset_name: heatmap_state.dataset_name,
-    resolution: heatmap_state.all_resolution[0]?.toString(),
-    gene_name: "IGHG1", // CXCL13
+  });
+  const {
+    data: geneExprData,
+    isLoading: isExprLoading,
+    isFetching: isExprFetching,
+    error: exprError,
+  } = useFetchGeneExprQuery({
+    dataset_name: heatmap_state.dataset_name,
+    index: "0",
   });
 
   const minRange = d3.min(formattedData, (d) =>
@@ -63,24 +75,30 @@ const Spatials: React.FC = () => {
   const colorScale =
     theme.palette.mode === "dark"
       ? d3
-          .scaleSequentialLog(d3.interpolateViridis)
+          .scaleSequential(d3.interpolateViridis)
           //@ts-ignore
           .domain([minRange, maxRange]) // adjust domain for log scale
       : //@ts-ignore
-        d3.scaleSequentialLog(d3.interpolateReds).domain([minRange, maxRange]); // adjust domain for log scale
+        d3.scaleSequential(d3.interpolateReds).domain([minRange, maxRange]); // adjust domain for log scale
 
   useEffect(() => {
-    if (!isLoading && rawSpatialData) {
-      const formattedData = rawSpatialData.map(([x, y, expr], index) => ({
-        x: typeof x === "string" ? parseFloat(x) : x,
-        y: typeof y === "string" ? parseFloat(y) : y,
-        expr: typeof expr === "string" ? parseFloat(expr) : expr,
-      }));
+    if (!isLoading && rawSpatialData && !isExprLoading && geneExprData) {
+      const formattedData = rawSpatialData.map(([x, y], index) => {
+        const expr = geneExprData?.[index] ?? "N/A";
+        return {
+          x: typeof x === "string" ? parseFloat(x) : x,
+          y: typeof y === "string" ? parseFloat(y) : y,
+          expr: typeof expr === "string" ? parseFloat(expr) : expr,
+        };
+      });
 
       setFormattedData(formattedData);
     }
-  }, [isLoading, rawSpatialData]);
+  }, [isLoading, rawSpatialData, geneExprData]);
 
+  const handleColorToggle = () => {
+    setIsColorCellSelect((prev) => !prev);
+  };
   const drawSvg = (
     g: d3.Selection<SVGGElement, unknown, null, undefined>,
     updateColorOnly: boolean = false
@@ -220,6 +238,10 @@ const Spatials: React.FC = () => {
           display: error ? "none" : "block", // Hide canvas when loadingdisplay= error ? "none" : "block", // Hide canvas when loading
         }}
       >
+        <SpatialTopBar
+          isCellSelect={isColorCellSelect}
+          handleColorToggle={handleColorToggle}
+        />
         <svg
           ref={ref}
           width="100%"
@@ -238,7 +260,7 @@ const Spatials: React.FC = () => {
           <svg width="100%" height="100%" ref={legendRef} />
         </Box>
       </Grid>
-      {isFetching || isLoading ? (
+      {isFetching || isLoading || isExprFetching || isExprLoading ? (
         <LoadingSpinner />
       ) : error ? (
         <ErrorAPI />

@@ -1,15 +1,15 @@
 import { useState, useEffect, useRef } from "react";
-import { useFetchEmbedQuery, useFetchMetaQuery } from "../redux/apiSlice";
-import { useAppDispatch, useAppSelector } from "../redux/hooks";
+import { useFetchEmbedQuery, useFetchMetaQuery } from "../../redux/apiSlice";
+import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import * as d3 from "d3";
 import { zoom, ZoomTransform } from "d3";
-import { tokens } from "../theme";
+import { tokens } from "../../theme";
 import { Box, useTheme, Grid } from "@mui/material";
-import EmbedTopBar from "./EmbeddingTopBar";
-import UmapPopUp from "./UmapPopUp";
-import { euclideanDistance } from "../utils/utils";
-import LoadingSpinner from "./LoadingPage";
-import ErrorAPI from "./ErrorComponent";
+import Scatter2DControls from "./Scatter2DControls";
+import ScatterPopUp from "./ScatterPopUp";
+import { euclideanDistance } from "../../utils/utils";
+import LoadingSpinner from "../LoadingPage";
+import ErrorAPI from "../ErrorComponent";
 
 interface Datum {
   pc1: number;
@@ -22,7 +22,7 @@ interface Datum {
 function vwToPixels(vw: number) {
   return vw * (window.innerWidth / 100);
 }
-const Embeds: React.FC = () => {
+const Scatter2D: React.FC = () => {
   const [formattedData, setFormattedData] = useState<Datum[]>([]);
   const [selectedCells, setSelectedCells] = useState<string[]>([]);
   const [isZoom, setIsZoom] = useState<boolean>(true);
@@ -396,19 +396,19 @@ const Embeds: React.FC = () => {
           display: error ? "none" : "block", // Hide canvas when loadingdisplay= error ? "none" : "block", // Hide canvas when loading
         }}
       >
-        <EmbedTopBar
+        <Scatter2DControls
           isZoom={isZoom}
           isCellSelect={isColorCellSelect}
           handleZoomToggle={handleZoomToggle}
           handleColorToggle={handleColorToggle}
         />
-        <UmapPopUp
+        <ScatterPopUp
           isVisible={isPopup}
           handleVisToggle={handleVisToggle}
           handleMapToggle={handleContactMapToggle}
           selectedUmapCells={selectedCells}
           pWidth={currentWidth}
-        ></UmapPopUp>
+        ></ScatterPopUp>
         <svg
           ref={ref}
           width="100%"
@@ -434,4 +434,4 @@ const Embeds: React.FC = () => {
   );
 };
 
-export default Embeds;
+export default Scatter2D;

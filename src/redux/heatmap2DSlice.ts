@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { number } from "prop-types";
+import config from "../config.json";
 
 type chromQueryType = {
   chrom1: string;
@@ -35,40 +35,16 @@ type HeatMapStateType = {
   selectedSidebarItem: number | null;
   selectRect: selectRectType;
 };
-const initMapQuery = {
-  chrom1: "chrom2:0-100000000",
-  chrom2: "chrom2:0-100000000",
-};
-const initApiCalls = [
-  {
-    id: 0,
-    selectedCells: ["0"],
-    query: initMapQuery,
-    showChromPos: false,
-    selectRegion: false,
-  },
-  {
-    id: 1,
-    selectedCells: ["1"],
-    query: initMapQuery,
-    showChromPos: false,
-    selectRegion: false,
-  },
-  {
-    id: 2,
-    selectedCells: ["2"],
-    query: initMapQuery,
-    showChromPos: false,
-    selectRegion: false,
-  },
-  {
-    id: 3,
-    selectedCells: ["3"],
-    query: initMapQuery,
-    showChromPos: false,
-    selectRegion: false,
-  },
-];
+
+const initApiCall = (id: number) => ({
+  id,
+  selectedCells: [`${id}`],
+  query: config.init_state.query,
+  showChromPos: false,
+  selectRegion: false,
+});
+const initApiCalls = Array.from({ length: 4 }, (_, i) => initApiCall(i));
+
 const initSelectRect = {
   isVisible: false,
   startX: 0,
@@ -78,14 +54,9 @@ const initSelectRect = {
 };
 
 const initialState: HeatMapStateType = {
-  dataset_name: "mouse2_slice99_4", //Ramani
-  resolution: "100000",
+  ...config.init_state,
   all_resolution: [],
   chrom_lengths: [],
-  app_size: 500,
-  contact_map_size: 400,
-  pix_size: 2,
-  map_cnts: 4,
   apiCalls: initApiCalls,
   selectedSidebarItem: null,
   selectRect: initSelectRect,

@@ -2,16 +2,18 @@ import { configureStore } from "@reduxjs/toolkit";
 
 import { rootApi } from "./apiSlice";
 import heatmap2DReducer from "./heatmap2DSlice";
+import layoutReducer from "./layoutSlice";
 
 const store = configureStore({
   reducer: {
     [rootApi.reducerPath]: rootApi.reducer,
     heatmap2D: heatmap2DReducer,
+    layout: layoutReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
-      immutableCheck: false,
-      serializableCheck: false,
+      immutableCheck: true,
+      serializableCheck: true,
     }).concat(rootApi.middleware),
 });
 

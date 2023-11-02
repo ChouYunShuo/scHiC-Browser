@@ -5,7 +5,7 @@ import * as d3 from "d3";
 import { zoom, ZoomTransform, select } from "d3";
 import { ColorModeContext, tokens } from "../../theme";
 import { Grid, useTheme } from "@mui/material";
-import HeatMap from "../../components/ContactMap2D";
+import HeatMap from "../../components/ContactMap/ContactMap2D";
 import { updateMapSelectCells } from "../../redux/heatmap2DSlice";
 interface Datum {
   pc1: number;

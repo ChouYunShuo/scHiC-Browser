@@ -1,11 +1,11 @@
 import { useRef, useState, useEffect, useCallback, useMemo } from "react";
 import { useContext } from "react";
-import { ColorModeContext, tokens } from "../theme";
+import { ColorModeContext, tokens } from "../../theme";
 import { Box, useTheme } from "@mui/material";
 import * as PIXI from "pixi.js";
 import { Viewport } from "pixi-viewport";
 import * as d3 from "d3";
-import { useAppDispatch, useAppSelector } from "../redux/hooks";
+import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import {
   getTicksAndPosFromRange,
   getStartPositionAndRange,
@@ -15,23 +15,26 @@ import {
   getNewChromFromNewPos,
   getNewChromZoomOut,
   adjustChromValues,
-} from "../utils/utils";
+} from "../../utils/utils";
 import {
   useFetchContactMapDataQuery,
   useFetchTrackDataQuery,
-} from "../redux/apiSlice";
-import { updateSelectRect, updateApiChromQuery } from "../redux/heatmap2DSlice";
+} from "../../redux/apiSlice";
+import {
+  updateSelectRect,
+  updateApiChromQuery,
+} from "../../redux/heatmap2DSlice";
 import { addHorizontalTicksText, addVerticalTicksText } from "./ChromTickTrack";
 import { drawVerticalTrack, drawHorizontalTrack } from "./SignalTrack1D";
 import { drawRectWithText } from "./PixiChromText";
 import createHeatMapFromTexture from "./ContactMapTexture";
-import LoadingSpinner from "./LoadingPage";
+import LoadingSpinner from "../LoadingPage";
 // @ts-ignore
 import { dispatch as nb_dispatch } from "@nucleome/nb-dispatch";
-import ErrorAPI from "./ErrorComponent";
+import ErrorAPI from "../ErrorComponent";
 import { DragEvent } from "pixi-viewport/dist/types";
 import debounce from "lodash.debounce";
-import { initRect, drawSelectRect, createGraphics } from "../utils/heatmap";
+import { initRect, drawSelectRect, createGraphics } from "../../utils/heatmap";
 
 interface HeatMapProps {
   map_id: number;

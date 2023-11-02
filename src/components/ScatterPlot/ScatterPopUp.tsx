@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useAppDispatch, useAppSelector } from "../redux/hooks";
-import { updateMapSelectCells } from "../redux/heatmap2DSlice";
+import { useAppDispatch, useAppSelector } from "../../redux/hooks";
+import { updateMapSelectCells } from "../../redux/heatmap2DSlice";
 import {
   Box,
   Button,
@@ -14,7 +14,7 @@ import {
 import { SelectChangeEvent } from "@mui/material/Select";
 import { styled } from "@mui/system";
 import shouldForwardProp from "@styled-system/should-forward-prop";
-import { tokens } from "../theme";
+import { tokens } from "../../theme";
 const CenteredBox = styled(Box)({
   display: "flex",
   justifyContent: "center",
@@ -60,7 +60,7 @@ const ButtonContainer = styled(Box, {
   }),
 }));
 
-type UmapPopUpProps = {
+type ScatterPopUpProps = {
   isVisible: boolean;
   handleVisToggle: () => void;
   handleMapToggle: (selectedMap: number) => void;
@@ -68,7 +68,7 @@ type UmapPopUpProps = {
   pWidth: number;
 };
 
-const UmapPopUp: React.FC<UmapPopUpProps> = ({
+const ScatterPopUp: React.FC<ScatterPopUpProps> = ({
   isVisible,
   handleVisToggle,
   handleMapToggle,
@@ -164,4 +164,4 @@ const UmapPopUp: React.FC<UmapPopUpProps> = ({
   );
 };
 
-export default UmapPopUp;
+export default ScatterPopUp;

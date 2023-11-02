@@ -1,6 +1,6 @@
 import * as PIXI from "pixi.js";
-import store from "../redux/store";
-import { tickType } from "../utils/utils";
+import store from "../../redux/store";
+import { tickType } from "../../utils/utils";
 import { format, precisionPrefix, formatPrefix } from "d3-format";
 
 const formatText = (pos: number) => {

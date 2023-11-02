@@ -1,22 +1,18 @@
 import { styled } from "@mui/system";
-import { tokens } from "../theme";
+import { tokens } from "../../theme";
 import { Box, useTheme, Grid, IconButton } from "@mui/material";
 import ZoomInIcon from "@mui/icons-material/ZoomIn";
 import HighlightAltIcon from "@mui/icons-material/HighlightAlt";
 import InvertColorsIcon from "@mui/icons-material/InvertColors";
 
-const MyStyledButton = styled(IconButton)(({ theme }) => ({
-  //backgroundColor: tokens(theme.palette.mode).primary[300],
-}));
-
-type EmbedTopBarProps = {
+type Scatter2DControlsProps = {
   isZoom: boolean;
   isCellSelect: boolean;
   handleZoomToggle: () => void;
   handleColorToggle: () => void;
 };
 
-const EmbedTopBar: React.FC<EmbedTopBarProps> = ({
+const Scatter2DControls: React.FC<Scatter2DControlsProps> = ({
   isZoom,
   isCellSelect,
   handleZoomToggle,
@@ -32,7 +28,7 @@ const EmbedTopBar: React.FC<EmbedTopBarProps> = ({
       display="flex"
       justifyContent="flex-start"
     >
-      <MyStyledButton
+      <IconButton
         style={{
           backgroundColor: isCellSelect
             ? colors.primary[300]
@@ -42,25 +38,25 @@ const EmbedTopBar: React.FC<EmbedTopBarProps> = ({
         onClick={() => handleColorToggle()}
       >
         <InvertColorsIcon />
-      </MyStyledButton>
-      <MyStyledButton
+      </IconButton>
+      <IconButton
         style={{
           backgroundColor: isZoom ? colors.primary[300] : colors.primary[400],
         }}
         onClick={() => !isZoom && handleZoomToggle()}
       >
         <ZoomInIcon />
-      </MyStyledButton>
-      <MyStyledButton
+      </IconButton>
+      <IconButton
         style={{
           backgroundColor: !isZoom ? colors.primary[300] : colors.primary[400],
         }}
         onClick={() => isZoom && handleZoomToggle()}
       >
         <HighlightAltIcon />
-      </MyStyledButton>
+      </IconButton>
     </Box>
   );
 };
 
-export default EmbedTopBar;
+export default Scatter2DControls;

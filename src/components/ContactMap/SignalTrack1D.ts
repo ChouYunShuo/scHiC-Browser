@@ -1,6 +1,6 @@
 import * as PIXI from "pixi.js";
 import { scaleLinear } from "d3-scale";
-import { useFetchTrackDataQuery } from "../redux/apiSlice";
+import { useFetchTrackDataQuery } from "../../redux/apiSlice";
 
 type PointType = {
   x: number;
