@@ -6,7 +6,7 @@ type chromQueryType = {
   chrom2: string;
 };
 
-type apiCallType = {
+export type apiCallType = {
   id: number;
   selectedCells: string[];
   query: chromQueryType;

@@ -4,7 +4,7 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { useTheme } from "@mui/system";
 
 import { tokens } from "../theme";
-import GridLayoutCMapSetting from "./GridLayoutCellSetting";
+import GridLayoutCMapSetting from "./GridLayoutCmapSetting";
 
 type GridLayoutTopbarProps = {
   id: number;

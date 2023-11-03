@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useFetchEmbedQuery, useFetchMetaQuery } from "../../redux/apiSlice";
+import { apiCallType } from "../../redux/heatmap2DSlice";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import * as d3 from "d3";
 import { zoom, ZoomTransform } from "d3";
@@ -25,6 +26,7 @@ function vwToPixels(vw: number) {
 const Scatter2D: React.FC = () => {
   const [formattedData, setFormattedData] = useState<Datum[]>([]);
   const [selectedCells, setSelectedCells] = useState<string[]>([]);
+  const apiCalls = useAppSelector((state) => state.heatmap2D.apiCalls);
   const [isZoom, setIsZoom] = useState<boolean>(true);
   const [isColorCellSelect, setIsColorCellSelect] = useState<boolean>(false);
   const [isPopup, setIsPopup] = useState<boolean>(false);
@@ -103,6 +105,29 @@ const Scatter2D: React.FC = () => {
       setFormattedData(formattedData);
     }
   }, [isLoading, rawEmbedData, cell_label]);
+
+  useEffect(() => {
+    // A function to check if the cell is selected and return the corresponding map id
+    const getSelectMapForCell = (
+      cellId: string,
+      apiCalls: apiCallType[]
+    ): string => {
+      // Find the apiCall that contains the cellId in its selectedCells array
+      const apiCallWithCell = apiCalls.find((apiCall) =>
+        apiCall.selectedCells.includes(cellId)
+      );
+
+      // Return the corresponding map id, or "0" if the cell is not selected
+      return apiCallWithCell ? (apiCallWithCell.id + 1).toString() : "0";
+    };
+
+    // Map over the formattedData to update the selectMap field
+    const updatedData = formattedData.map((datum) => ({
+      ...datum,
+      selectMap: getSelectMapForCell(datum.cellId, apiCalls),
+    }));
+    setFormattedData(updatedData);
+  }, [apiCalls]);
 
   const handleContactMapToggle = (selected_map: number) => {
     formattedData.forEach((cell) => {
@@ -215,10 +240,9 @@ const Scatter2D: React.FC = () => {
     }
   }, [isColorCellSelect]);
 
-  const hasData = formattedData.length > 0;
   useEffect(() => {
     //console.log("In embed get data drawSvg");
-    if (ref.current && formattedData.length != 0) {
+    if (ref.current && formattedData.length > 0) {
       const svg = d3.select(ref.current);
 
       svg.selectAll("*").remove();
@@ -233,7 +257,7 @@ const Scatter2D: React.FC = () => {
         g.remove(); // Remove the <g> element when the component unmounts
       };
     }
-  }, [hasData]);
+  }, [formattedData.length]);
   useEffect(() => {
     if (ref.current) {
       const svg = d3.select(ref.current);
@@ -243,6 +267,7 @@ const Scatter2D: React.FC = () => {
       drawSvg(g);
     }
   }, [theme]);
+
   useEffect(() => {
     if (ref.current && formattedData.length != 0) {
       const svg = d3.select(ref.current);
@@ -252,7 +277,7 @@ const Scatter2D: React.FC = () => {
       let lassoPath: [number, number][] = [];
       // Create a zoom behavior
       const zoomBehavior = zoom()
-        .scaleExtent([0.5, 5]) // This defines the range of zoom (0.5x to 5x here)
+        .scaleExtent([0.4, 5]) // This defines the range of zoom (0.5x to 5x here)
         .translateExtent([
           [-width, -height],
           [2 * width, 2 * height],

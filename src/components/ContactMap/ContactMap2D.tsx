@@ -59,7 +59,6 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const colorMode = useContext(ColorModeContext);
-
   // load data from redux slice
   const range1 = useAppSelector(
     (state) => state.heatmap2D.apiCalls[map_id]?.query.chrom1
@@ -67,7 +66,6 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
   const range2 = useAppSelector(
     (state) => state.heatmap2D.apiCalls[map_id]?.query.chrom2
   );
-
   const app_size = useAppSelector((state) => state.heatmap2D.app_size);
   const contact_map_size = useAppSelector(
     (state) => state.heatmap2D.contact_map_size
@@ -84,7 +82,6 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
   );
   const selectRect = useAppSelector((state) => state.heatmap2D.selectRect);
   const dispatch = useAppDispatch();
-
   // pixi related variables
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [contact2d_container, setContainer] = useState<PIXI.Container>(
