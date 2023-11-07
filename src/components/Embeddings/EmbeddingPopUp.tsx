@@ -60,7 +60,7 @@ const ButtonContainer = styled(Box, {
   }),
 }));
 
-type ScatterPopUpProps = {
+type EmbeddingPopUpProps = {
   isVisible: boolean;
   handleVisToggle: () => void;
   handleMapToggle: (selectedMap: number) => void;
@@ -68,7 +68,7 @@ type ScatterPopUpProps = {
   pWidth: number;
 };
 
-const ScatterPopUp: React.FC<ScatterPopUpProps> = ({
+const EmbeddingPopUp: React.FC<EmbeddingPopUpProps> = ({
   isVisible,
   handleVisToggle,
   handleMapToggle,
@@ -164,4 +164,4 @@ const ScatterPopUp: React.FC<ScatterPopUpProps> = ({
   );
 };
 
-export default ScatterPopUp;
+export default EmbeddingPopUp;

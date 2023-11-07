@@ -1,24 +1,21 @@
 import { useState, useEffect, useRef } from "react";
-import {
-  useFetchSpatialQuery,
-  useFetchGeneExprQuery,
-} from "../../redux/apiSlice";
+import { useFetchEmbedQuery, useFetchMetaQuery } from "../../redux/apiSlice";
 import { apiCallType } from "../../redux/heatmap2DSlice";
-import { useAppSelector } from "../../redux/hooks";
+import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import * as d3 from "d3";
 import { zoom, ZoomTransform } from "d3";
 import { tokens } from "../../theme";
 import { Box, useTheme, Grid } from "@mui/material";
+import EmbeddingControls from "./EmbeddingControls";
+import EmbeddingPopUp from "./EmbeddingPopUp";
 import { euclideanDistance } from "../../utils/utils";
 import LoadingSpinner from "../LoadingPage";
 import ErrorAPI from "../ErrorComponent";
-import SpatialControls from "./SpatialControls";
-import SpatialPopUp from "./SpatialPopUp";
 
 interface Datum {
-  x: number;
-  y: number;
-  expr: number;
+  pc1: number;
+  pc2: number;
+  cellType: string;
   cellId: string;
   selectMap: string;
 }
@@ -26,7 +23,7 @@ interface Datum {
 function vwToPixels(vw: number) {
   return vw * (window.innerWidth / 100);
 }
-const Spatials: React.FC = () => {
+const Scatter2D: React.FC = () => {
   const [formattedData, setFormattedData] = useState<Datum[]>([]);
   const [selectedCells, setSelectedCells] = useState<string[]>([]);
   const apiCalls = useAppSelector((state) => state.heatmap2D.apiCalls);
@@ -37,14 +34,6 @@ const Spatials: React.FC = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const ref = useRef<SVGSVGElement | null>(null);
-  const legendRef = useRef<SVGSVGElement | null>(null);
-
-  const width = vwToPixels(45);
-  const height = vwToPixels(45);
-  const DivRef = useRef<HTMLDivElement>(null);
-  let currentWidth = DivRef.current ? DivRef.current.offsetWidth : width;
-  const xExtent = d3.extent(formattedData, (d) => d.x) as [number, number];
-  const yExtent = d3.extent(formattedData, (d) => d.y) as [number, number];
   const lassoRef = useRef<d3.Selection<
     SVGPathElement,
     unknown,
@@ -53,6 +42,12 @@ const Spatials: React.FC = () => {
   > | null>(null);
   const lassoThreshold = 50;
 
+  const width = vwToPixels(45);
+  const height = vwToPixels(45);
+  const DivRef = useRef<HTMLDivElement>(null);
+  let currentWidth = DivRef.current ? DivRef.current.offsetWidth : width;
+  const xExtent = d3.extent(formattedData, (d) => d.pc1) as [number, number];
+  const yExtent = d3.extent(formattedData, (d) => d.pc2) as [number, number];
   const xScale = d3
     .scaleLinear()
     .domain([xExtent[0] - 1, xExtent[1] + 1])
@@ -63,23 +58,11 @@ const Spatials: React.FC = () => {
     .domain([yExtent[0] - 1, yExtent[1] + 1])
     .range([height, 0]);
 
-  const {
-    data: rawSpatialData,
-    isLoading,
-    isFetching,
-    error,
-  } = useFetchSpatialQuery({
-    dataset_name: heatmap_state.dataset_name,
-  });
-  const {
-    data: geneExprData,
-    isLoading: isExprLoading,
-    isFetching: isExprFetching,
-    error: exprError,
-  } = useFetchGeneExprQuery({
-    dataset_name: heatmap_state.dataset_name,
-    index: "0",
-  });
+  const CellTypeColor: d3.ScaleOrdinal<string, string> = d3
+    .scaleOrdinal<string>()
+    .domain(Array.from(new Set(formattedData.map((d) => d.cellType))))
+    .range(d3.schemeCategory10);
+
   const CellSelectColor: d3.ScaleOrdinal<string, string> = d3
     .scaleOrdinal<string>()
     .domain(
@@ -87,30 +70,33 @@ const Spatials: React.FC = () => {
     )
     .range(d3.schemeCategory10);
 
-  const minRange = d3.min(formattedData, (d) =>
-    typeof d.expr === "number" ? d.expr : Infinity
-  );
-  const maxRange = d3.max(formattedData, (d) =>
-    typeof d.expr === "number" ? d.expr : -Infinity
-  );
-
-  const colorScale =
-    theme.palette.mode === "dark"
-      ? d3
-          .scaleSequential(d3.interpolateViridis)
-          //@ts-ignore
-          .domain([minRange, maxRange]) // adjust domain for log scale
-      : //@ts-ignore
-        d3.scaleSequential(d3.interpolateReds).domain([minRange, maxRange]); // adjust domain for log scale
+  const {
+    data: rawEmbedData,
+    isLoading,
+    isFetching,
+    error,
+  } = useFetchEmbedQuery({
+    dataset_name: heatmap_state.dataset_name,
+    embed_type: "umap",
+  });
+  const {
+    data: cell_label,
+    isLoading: isLabelLoading,
+    isFetching: isLabelFetching,
+    error: labelError,
+  } = useFetchMetaQuery({
+    dataset_name: heatmap_state.dataset_name,
+    meta_type: "label",
+  });
 
   useEffect(() => {
-    if (!isLoading && rawSpatialData && !isExprLoading && geneExprData) {
-      const formattedData = rawSpatialData.map(([x, y], index) => {
-        const expr = geneExprData?.[index] ?? "N/A";
+    if (!isLoading && rawEmbedData && !isLabelLoading && cell_label) {
+      const formattedData = rawEmbedData.map(([pc1, pc2], index) => {
+        const label = cell_label?.[index] ?? "N/A";
         return {
-          x: typeof x === "string" ? parseFloat(x) : x,
-          y: typeof y === "string" ? parseFloat(y) : y,
-          expr: typeof expr === "string" ? parseFloat(expr) : expr,
+          pc1: typeof pc1 === "string" ? parseFloat(pc1) : pc1,
+          pc2: typeof pc2 === "string" ? parseFloat(pc2) : pc2,
+          cellType: label,
           cellId: index.toString(),
           selectMap: "0",
         };
@@ -118,7 +104,7 @@ const Spatials: React.FC = () => {
 
       setFormattedData(formattedData);
     }
-  }, [isLoading, rawSpatialData, geneExprData]);
+  }, [isLoading, rawEmbedData, cell_label]);
 
   useEffect(() => {
     // A function to check if the cell is selected and return the corresponding map id
@@ -157,9 +143,7 @@ const Spatials: React.FC = () => {
       drawSvg(svg.select("g"));
     }
   };
-  const handleVisToggle = () => {
-    setIsPopup((prev) => !prev);
-  };
+
   const handleZoomToggle = () => {
     setIsZoom((prevIsZoom) => !prevIsZoom);
     if (lassoRef.current) {
@@ -170,6 +154,10 @@ const Spatials: React.FC = () => {
   const handleColorToggle = () => {
     setIsColorCellSelect((prev) => !prev);
   };
+  const handleVisToggle = () => {
+    setIsPopup((prev) => !prev);
+  };
+
   const drawSvg = (
     g: d3.Selection<SVGGElement, unknown, null, undefined>,
     updateColorOnly: boolean = false
@@ -179,9 +167,9 @@ const Spatials: React.FC = () => {
         g.selectAll("circle")
           .data(formattedData)
           .join("circle")
-          .attr("cx", (d) => xScale(d.x))
-          .attr("cy", (d) => yScale(d.y))
-          .attr("r", (d) => 3);
+          .attr("cx", (d) => xScale(d.pc1))
+          .attr("cy", (d) => yScale(d.pc2))
+          .attr("r", (d) => 1.5);
       }
       g.selectAll("circle")
         .data(formattedData)
@@ -193,120 +181,50 @@ const Spatials: React.FC = () => {
               ? "black"
               : d3.rgb(CellSelectColor(d.selectMap));
           } else {
-            return colorScale(d.expr);
+            return d3.rgb(CellTypeColor(d.cellType)).darker(0.5);
           }
         });
       generateLegend();
     }
   };
   const generateLegend = () => {
+    const legend = d3.select("#legend-container");
+    legend.selectAll("*").remove();
+    let colorData;
     if (isColorCellSelect) {
-      d3.select(legendRef.current).selectAll("*").remove();
-      let legend = d3.select("#legend2-container");
-      legend.selectAll("*").remove();
-      let colorData;
       colorData = Array.from({ length: heatmap_state.map_cnts }, (_, i) =>
         String(i + 1)
       );
+    } else {
+      colorData = Array.from(new Set(formattedData.map((d) => d.cellType)));
+    }
 
-      const legendItems = legend
-        .selectAll("div")
-        .data(colorData)
-        .join("div")
-        .style("display", "flex")
-        .style("align-items", "center")
-        .style("margin-bottom", "5px");
+    const legendItems = legend
+      .selectAll("div")
+      .data(colorData)
+      .join("div")
+      .style("display", "flex")
+      .style("align-items", "center")
+      .style("margin-bottom", "5px");
 
-      legendItems
-        .append("div")
-        .style("width", "15px")
-        .style("height", "15px")
-        //@ts-ignore
-        .style("background-color", function (d) {
+    legendItems
+      .append("div")
+      .style("width", "15px")
+      .style("height", "15px")
+      //@ts-ignore
+      .style("background-color", function (d) {
+        if (isColorCellSelect) {
           return CellSelectColor(d);
-        })
-        .style("margin-right", "5px");
+        }
+        return CellTypeColor(d);
+      })
+      .style("margin-right", "5px");
+    if (isColorCellSelect) {
       legendItems.append("div").text((d) => "Map " + d);
     } else {
-      d3.select("#legend2-container").selectAll("*").remove();
-      let legend = d3.select(legendRef.current);
-      //legend.selectAll("*").remove();
-
-      const legendHeight = 200; // define your legend height
-      const gradientId = "legendGradient";
-      legend.attr("height", legendHeight).attr("width", 30);
-
-      // Append a defs (for definition) element to your SVG
-      const defs = legend.append("defs");
-
-      // Append a linearGradient element to the defs and give it a unique id
-      const linearGradient = defs
-        .append("linearGradient")
-        .attr("id", gradientId)
-        .attr("gradientUnits", "userSpaceOnUse") // add this line
-        .attr("x1", "0")
-        .attr("y1", String(legendHeight))
-        .attr("x2", "0")
-        .attr("y2", "0");
-
-      // Set the color for the start (0%)
-      linearGradient
-        .append("stop")
-        .attr("offset", "0%")
-        //@ts-ignore
-        .attr("stop-color", colorScale.range()[0]);
-
-      // Set the color for the end (100%)
-      linearGradient
-        .append("stop")
-        .attr("offset", "100%")
-        //@ts-ignore
-        .attr("stop-color", colorScale.range()[1]);
-
-      // Draw the rectangle and fill it with the gradient
-      legend
-        .append("rect")
-        .attr("width", 15) // this could be adjusted
-        .attr("height", legendHeight)
-        .style("fill", "url(#" + gradientId + ")");
-
-      // Create scale that we will use as our axis
-      const yScale = d3
-        .scaleLinear()
-        .range([legendHeight, 0])
-        .domain(colorScale.domain());
-
-      // Add the y Axis
-      legend.append("g").attr("class", "axis").call(d3.axisRight(yScale)); // Create an axis component with d3.axisRight
+      legendItems.append("div").text((d) => d);
     }
   };
-
-  useEffect(() => {
-    if (ref.current && formattedData.length > 0) {
-      const svg = d3.select(ref.current);
-
-      svg.selectAll("*").remove();
-      svg.style("background-color", colors.primary[400]);
-      const g = svg.append("g");
-      drawSvg(g);
-
-      // Cleanup function
-      return () => {
-        g.remove(); // Remove the <g> element when the component unmounts
-      };
-    }
-  }, [formattedData.length]);
-
-  useEffect(() => {
-    if (ref.current) {
-      const svg = d3.select(ref.current);
-      const g = svg.select("g");
-      svg.style("background-color", colors.primary[400]);
-      //@ts-ignore
-      drawSvg(g);
-    }
-  }, [theme]);
-
   useEffect(() => {
     if (ref.current && formattedData.length != 0) {
       const svg = d3.select(ref.current);
@@ -323,6 +241,34 @@ const Spatials: React.FC = () => {
   }, [isColorCellSelect]);
 
   useEffect(() => {
+    //console.log("In embed get data drawSvg");
+    if (ref.current && formattedData.length > 0) {
+      const svg = d3.select(ref.current);
+
+      svg.selectAll("*").remove();
+      svg.style("background-color", colors.primary[400]);
+      // Create a 'g' element inside the SVG
+      const g = svg.append("g");
+
+      drawSvg(g);
+
+      // Cleanup function
+      return () => {
+        g.remove(); // Remove the <g> element when the component unmounts
+      };
+    }
+  }, [formattedData.length]);
+  useEffect(() => {
+    if (ref.current) {
+      const svg = d3.select(ref.current);
+      const g = svg.select("g");
+      svg.style("background-color", colors.primary[400]);
+      //@ts-ignore
+      drawSvg(g);
+    }
+  }, [theme]);
+
+  useEffect(() => {
     if (ref.current && formattedData.length != 0) {
       const svg = d3.select(ref.current);
       const g = svg.select("g");
@@ -331,10 +277,10 @@ const Spatials: React.FC = () => {
       let lassoPath: [number, number][] = [];
       // Create a zoom behavior
       const zoomBehavior = zoom()
-        .scaleExtent([0.4, 5]) // This defines the range of zoom (0.5x to 5x here)
+        .scaleExtent([0.4, 5]) // This defines the range of zoom (0.4x to 5x here)
         .translateExtent([
-          [-width, -height],
-          [2 * width, 2 * height],
+          [-3 * width, -1.5 * height],
+          [3 * width, 2 * height],
         ]) // This defines the range of panning
         .on("zoom", (event: { transform: ZoomTransform }) => {
           g.attr("transform", event.transform.toString());
@@ -356,7 +302,7 @@ const Spatials: React.FC = () => {
         }
 
         g.selectAll("circle")
-          .attr("r", 3)
+          .attr("r", 2)
           //@ts-ignore
           .style("fill", function (d: Datum) {
             if (isColorCellSelect) {
@@ -365,7 +311,7 @@ const Spatials: React.FC = () => {
                 ? "black"
                 : d3.rgb(CellSelectColor(d.selectMap));
             } else {
-              return colorScale(d.expr);
+              return d3.rgb(CellTypeColor(d.cellType)).darker(0.5);
             }
           });
 
@@ -418,15 +364,15 @@ const Spatials: React.FC = () => {
 
         const selected = formattedData
           .filter((d) => {
-            const cellX = xScale(d.x);
-            const cellY = yScale(d.y);
+            const cellX = xScale(d.pc1);
+            const cellY = yScale(d.pc2);
             let [tranX, tranY] = currentTransform.apply([cellX, cellY]);
             return d3.polygonContains(lassoPath, [tranX, tranY]);
           })
           .map((d) => d.cellId);
 
         g.selectAll("circle")
-          .attr("r", 3)
+          .attr("r", 2)
           //@ts-ignore
           .style("fill", (d: Datum) => {
             if (selected.includes(d.cellId)) {
@@ -436,7 +382,7 @@ const Spatials: React.FC = () => {
                   ? "black"
                   : d3.rgb(CellSelectColor(d.selectMap));
               } else {
-                return colorScale(d.expr);
+                return d3.rgb(CellTypeColor(d.cellType)).brighter(1.5);
               }
             } else {
               if (isColorCellSelect) {
@@ -445,7 +391,7 @@ const Spatials: React.FC = () => {
                   ? "black"
                   : d3.rgb(CellSelectColor(d.selectMap));
               } else {
-                return colorScale(d.expr);
+                return d3.rgb(CellTypeColor(d.cellType)).darker(0.5);
               }
             }
           });
@@ -475,19 +421,19 @@ const Spatials: React.FC = () => {
           display: error ? "none" : "block", // Hide canvas when loadingdisplay= error ? "none" : "block", // Hide canvas when loading
         }}
       >
-        <SpatialControls
+        <EmbeddingControls
           isZoom={isZoom}
           isCellSelect={isColorCellSelect}
           handleZoomToggle={handleZoomToggle}
           handleColorToggle={handleColorToggle}
         />
-        <SpatialPopUp
+        <EmbeddingPopUp
           isVisible={isPopup}
           handleVisToggle={handleVisToggle}
           handleMapToggle={handleContactMapToggle}
           selectedUmapCells={selectedCells}
           pWidth={currentWidth}
-        ></SpatialPopUp>
+        ></EmbeddingPopUp>
         <svg
           ref={ref}
           width="100%"
@@ -495,30 +441,16 @@ const Spatials: React.FC = () => {
           style={{ border: "1px solid rgba(0, 0, 0, 0.2)" }}
         />
 
-        {isColorCellSelect && (
-          <Box
-            position="absolute"
-            top={0}
-            right={0}
-            paddingTop={1}
-            width="10%"
-            id="legend2-container"
-          ></Box>
-        )}
-        {!isColorCellSelect && (
-          <Box
-            position="absolute"
-            top={0}
-            right={0}
-            paddingTop={1}
-            zIndex={50}
-            width="10%"
-          >
-            <svg width="100%" height="100%" ref={legendRef} />
-          </Box>
-        )}
+        <Box
+          position="absolute"
+          top={0}
+          right={0}
+          paddingTop={1}
+          width="10%"
+          id="legend-container"
+        ></Box>
       </Grid>
-      {isFetching || isLoading || isExprFetching || isExprLoading ? (
+      {isFetching || isLoading ? (
         <LoadingSpinner />
       ) : error ? (
         <ErrorAPI />
@@ -527,4 +459,4 @@ const Spatials: React.FC = () => {
   );
 };
 
-export default Spatials;
+export default Scatter2D;

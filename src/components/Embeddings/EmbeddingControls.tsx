@@ -5,14 +5,14 @@ import ZoomInIcon from "@mui/icons-material/ZoomIn";
 import HighlightAltIcon from "@mui/icons-material/HighlightAlt";
 import InvertColorsIcon from "@mui/icons-material/InvertColors";
 
-type Scatter2DControlsProps = {
+type EmbeddingControlsProps = {
   isZoom: boolean;
   isCellSelect: boolean;
   handleZoomToggle: () => void;
   handleColorToggle: () => void;
 };
 
-const Scatter2DControls: React.FC<Scatter2DControlsProps> = ({
+const EmbeddingControls: React.FC<EmbeddingControlsProps> = ({
   isZoom,
   isCellSelect,
   handleZoomToggle,
@@ -59,4 +59,4 @@ const Scatter2DControls: React.FC<Scatter2DControlsProps> = ({
   );
 };
 
-export default Scatter2DControls;
+export default EmbeddingControls;
