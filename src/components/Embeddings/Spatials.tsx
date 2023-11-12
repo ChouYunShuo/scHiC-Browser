@@ -70,6 +70,8 @@ const Spatials: React.FC = () => {
     error,
   } = useFetchSpatialQuery({
     dataset_name: heatmap_state.dataset_name,
+  },{
+    refetchOnMountOrArgChange: true
   });
   const {
     data: geneExprData,
@@ -103,6 +105,7 @@ const Spatials: React.FC = () => {
       : //@ts-ignore
         d3.scaleSequential(d3.interpolateReds).domain([minRange, maxRange]); // adjust domain for log scale
 
+  console.log(isFetching, isExprFetching,rawSpatialData)
   useEffect(() => {
     if (!isLoading && rawSpatialData && !isExprLoading && geneExprData) {
       const formattedData = rawSpatialData.map(([x, y], index) => {
@@ -118,7 +121,30 @@ const Spatials: React.FC = () => {
 
       setFormattedData(formattedData);
     }
-  }, [isLoading, rawSpatialData, geneExprData]);
+  }, [isFetching, isExprFetching, rawSpatialData, geneExprData]);
+
+  useEffect(() => {
+   if (ref.current && formattedData.length > 0) {
+      const svg = d3.select(ref.current);
+      svg.selectAll("*").remove();
+      const g = svg.append("g");
+      svg.style("background-color", colors.primary[400]);
+      drawSvg(g);
+      return () => {
+        g.remove(); // Remove the <g> element when the component unmounts
+      };
+    }
+  }, [formattedData]);
+
+  useEffect(() => {
+    if (ref.current && formattedData.length != 0) {
+      const svg = d3.select(ref.current);
+      let g = svg.select("g");
+      svg.style("background-color", colors.primary[400]);
+      //@ts-ignore
+      drawSvg(g, true);
+    }
+  }, [isColorCellSelect, theme]);
 
   useEffect(() => {
     // A function to check if the cell is selected and return the corresponding map id
@@ -142,6 +168,7 @@ const Spatials: React.FC = () => {
     }));
     setFormattedData(updatedData);
   }, [apiCalls]);
+  
 
   const handleContactMapToggle = (selected_map: number) => {
     formattedData.forEach((cell) => {
@@ -282,47 +309,6 @@ const Spatials: React.FC = () => {
   };
 
   useEffect(() => {
-    if (ref.current && formattedData.length > 0) {
-      const svg = d3.select(ref.current);
-
-      svg.selectAll("*").remove();
-      svg.style("background-color", colors.primary[400]);
-      const g = svg.append("g");
-      drawSvg(g);
-
-      // Cleanup function
-      return () => {
-        g.remove(); // Remove the <g> element when the component unmounts
-      };
-    }
-  }, [formattedData.length]);
-
-  useEffect(() => {
-    if (ref.current) {
-      const svg = d3.select(ref.current);
-      const g = svg.select("g");
-      svg.style("background-color", colors.primary[400]);
-      //@ts-ignore
-      drawSvg(g);
-    }
-  }, [theme]);
-
-  useEffect(() => {
-    if (ref.current && formattedData.length != 0) {
-      const svg = d3.select(ref.current);
-      let g = svg.select("g");
-      if (g.empty()) {
-        //@ts-ignore
-        g = svg.append("g");
-      }
-
-      const updateColorOnly = true;
-      //@ts-ignore
-      drawSvg(g, updateColorOnly);
-    }
-  }, [isColorCellSelect]);
-
-  useEffect(() => {
     if (ref.current && formattedData.length != 0) {
       const svg = d3.select(ref.current);
       const g = svg.select("g");
@@ -460,7 +446,7 @@ const Spatials: React.FC = () => {
         svg.on(".zoom", null);
       };
     }
-  }, [formattedData, isZoom, isColorCellSelect]);
+  }, [formattedData, isZoom, isColorCellSelect, theme]);
 
   return (
     <Box width="100%" height="100%">

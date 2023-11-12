@@ -41,7 +41,6 @@ const Scatter2D: React.FC = () => {
     undefined
   > | null>(null);
   const lassoThreshold = 50;
-
   const width = vwToPixels(45);
   const height = vwToPixels(45);
   const DivRef = useRef<HTMLDivElement>(null);
@@ -78,6 +77,8 @@ const Scatter2D: React.FC = () => {
   } = useFetchEmbedQuery({
     dataset_name: heatmap_state.dataset_name,
     embed_type: "umap",
+  }, {
+    refetchOnMountOrArgChange: true
   });
   const {
     data: cell_label,
@@ -88,10 +89,11 @@ const Scatter2D: React.FC = () => {
     dataset_name: heatmap_state.dataset_name,
     meta_type: "label",
   });
-
+  
   useEffect(() => {
+    // Only proceed if all required data is available and not loading
     if (!isLoading && rawEmbedData && !isLabelLoading && cell_label) {
-      const formattedData = rawEmbedData.map(([pc1, pc2], index) => {
+      const newFormattedData = rawEmbedData.map(([pc1, pc2], index) => {
         const label = cell_label?.[index] ?? "N/A";
         return {
           pc1: typeof pc1 === "string" ? parseFloat(pc1) : pc1,
@@ -101,10 +103,34 @@ const Scatter2D: React.FC = () => {
           selectMap: "0",
         };
       });
-
-      setFormattedData(formattedData);
+  
+      setFormattedData(newFormattedData);
     }
-  }, [isLoading, rawEmbedData, cell_label]);
+  }, [rawEmbedData, cell_label, isFetching, isLabelFetching]); // Re-run when any of these dependencies change
+  
+  useEffect(() => {
+    if (ref.current && formattedData.length > 0) {
+      const svg = d3.select(ref.current);
+      svg.selectAll("*").remove();
+      const g = svg.append("g");
+      svg.style("background-color", colors.primary[400]);
+      drawSvg(g);
+      return () => {
+        g.remove(); // Cleanup when the component unmounts
+      };
+    }
+  }, [formattedData]); // Run when formattedData changes
+
+  useEffect(() => {
+    if (ref.current && formattedData.length != 0) {
+      const svg = d3.select(ref.current);
+      let g = svg.select("g");
+      svg.style("background-color", colors.primary[400]);
+      //@ts-ignore
+      drawSvg(g, true);
+    }
+  }, [isColorCellSelect, theme]);
+
 
   useEffect(() => {
     // A function to check if the cell is selected and return the corresponding map id
@@ -116,8 +142,6 @@ const Scatter2D: React.FC = () => {
       const apiCallWithCell = apiCalls.find((apiCall) =>
         apiCall.selectedCells.includes(cellId)
       );
-
-      // Return the corresponding map id, or "0" if the cell is not selected
       return apiCallWithCell ? (apiCallWithCell.id + 1).toString() : "0";
     };
 
@@ -225,48 +249,7 @@ const Scatter2D: React.FC = () => {
       legendItems.append("div").text((d) => d);
     }
   };
-  useEffect(() => {
-    if (ref.current && formattedData.length != 0) {
-      const svg = d3.select(ref.current);
-      let g = svg.select("g");
-      if (g.empty()) {
-        //@ts-ignore
-        g = svg.append("g");
-      }
 
-      const updateColorOnly = true;
-      //@ts-ignore
-      drawSvg(g, updateColorOnly);
-    }
-  }, [isColorCellSelect]);
-
-  useEffect(() => {
-    //console.log("In embed get data drawSvg");
-    if (ref.current && formattedData.length > 0) {
-      const svg = d3.select(ref.current);
-
-      svg.selectAll("*").remove();
-      svg.style("background-color", colors.primary[400]);
-      // Create a 'g' element inside the SVG
-      const g = svg.append("g");
-
-      drawSvg(g);
-
-      // Cleanup function
-      return () => {
-        g.remove(); // Remove the <g> element when the component unmounts
-      };
-    }
-  }, [formattedData.length]);
-  useEffect(() => {
-    if (ref.current) {
-      const svg = d3.select(ref.current);
-      const g = svg.select("g");
-      svg.style("background-color", colors.primary[400]);
-      //@ts-ignore
-      drawSvg(g);
-    }
-  }, [theme]);
 
   useEffect(() => {
     if (ref.current && formattedData.length != 0) {
@@ -406,7 +389,7 @@ const Scatter2D: React.FC = () => {
         svg.on(".zoom", null);
       };
     }
-  }, [formattedData, isZoom, isColorCellSelect]);
+  }, [formattedData, isZoom, isColorCellSelect, theme]);
 
   return (
     <Box width="100%" height="100%">

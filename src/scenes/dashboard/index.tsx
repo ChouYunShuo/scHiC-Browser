@@ -14,7 +14,6 @@ import { updateAllRes, updateChromLen } from "../../redux/heatmap2DSlice";
 import { fetchChromLens } from "../../utils/utils";
 import Scatter2D from "../../components/Embeddings/Scatter2D";
 import Spatials from "../../components/Embeddings/Spatials";
-import Error404 from "../../components/ErrorPage";
 import GridLayoutCellTopbar from "../../components/GridLayoutCellTopbar";
 import { updateGridLayout } from "../../redux/layoutSlice";
 

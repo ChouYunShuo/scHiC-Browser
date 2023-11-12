@@ -13,7 +13,7 @@ const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       immutableCheck: true,
-      serializableCheck: true,
+      serializableCheck: false,
     }).concat(rootApi.middleware),
 });
 
