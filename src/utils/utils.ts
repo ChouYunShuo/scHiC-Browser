@@ -42,13 +42,13 @@ export const fetchEmbedding = async (simpleQuery: EmbedQueryType) => {
 };
 
 export const chrom2idx = (chrom: string) => {
-  let chrom_name = chrom.substring(5);
+  let chrom_name = chrom.substring(3);
   if (chrom_name == "X") return 23;
   if (chrom_name == "Y") return 24;
   return Number(chrom_name) - 1;
 };
 export const getNbChrom = (range: string): string => {
-  var chrom = range.trim().split(":")[0].substring(5);
+  var chrom = range.trim().split(":")[0].substring(3);
   //console.log(chrom)
   return "chr" + chrom;
 };
@@ -217,6 +217,7 @@ export const getNewChromZoomIn = (range1: string, a: number) => {
 };
 export const getNewChromZoomOut = (range1: string, a: number) => {
   //range input: 0-40000000
+
   var chrom = range1.trim().split(":")[0];
   var rawrange = range1.trim().split(":")[1];
   try {
@@ -236,6 +237,7 @@ export const getNewChromZoomOut = (range1: string, a: number) => {
         Math.floor(mid - range).toString() +
         "-" +
         Math.floor(mid + range).toString();
+    console.log(range1, validateChrom(chrom_str));
     return validateChrom(chrom_str);
   } catch (err) {
     console.log(err);

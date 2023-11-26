@@ -18,7 +18,7 @@ export const formatPrecision = (pos: number) => {
 };
 const pixi_text_config = {
   fontFamily: "Arial",
-  fontSize: 12,
+  fontSize: 4,
   fill: 0xff0000,
 };
 export const addHorizontalTicksText = (
@@ -43,7 +43,7 @@ export const addHorizontalTicksText = (
 
     const text = new PIXI.Text(formatText(ticks[i].chrom_pos), {
       fontFamily: "Arial",
-      fontSize: 12,
+      fontSize: 10,
       fill: textColor,
     });
     text.x = padding_x + ticks[i].pix_pos;

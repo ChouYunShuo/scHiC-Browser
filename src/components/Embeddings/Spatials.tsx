@@ -68,11 +68,14 @@ const Spatials: React.FC = () => {
     isLoading,
     isFetching,
     error,
-  } = useFetchSpatialQuery({
-    dataset_name: heatmap_state.dataset_name,
-  },{
-    refetchOnMountOrArgChange: true
-  });
+  } = useFetchSpatialQuery(
+    {
+      dataset_name: heatmap_state.dataset_name,
+    },
+    {
+      refetchOnMountOrArgChange: true,
+    }
+  );
   const {
     data: geneExprData,
     isLoading: isExprLoading,
@@ -105,7 +108,7 @@ const Spatials: React.FC = () => {
       : //@ts-ignore
         d3.scaleSequential(d3.interpolateReds).domain([minRange, maxRange]); // adjust domain for log scale
 
-  console.log(isFetching, isExprFetching,rawSpatialData)
+  //console.log(isFetching, isExprFetching,rawSpatialData)
   useEffect(() => {
     if (!isLoading && rawSpatialData && !isExprLoading && geneExprData) {
       const formattedData = rawSpatialData.map(([x, y], index) => {
@@ -124,7 +127,7 @@ const Spatials: React.FC = () => {
   }, [isFetching, isExprFetching, rawSpatialData, geneExprData]);
 
   useEffect(() => {
-   if (ref.current && formattedData.length > 0) {
+    if (ref.current && formattedData.length > 0) {
       const svg = d3.select(ref.current);
       svg.selectAll("*").remove();
       const g = svg.append("g");
@@ -168,7 +171,6 @@ const Spatials: React.FC = () => {
     }));
     setFormattedData(updatedData);
   }, [apiCalls]);
-  
 
   const handleContactMapToggle = (selected_map: number) => {
     formattedData.forEach((cell) => {

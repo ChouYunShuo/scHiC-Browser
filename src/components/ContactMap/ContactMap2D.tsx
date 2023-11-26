@@ -66,6 +66,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
   const range2 = useAppSelector(
     (state) => state.heatmap2D.apiCalls[map_id]?.query.chrom2
   );
+  console.log(range1);
   const app_size = useAppSelector((state) => state.heatmap2D.app_size);
   const contact_map_size = useAppSelector(
     (state) => state.heatmap2D.contact_map_size
@@ -161,7 +162,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
     isFetching: sig1IsFetching,
     isLoading: sig1IsLoading,
   } = useFetchTrackDataQuery({
-    type: "insulation",
+    type: "insul_score", // ab_score, gene_score, insul_score
     chrom1: range1,
     dataset_name: dataset_name,
     resolution: resolution,
@@ -173,7 +174,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
     isFetching: sig2IsFetching,
     isLoading: sig2IsLoading,
   } = useFetchTrackDataQuery({
-    type: "insulation",
+    type: "insul_score",
     chrom1: range2,
     dataset_name: dataset_name,
     resolution: resolution,
@@ -284,7 +285,6 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
       const newChrom2 = getNewChromZoomOut(range2Ref.current, 1 / e.scale.y);
       range1Ref.current = newChrom1;
       range2Ref.current = newChrom2;
-
       dispatch(
         updateApiChromQuery({
           id: map_id,

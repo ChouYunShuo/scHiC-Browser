@@ -72,12 +72,14 @@ const Sidebar: React.FC = () => {
           display: "flex",
           alignItems: "center",
           justifyContent: "start",
-          width: "25%",
-          height: "30px",
-          backgroundColor: colors.primary[400],
+          width: "100%",
+          height: "60px",
+          backgroundColor: colors.primary[500],
+          ml: 2,
         }}
       >
-        <SidebarItem
+        <HicMapConfig />
+        {/* <SidebarItem
           selected={selected === 1}
           aboveSelected={false}
           belowSelected={selected === 2}
@@ -111,7 +113,7 @@ const Sidebar: React.FC = () => {
             backgroundColor: colors.primary[500],
             borderTopLeftRadius: selected === 3 ? 10 : 0,
           }}
-        ></Box>
+        ></Box> */}
       </Box>
 
       {/* {selected && (

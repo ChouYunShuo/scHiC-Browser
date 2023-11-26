@@ -1,14 +1,14 @@
 {
   "init_state": {
-    "dataset_name": "mouse2_slice99_all",
+    "dataset_name": "mouse2_slice99_4",
     "resolution": "100000",
     "app_size": 500,
     "contact_map_size": 400,
     "pix_size": 2,
     "map_cnts": 4,
     "query": {
-      "chrom1": "chrom2:0-100000000",
-      "chrom2": "chrom2:0-100000000"
+      "chrom1": "chr2:0-100000000",
+      "chrom2": "chr2:0-100000000"
     }
   },
   "layout": {

@@ -1,12 +1,19 @@
 import * as PIXI from "pixi.js";
 import { scaleLinear } from "d3-scale";
+import { min, max } from "d3";
 import { useFetchTrackDataQuery } from "../../redux/apiSlice";
 
 type PointType = {
   x: number;
   y: number;
 };
+function normalizeArray(data: number[]): number[] {
+  const scale = scaleLinear()
+    .domain([min(data)!, max(data)!])
+    .range([0, 1]);
 
+  return data.map((d) => scale(d));
+}
 export const drawVerticalTrack = (
   data: number[],
   app_size: number,
@@ -16,16 +23,20 @@ export const drawVerticalTrack = (
 ) => {
   // 1. Normalize & Scale Data:
   // Create y scale
-  const yScale = scaleLinear().domain([0, data.length]).range([0, app_size]);
+  const arr = normalizeArray(data);
+  const yScale = scaleLinear().domain([0, arr.length]).range([0, app_size]);
 
   // Create x scale
-  const xScale = scaleLinear().domain([0, 1]).range([tramsform_xy, 0]); // reverse as y is from top to bottom in canvas
+  const xScale = scaleLinear()
+    .domain([0, 1])
+    .range([tramsform_xy - 20, 0]); // reverse as y is from top to bottom in canvas
 
   // Map data points to scaled values
-  const points = data.map((d, i) => ({
+  const points = arr.map((d, i) => ({
     x: xScale(d),
     y: yScale(i),
   }));
+  //console.log(points)
   // 2. Draw with PIXI:
   const graphics = new PIXI.Graphics();
   if (colorMode === "dark") {
@@ -39,7 +50,7 @@ export const drawVerticalTrack = (
   for (let i = 1; i < points.length; i++) {
     graphics.lineTo(points[i].x, points[i].y);
   }
-  graphics.position.set(430, 50);
+  graphics.position.set(460, 50);
   container.addChild(graphics);
 };
 export const drawHorizontalTrack = (
@@ -51,12 +62,15 @@ export const drawHorizontalTrack = (
 ) => {
   // 1. Normalize & Scale Data:
   // Create x scale
-  const xScale = scaleLinear().domain([0, data.length]).range([0, app_size]);
+  const arr = normalizeArray(data);
+  const xScale = scaleLinear().domain([0, arr.length]).range([0, app_size]);
   // Create y scale
-  const yScale = scaleLinear().domain([0, 1]).range([tramsform_xy, 0]); // reverse as y is from top to bottom in canvas
+  const yScale = scaleLinear()
+    .domain([0, 1])
+    .range([tramsform_xy - 20, 0]); // reverse as y is from top to bottom in canvas
 
   // Map data points to scaled values
-  const points = data.map((d, i) => ({
+  const points = arr.map((d, i) => ({
     x: xScale(i),
     y: yScale(d),
   }));
@@ -73,7 +87,7 @@ export const drawHorizontalTrack = (
   for (let i = 1; i < points.length; i++) {
     graphics.lineTo(points[i].x, points[i].y);
   }
-  graphics.position.set(50, 430);
+  graphics.position.set(50, 460);
 
   container.addChild(graphics);
 };
