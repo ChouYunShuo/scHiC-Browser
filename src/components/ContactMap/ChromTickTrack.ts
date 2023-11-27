@@ -55,6 +55,16 @@ export const addHorizontalTicksText = (
   }
 };
 
+// Function to adjust the scale of text based on the container's scale
+const adjustTextScale = (text: PIXI.Text, container: PIXI.Container) => {
+  // Calculate the inverse scale
+  const inverseScaleX = 1 / container.scale.x;
+  const inverseScaleY = 1 / container.scale.y;
+
+  // Apply the inverse scale to the text
+  text.scale.set(inverseScaleX, inverseScaleY);
+};
+
 export const addVerticalTicksText = (
   ticks: tickType[],
   container: PIXI.Container,

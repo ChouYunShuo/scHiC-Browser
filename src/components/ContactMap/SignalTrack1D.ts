@@ -145,6 +145,22 @@ export const drawHorizontalScale = (
   container.addChild(line1);
   container.addChild(line2);
 };
+
+export const drawHorizontalTrackType = (
+  container: PIXI.Container,
+  textColor: string,
+  type: string
+) => {
+  const testConfig = {
+    fontFamily: "Arial",
+    fontSize: 12,
+    fill: textColor,
+  };
+  const text = new PIXI.Text(type, testConfig);
+  text.x = 60;
+  text.y = 465;
+  container.addChild(text);
+};
 // Functions for generating fake data when testing
 
 // const generateRandomNumber = (min: number, max: number) => {

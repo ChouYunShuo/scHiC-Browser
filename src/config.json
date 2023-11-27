@@ -9,7 +9,8 @@
     "query": {
       "chrom1": "chr2:0-100000000",
       "chrom2": "chr2:0-100000000"
-    }
+    },
+    "track_type": "insul_score"
   },
   "layout": {
     "grid":{

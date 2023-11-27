@@ -29,6 +29,7 @@ import {
   drawVerticalTrack,
   drawHorizontalTrack,
   drawHorizontalScale,
+  drawHorizontalTrackType,
 } from "./SignalTrack1D";
 import { drawRectWithText } from "./PixiChromText";
 import createHeatMapFromTexture from "./ContactMapTexture";
@@ -39,6 +40,9 @@ import ErrorAPI from "../ErrorComponent";
 import { DragEvent } from "pixi-viewport/dist/types";
 import debounce from "lodash.debounce";
 import { initRect, drawSelectRect, createGraphics } from "../../utils/heatmap";
+
+// load config
+import config from "../../config.json";
 
 interface HeatMapProps {
   map_id: number;
@@ -114,6 +118,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
   );
   const selectRect = useAppSelector((state) => state.heatmap2D.selectRect);
   const dispatch = useAppDispatch();
+
   // pixi related variables
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [contact2d_container, setContainer] = useState<PIXI.Container>(
@@ -124,13 +129,16 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
   );
   const [chrom_dist_container, setChrom_dist_container] =
     useState<PIXI.Container>(new PIXI.Container());
+  const [horizontal_track_container, setHorizontal_track_container] =
+    useState<PIXI.Container>(new PIXI.Container());
+  const [vertical_track_container, setVertical_track_container] =
+    useState<PIXI.Container>(new PIXI.Container());
 
   const [sltRect, setSltRect] = useState<PIXI.Graphics>(new PIXI.Graphics());
   const [symRect, setSymRect] = useState<PIXI.Graphics>(new PIXI.Graphics());
   const [posRect, setPosRect] = useState<PIXI.Graphics>(new PIXI.Graphics());
 
   //pixi event
-  const [allowViewport, setAllowViewport] = useState(true);
   const viewportRef = useRef<Viewport | null>(null);
 
   const isDragging = useRef(false);
@@ -151,9 +159,6 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
   const [mapbottomCorner, setMapBottomCorner] = useState(
     new PIXI.Point(contact_map_size, contact_map_size)
   );
-
-  // switch for displaying 1d signal track
-  const [display1dTrack, setDisplay1dTrack] = useState(false);
 
   // pixi contact map color scale
   const logScale = d3
@@ -179,6 +184,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
   // theme.palette.mode === "dark"
   //   ? d3.scaleSequentialLog(d3.interpolateViridis).domain([0, 1]) // adjust domain for log scale
   //   : d3.scaleSequentialLog(d3.interpolateReds).domain([0, 1]); // adjust domain for log scale
+
   const colorScaleMemo = useMemo(() => colorScale, [theme.palette.mode]);
   const cleanupCanvas = useCallback(() => {
     contact2d_container.removeChildren();
@@ -212,7 +218,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
     isFetching: sig1IsFetching,
     isLoading: sig1IsLoading,
   } = useFetchTrackDataQuery({
-    type: "insul_score", // ab_score, gene_score, insul_score
+    type: config.init_state.track_type, // ab_score, gene_score, insul_score
     chrom1: range1,
     dataset_name: dataset_name,
     resolution: resolution,
@@ -224,7 +230,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
     isFetching: sig2IsFetching,
     isLoading: sig2IsLoading,
   } = useFetchTrackDataQuery({
-    type: "insul_score",
+    type: config.init_state.track_type,
     chrom1: range2,
     dataset_name: dataset_name,
     resolution: resolution,
@@ -242,14 +248,14 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
     }
 
     // Initialize PIXI application and viewport
-    const { app, viewport } = initializePixiAppAndViewport();
-    viewportRef.current = viewport;
+    const { app, mapViewport } = initializePixiAppAndViewport();
+    viewportRef.current = mapViewport;
 
     // Initialize rectangles and add them to the stage
     initializeRectsAndAddToStage(app);
 
     // Add event listeners to the viewport
-    addViewportEventListeners(viewport);
+    addMapViewportEventListeners(mapViewport);
 
     function initializePixiAppAndViewport() {
       const app = new PIXI.Application({
@@ -259,7 +265,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
         resolution: 1,
       });
 
-      const viewport = new Viewport({
+      const mapViewport = new Viewport({
         screenWidth: app_size,
         screenHeight: app_size,
         worldWidth: contact_map_size,
@@ -268,22 +274,24 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
         events: app.renderer.events,
       });
 
-      return { app, viewport };
+      return { app, mapViewport };
     }
 
     function initializeRectsAndAddToStage(app: PIXI.Application) {
       [sltRect, symRect, posRect].forEach(initRect);
 
       app.stage.addChild(bg_container);
-      app.stage.addChild(viewport);
-      viewport.addChild(contact2d_container);
+      app.stage.addChild(mapViewport);
+      mapViewport.addChild(contact2d_container);
+      app.stage.addChild(horizontal_track_container);
+      app.stage.addChild(vertical_track_container);
       app.stage.addChild(chrom_dist_container);
       app.stage.addChild(sltRect);
       app.stage.addChild(symRect);
       app.stage.addChild(posRect);
     }
 
-    function addViewportEventListeners(viewport: Viewport) {
+    function addMapViewportEventListeners(viewport: Viewport) {
       viewport.drag().wheel();
 
       viewport.on("zoomed-end", (e: Viewport) => {
@@ -291,12 +299,14 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
         const mapBRCorner = new PIXI.Point(contact_map_size, contact_map_size);
         const worldTLPosition = e.toGlobal(mapTLCorner);
         const worldBRPosition = e.toGlobal(mapBRCorner);
-
         topCornerRef.current = worldTLPosition;
         bottomCornerRef.current = worldBRPosition;
         setMapTopCorner(worldTLPosition);
         setMapBottomCorner(worldBRPosition);
-
+        horizontal_track_container.scale.x = e.scale.x;
+        horizontal_track_container.position.x = worldTLPosition.x;
+        vertical_track_container.scale.y = e.scale.y;
+        vertical_track_container.position.y = worldTLPosition.y;
         handleZoomedEnd(e);
       });
       viewport.on("drag-end", (e: DragEvent) => {
@@ -310,6 +320,8 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
 
         setMapTopCorner(worldTLPosition);
         setMapBottomCorner(worldBRPosition);
+        horizontal_track_container.position.x = worldTLPosition.x;
+        vertical_track_container.position.y = worldTLPosition.y;
       });
       return () => {
         viewport.off("zoomed-end");
@@ -341,7 +353,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
           query: { chrom1: newChrom1, chrom2: newChrom2 },
         })
       );
-    }, 1000);
+    }, 2000);
 
     const debouncedHandleZoomIn = debounce((e: Viewport) => {
       const { worldPoint, worldPoint1 } = getCornerPoints(e);
@@ -462,7 +474,6 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
       transform_xy,
       transform_xy
     );
-
     const signal1Rect = createGraphics(
       colors.primary[400],
       transform_xy,
@@ -478,32 +489,32 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
       contact_map_size
     );
     chrom_dist_container.addChild(cornerRect);
-    chrom_dist_container.addChild(signal1Rect);
-    chrom_dist_container.addChild(signal2Rect);
+    horizontal_track_container.addChild(signal1Rect);
+    vertical_track_container.addChild(signal2Rect);
 
     if (heatMapData) {
       if (!sig1IsLoading && sig1Data) {
-        drawVerticalTrack(
+        drawHorizontalTrack(
           sig1Data,
           contact_map_size,
           transform_xy,
-          chrom_dist_container,
-          theme.palette.mode == "dark"
-            ? colors.redAccent[300]
-            : colors.greenAccent[300]
-        );
-      }
-      if (!sig2IsLoading && sig2Data) {
-        drawHorizontalTrack(
-          sig2Data,
-          contact_map_size,
-          transform_xy,
-          chrom_dist_container,
+          horizontal_track_container,
           theme.palette.mode == "dark"
             ? colors.redAccent[300]
             : colors.greenAccent[300]
         );
         drawHorizontalScale(chrom_dist_container, colors.grey[100]);
+      }
+      if (!sig2IsLoading && sig2Data) {
+        drawVerticalTrack(
+          sig2Data,
+          contact_map_size,
+          transform_xy,
+          vertical_track_container,
+          theme.palette.mode == "dark"
+            ? colors.redAccent[300]
+            : colors.greenAccent[300]
+        );
       }
     }
   };
@@ -527,43 +538,40 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
     chrom_dist_container.addChild(chrom1Rect);
     chrom_dist_container.addChild(chrom2Rect);
 
-    if (heatMapData) {
-      const [scaleX, scaleY] = getScaleFromRange(
-        range1Ref.current,
-        range2Ref.current
-      );
-      const hStart = topCornerRef.current.x;
-      const hEnd = bottomCornerRef.current.x;
-      const vStart = topCornerRef.current.y;
-      const vEnd = bottomCornerRef.current.y;
+    const [scaleX, scaleY] = getScaleFromRange(
+      range1Ref.current,
+      range2Ref.current
+    );
+    const hStart = topCornerRef.current.x;
+    const hEnd = bottomCornerRef.current.x;
+    const vStart = topCornerRef.current.y;
+    const vEnd = bottomCornerRef.current.y;
 
-      const horizontal_ticks = getTicksAndPosFromRange(
-        range1Ref.current,
-        hStart,
-        hEnd,
-        1
-      );
-      const vertical_ticks = getTicksAndPosFromRange(
-        range2Ref.current,
-        vStart,
-        vEnd,
-        1
-      );
+    const horizontal_ticks = getTicksAndPosFromRange(
+      range1Ref.current,
+      hStart,
+      hEnd,
+      1
+    );
+    const vertical_ticks = getTicksAndPosFromRange(
+      range2Ref.current,
+      vStart,
+      vEnd,
+      1
+    );
 
-      // Add Text data
-      if (heatMapData[0]) {
-        addHorizontalTicksText(
-          horizontal_ticks,
-          chrom_dist_container,
-          colors.grey[100]
-        );
-        addVerticalTicksText(
-          vertical_ticks,
-          chrom_dist_container,
-          colors.grey[100]
-        );
-      }
-    }
+    // Add Text data
+
+    addHorizontalTicksText(
+      horizontal_ticks,
+      chrom_dist_container,
+      colors.grey[100]
+    );
+    addVerticalTicksText(
+      vertical_ticks,
+      chrom_dist_container,
+      colors.grey[100]
+    );
   };
 
   useEffect(() => {
@@ -656,8 +664,6 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
         const height = Math.abs(endY - mousePos.current.y_pos);
         const startX = Math.min(mousePos.current.x_pos, endX);
         const startY = Math.min(mousePos.current.y_pos, endY);
-        // drawSelectRect(sltRect, x, y, width, height);
-        // drawSelectRect(symRect, y, x, height, width);
         dispatch(
           updateSelectRect({ isVisible: true, startX, startY, width, height })
         );
