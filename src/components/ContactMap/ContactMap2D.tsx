@@ -25,7 +25,11 @@ import {
   updateApiChromQuery,
 } from "../../redux/heatmap2DSlice";
 import { addHorizontalTicksText, addVerticalTicksText } from "./ChromTickTrack";
-import { drawVerticalTrack, drawHorizontalTrack } from "./SignalTrack1D";
+import {
+  drawVerticalTrack,
+  drawHorizontalTrack,
+  drawHorizontalScale,
+} from "./SignalTrack1D";
 import { drawRectWithText } from "./PixiChromText";
 import createHeatMapFromTexture from "./ContactMapTexture";
 import LoadingSpinner from "../LoadingPage";
@@ -48,11 +52,38 @@ interface NBQuery {
   color: string | null;
 }
 
-type ChromPos = {
-  start: number;
-  end: number;
+type BreakPoint = {
+  value: number;
+  color: string;
 };
 
+const breakpoints_light = [
+  { value: 0, color: "white" },
+  { value: 0.6, color: "yellow" },
+  { value: 0.7, color: "orange" },
+  { value: 0.88, color: "red" },
+  { value: 1, color: "black" },
+];
+const breakpoints_dark = [
+  { value: 0, color: "#440154" },
+  { value: 0.6, color: "#2a788e" },
+  { value: 0.7, color: "#22a884" },
+  { value: 0.88, color: "#7ad151" },
+  { value: 1, color: "#fde725" },
+];
+//["#440154","#482475","#414487","#355f8d","#2a788e","#21918c","#22a884","#44bf70","#7ad151","#bddf26","#fde725"]
+// Custom interpolator
+function customInterpolator(t: number, breakpoints: BreakPoint[]) {
+  for (let i = 1; i < breakpoints.length; i++) {
+    if (t <= breakpoints[i].value) {
+      const t0 = breakpoints[i - 1].value;
+      const t1 = breakpoints[i].value;
+      const f = (t - t0) / (t1 - t0);
+      return d3.interpolate(breakpoints[i - 1].color, breakpoints[i].color)(f);
+    }
+  }
+  return breakpoints[breakpoints.length - 1].color;
+}
 const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
   //The color theme of the project
 
@@ -125,10 +156,29 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
   const [display1dTrack, setDisplay1dTrack] = useState(false);
 
   // pixi contact map color scale
+  const logScale = d3
+    .scaleLog()
+    .domain([0.0001, 1]) // Starting from 0.0001 to avoid -Infinity with log(0)
+    .range([0, 1]);
+
+  // Combine with sequential scale using the custom interpolator
   const colorScale =
     theme.palette.mode === "dark"
-      ? d3.scaleSequentialLog(d3.interpolateViridis).domain([0.1, 1]) // adjust domain for log scale
-      : d3.scaleSequentialLog(d3.interpolateReds).domain([0.1, 1]); // adjust domain for log scale
+      ? d3
+          .scaleSequential((t) =>
+            customInterpolator(logScale(t), breakpoints_dark)
+          )
+          .domain([0, 1]) // adjust domain for log scale
+      : d3
+          .scaleSequential((t) =>
+            customInterpolator(logScale(t), breakpoints_light)
+          )
+          .domain([0, 1]);
+
+  // const colorScale =
+  // theme.palette.mode === "dark"
+  //   ? d3.scaleSequentialLog(d3.interpolateViridis).domain([0, 1]) // adjust domain for log scale
+  //   : d3.scaleSequentialLog(d3.interpolateReds).domain([0, 1]); // adjust domain for log scale
   const colorScaleMemo = useMemo(() => colorScale, [theme.palette.mode]);
   const cleanupCanvas = useCallback(() => {
     contact2d_container.removeChildren();
@@ -206,7 +256,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
         view: canvasRef.current!,
         width: app_size,
         height: app_size,
-        resolution: 2,
+        resolution: 1,
       });
 
       const viewport = new Viewport({
@@ -405,6 +455,14 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
   }, [mapTopCorner, mapbottomCorner, theme.palette.mode]);
 
   const handleSignal1dUpdate = () => {
+    const cornerRect = createGraphics(
+      colors.primary[400],
+      transform_xy + contact_map_size,
+      transform_xy + contact_map_size,
+      transform_xy,
+      transform_xy
+    );
+
     const signal1Rect = createGraphics(
       colors.primary[400],
       transform_xy,
@@ -419,7 +477,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
       transform_xy,
       contact_map_size
     );
-
+    chrom_dist_container.addChild(cornerRect);
     chrom_dist_container.addChild(signal1Rect);
     chrom_dist_container.addChild(signal2Rect);
 
@@ -430,7 +488,9 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
           contact_map_size,
           transform_xy,
           chrom_dist_container,
-          theme.palette.mode
+          theme.palette.mode == "dark"
+            ? colors.redAccent[300]
+            : colors.greenAccent[300]
         );
       }
       if (!sig2IsLoading && sig2Data) {
@@ -439,18 +499,13 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
           contact_map_size,
           transform_xy,
           chrom_dist_container,
-          theme.palette.mode
+          theme.palette.mode == "dark"
+            ? colors.redAccent[300]
+            : colors.greenAccent[300]
         );
+        drawHorizontalScale(chrom_dist_container, colors.grey[100]);
       }
     }
-    const cornerRect = createGraphics(
-      colors.primary[400],
-      transform_xy + contact_map_size,
-      transform_xy + contact_map_size,
-      transform_xy,
-      transform_xy
-    );
-    chrom_dist_container.addChild(cornerRect);
   };
 
   const handleTickUpdate = () => {

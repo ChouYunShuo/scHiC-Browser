@@ -74,12 +74,15 @@ const Scatter2D: React.FC = () => {
     isLoading,
     isFetching,
     error,
-  } = useFetchEmbedQuery({
-    dataset_name: heatmap_state.dataset_name,
-    embed_type: "umap",
-  }, {
-    refetchOnMountOrArgChange: true
-  });
+  } = useFetchEmbedQuery(
+    {
+      dataset_name: heatmap_state.dataset_name,
+      embed_type: "umap",
+    },
+    {
+      refetchOnMountOrArgChange: true,
+    }
+  );
   const {
     data: cell_label,
     isLoading: isLabelLoading,
@@ -89,7 +92,7 @@ const Scatter2D: React.FC = () => {
     dataset_name: heatmap_state.dataset_name,
     meta_type: "label",
   });
-  
+
   useEffect(() => {
     // Only proceed if all required data is available and not loading
     if (!isLoading && rawEmbedData && !isLabelLoading && cell_label) {
@@ -103,11 +106,11 @@ const Scatter2D: React.FC = () => {
           selectMap: "0",
         };
       });
-  
+
       setFormattedData(newFormattedData);
     }
   }, [rawEmbedData, cell_label, isFetching, isLabelFetching]); // Re-run when any of these dependencies change
-  
+
   useEffect(() => {
     if (ref.current && formattedData.length > 0) {
       const svg = d3.select(ref.current);
@@ -130,7 +133,6 @@ const Scatter2D: React.FC = () => {
       drawSvg(g, true);
     }
   }, [isColorCellSelect, theme]);
-
 
   useEffect(() => {
     // A function to check if the cell is selected and return the corresponding map id
@@ -193,7 +195,7 @@ const Scatter2D: React.FC = () => {
           .join("circle")
           .attr("cx", (d) => xScale(d.pc1))
           .attr("cy", (d) => yScale(d.pc2))
-          .attr("r", (d) => 1.5);
+          .attr("r", (d) => 2);
       }
       g.selectAll("circle")
         .data(formattedData)
@@ -249,7 +251,6 @@ const Scatter2D: React.FC = () => {
       legendItems.append("div").text((d) => d);
     }
   };
-
 
   useEffect(() => {
     if (ref.current && formattedData.length != 0) {
@@ -326,7 +327,7 @@ const Scatter2D: React.FC = () => {
           lassoRef.current.attr("fill", colors.greenAccent[400]); // change the lasso color to green
           lassoRef.current.attr("d", "M" + lassoPath.join("L") + "Z");
         } else {
-          lassoRef.current.attr("fill", colors.blueAccent[600]); // change the lasso color to green
+          lassoRef.current.attr("fill", colors.blueAccent[600]); // change the lasso color to blue
           lassoRef.current.attr("stroke", colors.blueAccent[400]);
           lassoRef.current.attr("d", "M" + lassoPath.join("L"));
         }

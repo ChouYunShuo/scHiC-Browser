@@ -1,6 +1,6 @@
 {
   "init_state": {
-    "dataset_name": "mouse2_slice99_4",
+    "dataset_name": "mouse2_slice99_all",
     "resolution": "100000",
     "app_size": 500,
     "contact_map_size": 400,
