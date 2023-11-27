@@ -207,7 +207,7 @@ const Scatter2D: React.FC = () => {
               ? "black"
               : d3.rgb(CellSelectColor(d.selectMap));
           } else {
-            return d3.rgb(CellTypeColor(d.cellType)).darker(0.5);
+            return d3.rgb(CellTypeColor(d.cellType));
           }
         });
       generateLegend();
@@ -295,7 +295,7 @@ const Scatter2D: React.FC = () => {
                 ? "black"
                 : d3.rgb(CellSelectColor(d.selectMap));
             } else {
-              return d3.rgb(CellTypeColor(d.cellType)).darker(0.5);
+              return d3.rgb(CellTypeColor(d.cellType));
             }
           });
 
