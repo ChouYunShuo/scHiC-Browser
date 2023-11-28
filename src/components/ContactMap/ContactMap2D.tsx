@@ -75,7 +75,7 @@ const breakpoints_dark = [
   { value: 0.88, color: "#7ad151" },
   { value: 1, color: "#fde725" },
 ];
-//["#440154","#482475","#414487","#355f8d","#2a788e","#21918c","#22a884","#44bf70","#7ad151","#bddf26","#fde725"]
+
 // Custom interpolator
 function customInterpolator(t: number, breakpoints: BreakPoint[]) {
   for (let i = 1; i < breakpoints.length; i++) {
@@ -90,7 +90,6 @@ function customInterpolator(t: number, breakpoints: BreakPoint[]) {
 }
 const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
   //The color theme of the project
-
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const colorMode = useContext(ColorModeContext);
@@ -429,7 +428,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
 
   useEffect(() => {
     const point1 = createGraphics(
-      colors.primary[400],
+      colors.primary[500],
       0,
       0,
       app_size,
@@ -448,7 +447,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
           app_size,
           contact_map_size,
           colorScaleMemo,
-          colors.primary[400]
+          colors.primary[500]
         );
       }
       if (viewportRef.current) {
@@ -468,21 +467,21 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
 
   const handleSignal1dUpdate = () => {
     const cornerRect = createGraphics(
-      colors.primary[400],
+      colors.primary[500],
       transform_xy + contact_map_size,
       transform_xy + contact_map_size,
       transform_xy,
       transform_xy
     );
     const signal1Rect = createGraphics(
-      colors.primary[400],
+      colors.primary[500],
       transform_xy,
       transform_xy + contact_map_size,
       contact_map_size,
       transform_xy
     );
     const signal2Rect = createGraphics(
-      colors.primary[400],
+      colors.primary[500],
       transform_xy + contact_map_size,
       transform_xy,
       transform_xy,
@@ -521,14 +520,14 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
 
   const handleTickUpdate = () => {
     const chrom1Rect = createGraphics(
-      colors.primary[400],
+      colors.primary[500],
       0,
       0,
       transform_xy,
       app_size
     );
     const chrom2Rect = createGraphics(
-      colors.primary[400],
+      colors.primary[500],
       0,
       0,
       app_size,
@@ -788,7 +787,8 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
         width: "100%",
         height: "100%",
         overflow: "hidden",
-        border: "1px solid rgba(0, 0, 0, 0.2)",
+        border: "1px solid",
+        borderColor: colors.border[100],
       }}
     >
       <Box

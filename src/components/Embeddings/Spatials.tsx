@@ -459,7 +459,7 @@ const Spatials: React.FC = () => {
           ref={svgRef}
           width="100%"
           height="100%"
-          style={{ border: "1px solid rgba(0, 0, 0, 0.2)" }}
+          style={{ border: "1px solid", borderColor: colors.border[100] }}
         />
 
         {isColorCellSelect && (

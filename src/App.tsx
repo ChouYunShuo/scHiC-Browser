@@ -19,8 +19,9 @@ function App() {
           <Box className="content" marginTop="60px">
             <Routes>
               {/* @ts-ignore */}
+              <Route path="/" element={<></>} />
               <Route
-                path="/"
+                path="/dashboard"
                 element={
                   <>
                     <Sidebar />

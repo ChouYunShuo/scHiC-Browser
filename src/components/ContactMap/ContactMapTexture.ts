@@ -2,28 +2,6 @@ import * as PIXI from "pixi.js";
 import * as d3 from "d3";
 import { ScaleSequential } from "d3-scale";
 
-function countDataPoints(data: number[][]) {
-  let counts = {
-    black: 0,
-    red: 0,
-    orange: 0,
-    yellow: 0,
-    white: 0,
-  };
-
-  data.forEach((row) => {
-    row.forEach((t) => {
-      if (t === 0) counts.white++;
-      else if (t <= 0.1) counts.yellow++;
-      else if (t <= 0.3) counts.orange++;
-      else if (t <= 0.5) counts.red++;
-      else counts.black++;
-    });
-  });
-
-  return counts;
-}
-
 export const createHeatMapFromTexture = (
   data: number[][],
   container: PIXI.Container,
@@ -41,8 +19,7 @@ export const createHeatMapFromTexture = (
   heatmapCanvas.width = contact_map_size * scaleX;
   heatmapCanvas.height = contact_map_size * scaleY;
   const ctx = heatmapCanvas.getContext("2d");
-  const result = countDataPoints(data);
-  console.log(result);
+
   if (ctx) {
     ctx.imageSmoothingEnabled = false;
     const maxsize = Math.max(xsize, ysize);

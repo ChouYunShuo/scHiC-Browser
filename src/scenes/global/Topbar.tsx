@@ -11,14 +11,14 @@ import logoDark from "../../assets/scViz_logo.png";
 import logoLight from "../../assets/scViz_logo_light.png";
 
 const TopBarTypography = styled(Typography)(({ theme }) => ({
-  fontWeight: 600,
+  fontWeight: 400,
   "&:hover": {
     color: tokens(theme.palette.mode).text[100], // choose a lighter color on hover
     cursor: "pointer",
   },
 }));
 
-type ItemType = "Dashboard" | "Datasets" | "";
+type ItemType = "Dashboard" | "Datasets" | "Documentation" | "";
 interface ItemProps {
   title: ItemType;
   to: string;
@@ -78,11 +78,11 @@ const Topbar: React.FC = () => {
   const colorMode = useContext(ColorModeContext);
   const [selected, setSelected] = useState<ItemType>("");
 
-  useEffect(() => {
-    const currentPath = window.location.pathname.slice(1); // Remove the initial '/'
-    if (currentPath === "") setSelected("Dashboard" as ItemType);
-    else setSelected(currentPath as ItemType);
-  }, []);
+  // useEffect(() => {
+  //   const currentPath = window.location.pathname.slice(1); // Remove the initial '/'
+  //   if (currentPath === "") setSelected("Dashboard" as ItemType);
+  //   else setSelected(currentPath as ItemType);
+  // }, []);
 
   const handleSelect = (title: ItemType) => {
     setSelected(title);
@@ -101,25 +101,40 @@ const Topbar: React.FC = () => {
           alt="Logo"
           style={{ height: "2em", marginRight: "1em" }}
         />
-        <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
-          <Typography
-            variant="h4"
-            marginRight={2}
-            color={colors.text[100]}
-            fontWeight={600}
+        <Box display="flex" alignItems="center" justifyContent="center" gap={2}>
+          <Link
+            to="/"
+            style={{
+              textDecoration: "none",
+              position: "relative",
+            }}
+            onClick={() => handleSelect("")}
           >
-            CellScope
-          </Typography>
+            <Typography
+              variant="h4"
+              marginRight={2}
+              color={colors.text[100]}
+              fontWeight={600}
+            >
+              CellScope
+            </Typography>
+          </Link>
 
           <Item
             title="Dashboard"
-            to="/"
+            to="/dashboard"
             selected={selected}
             handleSelect={handleSelect}
           ></Item>
           <Item
             title="Datasets"
             to="/datasets"
+            selected={selected}
+            handleSelect={handleSelect}
+          ></Item>
+          <Item
+            title="Documentation"
+            to="/doc"
             selected={selected}
             handleSelect={handleSelect}
           ></Item>
