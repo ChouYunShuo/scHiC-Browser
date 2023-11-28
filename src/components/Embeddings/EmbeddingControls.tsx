@@ -1,6 +1,5 @@
-import { styled } from "@mui/system";
 import { tokens } from "../../theme";
-import { Box, useTheme, Grid, IconButton } from "@mui/material";
+import { Box, useTheme, Tooltip, IconButton } from "@mui/material";
 import ZoomInIcon from "@mui/icons-material/ZoomIn";
 import HighlightAltIcon from "@mui/icons-material/HighlightAlt";
 import InvertColorsIcon from "@mui/icons-material/InvertColors";
@@ -28,33 +27,37 @@ const EmbeddingControls: React.FC<EmbeddingControlsProps> = ({
       display="flex"
       justifyContent="flex-start"
     >
-      <IconButton
-        style={{
-          backgroundColor: isCellSelect
-            ? colors.primary[300]
-            : colors.primary[400],
-          marginRight: "20px",
-        }}
-        onClick={() => handleColorToggle()}
-      >
-        <InvertColorsIcon />
-      </IconButton>
-      <IconButton
-        style={{
-          backgroundColor: isZoom ? colors.primary[300] : colors.primary[400],
-        }}
-        onClick={() => !isZoom && handleZoomToggle()}
-      >
-        <ZoomInIcon />
-      </IconButton>
-      <IconButton
-        style={{
-          backgroundColor: !isZoom ? colors.primary[300] : colors.primary[400],
-        }}
-        onClick={() => isZoom && handleZoomToggle()}
-      >
-        <HighlightAltIcon />
-      </IconButton>
+      <Tooltip title="Toggle color" arrow>
+        <IconButton
+          style={{
+            color: isCellSelect ? colors.grey[100] : colors.grey[600],
+            marginRight: "20px",
+          }}
+          onClick={() => handleColorToggle()}
+        >
+          <InvertColorsIcon />
+        </IconButton>
+      </Tooltip>
+      <Tooltip title="Zoom/Pan" arrow>
+        <IconButton
+          onClick={() => !isZoom && handleZoomToggle()}
+          style={{
+            color: isZoom ? colors.grey[100] : colors.grey[600],
+          }}
+        >
+          <ZoomInIcon />
+        </IconButton>
+      </Tooltip>
+      <Tooltip title="Lasso select" arrow>
+        <IconButton
+          onClick={() => isZoom && handleZoomToggle()}
+          style={{
+            color: !isZoom ? colors.grey[100] : colors.grey[600],
+          }}
+        >
+          <HighlightAltIcon />
+        </IconButton>
+      </Tooltip>
     </Box>
   );
 };

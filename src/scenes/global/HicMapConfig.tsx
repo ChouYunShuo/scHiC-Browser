@@ -9,7 +9,6 @@ import {
   MenuItem,
   Button,
   IconButton,
-  Typography,
   useTheme,
   Checkbox,
   ListItemText,
@@ -19,17 +18,13 @@ import { SelectChangeEvent } from "@mui/material/Select";
 import { tokens } from "../../theme";
 import { updateApiChromQuery } from "../../redux/heatmap2DSlice";
 import {
-  getNewChromeMove,
   getNewChromZoomIn,
   getNewChromZoomOut,
   validateChrom,
 } from "../../utils/utils";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
-import ControlButtons from "../../components/MapControlButtons";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
-
-type MoveDirType = "up" | "down" | "left" | "right";
 
 const HicMapConfig: React.FC = () => {
   const theme = useTheme();
@@ -51,19 +46,6 @@ const HicMapConfig: React.FC = () => {
   const mapCnt = heatmap_state.map_cnts;
   const maps = map(range(mapCnt), (val) => `${val + 1}`);
 
-  const handleZoomInLevelChange = (
-    event: Event,
-    newValue: number | number[]
-  ) => {
-    setZoomInLevel(newValue as number);
-    console.log(newValue);
-  };
-  const handleZoomOutLevelChange = (
-    event: Event,
-    newValue: number | number[]
-  ) => {
-    setZoomOutLevel(newValue as number);
-  };
   useEffect(() => {
     if (selectedMaps.length > 0) {
       const selectedMapIndex = parseInt(selectedMaps[0], 10) - 1;
@@ -120,41 +102,6 @@ const HicMapConfig: React.FC = () => {
       }
     });
   };
-
-  // const handleMapMove = (type: MoveDirType) => {
-  //   if (selectedMaps.length === 0) return; // TODO:  Add a toast to remind user to select a map
-
-  //   const chromRegex = /^chrom([1-9]|1[0-9]|2[0-3]|X|Y):[0-9]+-[0-9]+$/;
-  //   let updatedChrom = false;
-  //   if (!chromRegex.test(chrom1) || !chromRegex.test(chrom2)) {
-  //     console.log("Invalid chrom format");
-  //     return;
-  //   }
-
-  //   let newChrom1 = chrom1;
-  //   let newChrom2 = chrom2;
-  //   selectedMaps.map((id) => {
-  //     if (id != "All") {
-  //       if (type === "up") {
-  //         newChrom2 = getNewChromeMove(chrom2, "left");
-  //       } else if (type === "down") {
-  //         newChrom2 = getNewChromeMove(chrom2, "right");
-  //       } else if (type === "left") {
-  //         newChrom1 = getNewChromeMove(chrom1, "left");
-  //       } else {
-  //         newChrom1 = getNewChromeMove(chrom1, "right");
-  //       }
-  //       //console.log(newChrom1, newChrom2);
-
-  //       let query = { chrom1: newChrom1, chrom2: newChrom2 };
-  //       dispatch(updateApiChromQuery({ id: parseInt(id) - 1, query }));
-  //       if (!updatedChrom) {
-  //         handleSetChrom(newChrom1, newChrom2);
-  //         updatedChrom = true;
-  //       }
-  //     }
-  //   });
-  // };
 
   const handleSetChrom = (chr1: string, chr2: string) => {
     setChrom1(chr1);
@@ -283,23 +230,7 @@ const HicMapConfig: React.FC = () => {
         Send
       </Button>
 
-      <Box
-        display="flex"
-        justifyContent="space-between"
-        alignItems="center"
-        sx={{
-          border: 2,
-          borderRadius: 2,
-          borderColor: colors.primary[500],
-        }}
-      >
-        {/* <ControlButtons
-            onUp={() => handleMapMove("up")}
-            onDown={() => handleMapMove("down")}
-            onLeft={() => handleMapMove("left")}
-            onRight={() => handleMapMove("right")}
-          /> */}
-
+      <Box display="flex" justifyContent="space-between" alignItems="center">
         <Tooltip title="Zoom Out" arrow>
           <IconButton onClick={zoomMapOut} aria-label="zoom out">
             <RemoveIcon />

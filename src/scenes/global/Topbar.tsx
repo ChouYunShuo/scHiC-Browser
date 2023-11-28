@@ -78,11 +78,10 @@ const Topbar: React.FC = () => {
   const colorMode = useContext(ColorModeContext);
   const [selected, setSelected] = useState<ItemType>("");
 
-  // useEffect(() => {
-  //   const currentPath = window.location.pathname.slice(1); // Remove the initial '/'
-  //   if (currentPath === "") setSelected("Dashboard" as ItemType);
-  //   else setSelected(currentPath as ItemType);
-  // }, []);
+  useEffect(() => {
+    const currentPath = window.location.pathname.slice(1); // Remove the initial '/'
+    setSelected(currentPath as ItemType);
+  }, []);
 
   const handleSelect = (title: ItemType) => {
     setSelected(title);
