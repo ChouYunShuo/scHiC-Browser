@@ -173,6 +173,7 @@ const Scatter2D: React.FC = () => {
   const drawSvg = () => {
     if (!svgRef.current || formattedData.length === 0) return;
     const svg = d3.select(svgRef.current);
+    svg.selectAll("*").remove(); // Clear previous SVG elements
     const g = svg.select("g").empty() ? svg.append("g") : svg.select("g");
     const { xScale, yScale } = updateScales();
 

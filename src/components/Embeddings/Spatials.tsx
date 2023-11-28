@@ -110,15 +110,14 @@ const Spatials: React.FC = () => {
     typeof d.expr === "number" ? d.expr : -Infinity
   );
 
-  const colorScale =
+  let colorScale =
     theme.palette.mode === "dark"
       ? d3
           .scaleSequential(d3.interpolateViridis)
           //@ts-ignore
-          .domain([minRange, maxRange]) // adjust domain for log scale
+          .domain([minRange, maxRange])
       : //@ts-ignore
         d3.scaleSequential(d3.interpolateReds).domain([minRange, maxRange]); // adjust domain for log scale
-
   //console.log(isFetching, isExprFetching,rawSpatialData)
   useEffect(() => {
     if (!isLoading && rawSpatialData && !isExprLoading && geneExprData) {
@@ -186,6 +185,7 @@ const Spatials: React.FC = () => {
   const drawSvg = () => {
     if (!svgRef.current || formattedData.length === 0) return;
     const svg = d3.select(svgRef.current);
+    svg.selectAll("*").remove(); // Clear previous SVG elements
     const g = svg.select("g").empty() ? svg.append("g") : svg.select("g");
     const { xScale, yScale } = updateScales();
     // Draw or update circles
@@ -257,10 +257,8 @@ const Spatials: React.FC = () => {
         .style("margin-right", "5px");
       legendItems.append("div").text((d) => "Map " + d);
     } else {
-      d3.select("#legend2-container").selectAll("*").remove();
       let legend = d3.select(legendRef.current);
-      //legend.selectAll("*").remove();
-
+      legend.selectAll("*").remove();
       const legendHeight = 200; // define your legend height
       const gradientId = "legendGradient";
       legend.attr("height", legendHeight).attr("width", 30);
@@ -298,15 +296,6 @@ const Spatials: React.FC = () => {
         .attr("width", 15) // this could be adjusted
         .attr("height", legendHeight)
         .style("fill", "url(#" + gradientId + ")");
-
-      // Create scale that we will use as our axis
-      const yScale = d3
-        .scaleLinear()
-        .range([legendHeight, 0])
-        .domain(colorScale.domain());
-
-      // Add the y Axis
-      legend.append("g").attr("class", "axis").call(d3.axisRight(yScale)); // Create an axis component with d3.axisRight
     }
   };
   useEffect(() => {
