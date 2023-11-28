@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useFetchEmbedQuery, useFetchMetaQuery } from "../../redux/apiSlice";
 import { apiCallType } from "../../redux/heatmap2DSlice";
-import { useAppDispatch, useAppSelector } from "../../redux/hooks";
+import { useAppSelector } from "../../redux/hooks";
 import * as d3 from "d3";
 import { zoom, ZoomTransform } from "d3";
 import { tokens } from "../../theme";
@@ -154,10 +154,6 @@ const Scatter2D: React.FC = () => {
         cell.selectMap = String(selected_map);
       }
     });
-    // if (svgRef.current && formattedData.length != 0) {
-    //   const svg = d3.select(svgRef.current);
-    //   drawSvg();
-    // }
   };
 
   const handleZoomToggle = () => {
@@ -174,7 +170,7 @@ const Scatter2D: React.FC = () => {
     setIsPopup((prev) => !prev);
   };
 
-  const drawSvg = (updateColorOnly: boolean = false) => {
+  const drawSvg = () => {
     if (!svgRef.current || formattedData.length === 0) return;
     const svg = d3.select(svgRef.current);
     const g = svg.select("g").empty() ? svg.append("g") : svg.select("g");
