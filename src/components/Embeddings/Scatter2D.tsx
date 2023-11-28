@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useFetchEmbedQuery, useFetchMetaQuery } from "../../redux/apiSlice";
 import { apiCallType } from "../../redux/heatmap2DSlice";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
@@ -24,38 +24,51 @@ function vwToPixels(vw: number) {
   return vw * (window.innerWidth / 100);
 }
 const Scatter2D: React.FC = () => {
+  // State declarations
   const [formattedData, setFormattedData] = useState<Datum[]>([]);
   const [selectedCells, setSelectedCells] = useState<string[]>([]);
-  const apiCalls = useAppSelector((state) => state.heatmap2D.apiCalls);
   const [isZoom, setIsZoom] = useState<boolean>(true);
   const [isColorCellSelect, setIsColorCellSelect] = useState<boolean>(false);
   const [isPopup, setIsPopup] = useState<boolean>(false);
+
+  // Redux selectors and theme context
+  const apiCalls = useAppSelector((state) => state.heatmap2D.apiCalls);
   const heatmap_state = useAppSelector((state) => state.heatmap2D);
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-  const ref = useRef<SVGSVGElement | null>(null);
+
+  // Refs for SVG and D3 components
+  const svgRef = useRef<SVGSVGElement | null>(null);
+  const zoomRef = useRef<ZoomTransform>(d3.zoomIdentity);
+  const DivRef = useRef<HTMLDivElement>(null);
   const lassoRef = useRef<d3.Selection<
     SVGPathElement,
     unknown,
     null,
     undefined
   > | null>(null);
+
+  // Constants and scales for the plot
   const lassoThreshold = 50;
   const width = vwToPixels(45);
   const height = vwToPixels(45);
-  const DivRef = useRef<HTMLDivElement>(null);
   let currentWidth = DivRef.current ? DivRef.current.offsetWidth : width;
-  const xExtent = d3.extent(formattedData, (d) => d.pc1) as [number, number];
-  const yExtent = d3.extent(formattedData, (d) => d.pc2) as [number, number];
-  const xScale = d3
-    .scaleLinear()
-    .domain([xExtent[0] - 1, xExtent[1] + 1])
-    .range([0, width]);
 
-  const yScale = d3
-    .scaleLinear()
-    .domain([yExtent[0] - 1, yExtent[1] + 1])
-    .range([height, 0]);
+  // Function to update the scales based on data
+  const updateScales = useCallback(() => {
+    const xExtent = d3.extent(formattedData, (d) => d.pc1) as [number, number];
+    const yExtent = d3.extent(formattedData, (d) => d.pc2) as [number, number];
+    return {
+      xScale: d3
+        .scaleLinear()
+        .domain([xExtent[0] - 1, xExtent[1] + 1])
+        .range([0, width]),
+      yScale: d3
+        .scaleLinear()
+        .domain([yExtent[0] - 1, yExtent[1] + 1])
+        .range([height, 0]),
+    };
+  }, [formattedData, width, height]);
 
   const CellTypeColor: d3.ScaleOrdinal<string, string> = d3
     .scaleOrdinal<string>()
@@ -112,29 +125,6 @@ const Scatter2D: React.FC = () => {
   }, [rawEmbedData, cell_label, isFetching, isLabelFetching]); // Re-run when any of these dependencies change
 
   useEffect(() => {
-    if (ref.current && formattedData.length > 0) {
-      const svg = d3.select(ref.current);
-      svg.selectAll("*").remove();
-      const g = svg.append("g");
-      svg.style("background-color", colors.primary[400]);
-      drawSvg(g);
-      return () => {
-        g.remove(); // Cleanup when the component unmounts
-      };
-    }
-  }, [formattedData]); // Run when formattedData changes
-
-  useEffect(() => {
-    if (ref.current && formattedData.length != 0) {
-      const svg = d3.select(ref.current);
-      let g = svg.select("g");
-      svg.style("background-color", colors.primary[400]);
-      //@ts-ignore
-      drawSvg(g, true);
-    }
-  }, [isColorCellSelect, theme]);
-
-  useEffect(() => {
     // A function to check if the cell is selected and return the corresponding map id
     const getSelectMapForCell = (
       cellId: string,
@@ -164,10 +154,10 @@ const Scatter2D: React.FC = () => {
         cell.selectMap = String(selected_map);
       }
     });
-    if (ref.current && formattedData.length != 0) {
-      const svg = d3.select(ref.current);
-      drawSvg(svg.select("g"));
-    }
+    // if (svgRef.current && formattedData.length != 0) {
+    //   const svg = d3.select(svgRef.current);
+    //   drawSvg();
+    // }
   };
 
   const handleZoomToggle = () => {
@@ -184,34 +174,52 @@ const Scatter2D: React.FC = () => {
     setIsPopup((prev) => !prev);
   };
 
-  const drawSvg = (
-    g: d3.Selection<SVGGElement, unknown, null, undefined>,
-    updateColorOnly: boolean = false
-  ) => {
-    if (ref.current && formattedData.length != 0) {
-      if (!updateColorOnly) {
-        g.selectAll("circle")
-          .data(formattedData)
-          .join("circle")
-          .attr("cx", (d) => xScale(d.pc1))
-          .attr("cy", (d) => yScale(d.pc2))
-          .attr("r", (d) => 2);
-      }
-      g.selectAll("circle")
-        .data(formattedData)
-        //@ts-ignore
-        .style("fill", function (d: Datum) {
-          if (isColorCellSelect) {
-            // Assume colorMap is an array or function that can return color based on d.cellType.
-            return d.selectMap === "0"
-              ? "black"
-              : d3.rgb(CellSelectColor(d.selectMap));
-          } else {
-            return d3.rgb(CellTypeColor(d.cellType));
-          }
-        });
-      generateLegend();
+  const drawSvg = (updateColorOnly: boolean = false) => {
+    if (!svgRef.current || formattedData.length === 0) return;
+    const svg = d3.select(svgRef.current);
+    const g = svg.select("g").empty() ? svg.append("g") : svg.select("g");
+    const { xScale, yScale } = updateScales();
+
+    // Draw or update circles
+    //@ts-ignore
+    g.selectAll("circle")
+      //@ts-ignore
+      .data(formattedData)
+      .join("circle")
+      //@ts-ignore
+      .attr("cx", (d: Datum) => xScale(d.pc1))
+      .attr("cy", (d: Datum) => yScale(d.pc2))
+      .attr("r", 2)
+      .style("fill", (d: Datum) =>
+        isColorCellSelect
+          ? d.selectMap === "0"
+            ? "black"
+            : CellSelectColor(d.selectMap)
+          : CellTypeColor(d.cellType)
+      );
+
+    // Apply the stored zoom transform
+    g.attr("transform", zoomRef.current.toString());
+
+    // Define the zoom behavior
+    const zoomBehavior = zoom<SVGSVGElement, unknown>()
+      .scaleExtent([0.4, 5])
+      .translateExtent([
+        [-3 * width, -1.5 * height],
+        [3 * width, 2 * height],
+      ])
+      .on("zoom", (event) => {
+        zoomRef.current = event.transform;
+        g.attr("transform", event.transform.toString());
+      });
+
+    // Apply the zoom behavior to the SVG if zoom is enabled
+    if (isZoom) {
+      svg.call(zoomBehavior);
+    } else {
+      svg.on(".zoom", null); // Remove the zoom behavior
     }
+    generateLegend();
   };
   const generateLegend = () => {
     const legend = d3.select("#legend-container");
@@ -251,35 +259,22 @@ const Scatter2D: React.FC = () => {
       legendItems.append("div").text((d) => d);
     }
   };
+  useEffect(() => {
+    // Redraw the SVG whenever necessary data changes
+    drawSvg();
+  }, [drawSvg, formattedData, isColorCellSelect, theme.palette.mode]);
 
   useEffect(() => {
-    if (ref.current && formattedData.length != 0) {
-      const svg = d3.select(ref.current);
+    if (svgRef.current && formattedData.length != 0) {
+      const svg = d3.select(svgRef.current);
       const g = svg.select("g");
 
       let currentTransform = d3.zoomTransform(svg.node()!);
       let lassoPath: [number, number][] = [];
-      // Create a zoom behavior
-      const zoomBehavior = zoom()
-        .scaleExtent([0.4, 5]) // This defines the range of zoom (0.4x to 5x here)
-        .translateExtent([
-          [-3 * width, -1.5 * height],
-          [3 * width, 2 * height],
-        ]) // This defines the range of panning
-        .on("zoom", (event: { transform: ZoomTransform }) => {
-          g.attr("transform", event.transform.toString());
-        });
-
-      if (isZoom) {
-        //@ts-ignore
-        svg.call(zoomBehavior);
-      }
 
       svg.on("mousedown", function (event) {
         // Reset the highlight for all circles
-
         if (isZoom) return;
-
         if (lassoRef.current) {
           lassoRef.current.remove();
           lassoRef.current = null;
@@ -334,6 +329,7 @@ const Scatter2D: React.FC = () => {
       });
       svg.on("mouseup", function (event) {
         if (isZoom || !lassoRef.current || lassoPath.length == 0) return;
+        const { xScale, yScale } = updateScales();
         const dist = euclideanDistance(
           lassoPath[0],
           lassoPath[lassoPath.length - 1]
@@ -419,7 +415,7 @@ const Scatter2D: React.FC = () => {
           pWidth={currentWidth}
         ></EmbeddingPopUp>
         <svg
-          ref={ref}
+          ref={svgRef}
           width="100%"
           height="100%"
           style={{ border: "1px solid rgba(0, 0, 0, 0.2)" }}

@@ -36,7 +36,7 @@ const UnderLine: React.FC = () => {
         bottom: 0,
         left: 0,
         right: 0,
-        height: "1px",
+        height: "2px",
         bgcolor: colors.text[100],
         zIndex: 100,
       }}
