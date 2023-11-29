@@ -3,7 +3,10 @@ import { Box, Typography, Checkbox, ClickAwayListener } from "@mui/material";
 import { useTheme } from "@mui/system";
 import { tokens } from "../theme";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
-import { updateMapShowChromPos } from "../redux/heatmap2DSlice";
+import {
+  updateMapSelectRegion,
+  updateMapShowChromPos,
+} from "../redux/heatmap2DSlice";
 type ComponentProps = {
   map_id: number;
   isVisible: boolean;
@@ -20,19 +23,37 @@ const GridLayoutCMapSetting: React.FC<ComponentProps> = ({
   const showChromPos = useAppSelector(
     (state) => state.heatmap2D.apiCalls[map_id].showChromPos
   );
-  const [checked, setChecked] = useState(showChromPos);
+  const selectRegion = useAppSelector(
+    (state) => state.heatmap2D.apiCalls[map_id].selectRegion
+  );
+  const [showChromChecked, setShowChromChecked] = useState(showChromPos);
+  const [selectRegionChecked, setSelectRegionChecked] = useState(selectRegion);
   const dispatch = useAppDispatch();
 
   const handleClickAway = () => {
     handleVisToggle();
   };
 
-  const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setChecked(event.target.checked);
+  const handleShowChromChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setShowChromChecked(event.target.checked);
     dispatch(
       updateMapShowChromPos({
         id: map_id,
         showChromPos: event.target.checked,
+      })
+    );
+  };
+
+  const handleSelectRegionChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setSelectRegionChecked(event.target.checked);
+    dispatch(
+      updateMapSelectRegion({
+        id: map_id,
+        selectRegion: event.target.checked,
       })
     );
   };
@@ -61,8 +82,23 @@ const GridLayoutCMapSetting: React.FC<ComponentProps> = ({
         >
           <Typography variant="body1">Show chrome location</Typography>
           <Checkbox
-            checked={checked}
-            onChange={handleCheckboxChange}
+            checked={showChromChecked}
+            onChange={handleShowChromChange}
+            inputProps={{ "aria-label": "primary checkbox" }}
+          />
+        </Box>
+      </ClickAwayListener>
+      <ClickAwayListener onClickAway={handleClickAway}>
+        <Box
+          display="flex"
+          alignItems="center"
+          justifyContent="space-between"
+          paddingX={1}
+        >
+          <Typography variant="body1">Select Region</Typography>
+          <Checkbox
+            checked={selectRegionChecked}
+            onChange={handleSelectRegionChange}
             inputProps={{ "aria-label": "primary checkbox" }}
           />
         </Box>

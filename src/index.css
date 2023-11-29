@@ -16,6 +16,7 @@ body,
 }
 .content {
   display: flex;
+  flex-direction: column;
   flex: 1; /* This allows content to take up the remaining space in the .app container */
 }
 

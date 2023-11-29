@@ -1,6 +1,6 @@
 import * as PIXI from "pixi.js";
-import store from "../redux/store";
-import { tickType } from "../utils";
+import store from "../../redux/store";
+import { tickType } from "../../utils/utils";
 import { format, precisionPrefix, formatPrefix } from "d3-format";
 
 const formatText = (pos: number) => {
@@ -18,7 +18,7 @@ export const formatPrecision = (pos: number) => {
 };
 const pixi_text_config = {
   fontFamily: "Arial",
-  fontSize: 12,
+  fontSize: 4,
   fill: 0xff0000,
 };
 export const addHorizontalTicksText = (
@@ -43,7 +43,7 @@ export const addHorizontalTicksText = (
 
     const text = new PIXI.Text(formatText(ticks[i].chrom_pos), {
       fontFamily: "Arial",
-      fontSize: 12,
+      fontSize: 10,
       fill: textColor,
     });
     text.x = padding_x + ticks[i].pix_pos;
@@ -53,6 +53,16 @@ export const addHorizontalTicksText = (
       container.addChild(text);
     }
   }
+};
+
+// Function to adjust the scale of text based on the container's scale
+const adjustTextScale = (text: PIXI.Text, container: PIXI.Container) => {
+  // Calculate the inverse scale
+  const inverseScaleX = 1 / container.scale.x;
+  const inverseScaleY = 1 / container.scale.y;
+
+  // Apply the inverse scale to the text
+  text.scale.set(inverseScaleX, inverseScaleY);
 };
 
 export const addVerticalTicksText = (

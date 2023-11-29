@@ -5,6 +5,7 @@ import Topbar from "./scenes/global/Topbar";
 import Sidebar from "./scenes/global/Sidebar";
 import Dashboard from "./scenes/dashboard";
 import DataPage from "./scenes/datasets";
+import Home from "./scenes/home";
 
 function App() {
   const [theme, colorMode] = useMode();
@@ -19,8 +20,9 @@ function App() {
           <Box className="content" marginTop="60px">
             <Routes>
               {/* @ts-ignore */}
+              <Route path="/" element={<Home />} />
               <Route
-                path="/"
+                path="/dashboard"
                 element={
                   <>
                     <Sidebar />
@@ -41,15 +43,3 @@ function App() {
 }
 
 export default App;
-
-//{
-//"file_path": "data/scHiC.h5",
-//"grp_path": "resolutions/100000/cells/cell_id0",
-//"range1": "chrom2:0-40000000",
-//"range2": "chrom2:0-40000000"
-//}
-/*
-{
-"chrom1": "chrom2:0-40000000",
-"chrom2": "chrom2:0-40000000"
-}*/

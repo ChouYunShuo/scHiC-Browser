@@ -6,17 +6,10 @@ import {
   selectPixSize,
   selectAllRes,
   selectChromLen,
-} from "./redux/heatmap2DSlice";
-import store from "./redux/store";
-import { useGetDatasetsQuery } from "./redux/apiSlice";
+} from "../redux/heatmap2DSlice";
+import store from "../redux/store";
+import { apiEndpoint } from "../redux/apiSlice";
 
-type queryType = {
-  chrom1: string;
-  chrom2: string;
-  dataset_name: string;
-  resolution: string;
-  cell_id: string | string[];
-};
 type ChromLenQueryType = {
   name: string;
   resolution: string;
@@ -29,12 +22,6 @@ type EmbedQueryType = {
   embed_type: string;
 };
 
-type SpatialQueryType = {
-  dataset_name: string;
-  resolution: string;
-  gene_name: string;
-};
-
 type MoveType = "left" | "right";
 
 export type tickType = {
@@ -42,39 +29,26 @@ export type tickType = {
   pix_pos: number;
 };
 
-// export const fetchMap = async (simpleQuery: queryType) => {
-//   return axios.post("http://128.2.220.67:8020/api/query", simpleQuery).then(
-//     (
-//       res //genome-dev.compbio.cs.cmu.edu
-//     ) => JSON.parse(res.data)
-//   );
-// };
 export const fetchChromLens = async (simpleQuery: ChromLenQueryType) => {
   return axios
-    .post("https://cellscope.nucleome.org/api/chromlens", simpleQuery)
+    .post(`http://${apiEndpoint}/api/chromlens`, simpleQuery)
     .then((res) => JSON.parse(res.data));
 };
 
 export const fetchEmbedding = async (simpleQuery: EmbedQueryType) => {
   return axios
-    .post("https://cellscope.nucleome.org/api/embed", simpleQuery)
-    .then((res) => JSON.parse(res.data));
-};
-
-export const fetchSpatial = async (simpleQuery: SpatialQueryType) => {
-  return axios
-    .post("https://cellscope.nucleome.org/api/spatial", simpleQuery)
+    .post(`http://${apiEndpoint}/api/embed`, simpleQuery)
     .then((res) => JSON.parse(res.data));
 };
 
 export const chrom2idx = (chrom: string) => {
-  let chrom_name = chrom.substring(5);
+  let chrom_name = chrom.substring(3);
   if (chrom_name == "X") return 23;
   if (chrom_name == "Y") return 24;
   return Number(chrom_name) - 1;
 };
 export const getNbChrom = (range: string): string => {
-  var chrom = range.trim().split(":")[0].substring(5);
+  var chrom = range.trim().split(":")[0].substring(3);
   //console.log(chrom)
   return "chr" + chrom;
 };
@@ -118,7 +92,25 @@ export const getChromLenFromPos = (
   const xScale = scaleLinear().domain([0, map_size]).range([lo, hi]);
   return Math.min(Math.max(lo, Math.ceil(xScale(pos))), hi);
 };
+export const calculateRange = (start: number, end: number) => end - start;
 
+export const adjustChromValues = (
+  chrom1_start: number,
+  chrom1_end: number,
+  chrom2_start: number,
+  chrom2_end: number
+) => {
+  const chrom1_range = calculateRange(chrom1_start, chrom1_end);
+  const chrom2_range = calculateRange(chrom2_start, chrom2_end);
+
+  if (chrom1_range > chrom2_range) {
+    chrom2_end = chrom2_start + chrom1_range;
+  } else if (chrom2_range > chrom1_range) {
+    chrom1_end = chrom1_start + chrom2_range;
+  }
+
+  return { chrom1_start, chrom1_end, chrom2_start, chrom2_end };
+};
 export const getScaleFromRange = (range1: string, range2: string) => {
   const raw1 = range1.trim().split(":")[1];
   const lo1 = Number(raw1.split("-")[0]);
@@ -136,7 +128,8 @@ export const getScaleFromRange = (range1: string, range2: string) => {
 
 export const getTicksAndPosFromRange = (
   range: string,
-  map_size: number,
+  start_pos: number,
+  end_pos: number,
   scale: number
 ) => {
   const ticks: tickType[] = [];
@@ -147,12 +140,11 @@ export const getTicksAndPosFromRange = (
   if (scale === 1) numTicks = 4;
   else numTicks = 3;
 
-  const xScale = scaleLinear()
-    .domain([lo, hi])
-    .range([0, scale * map_size]);
-  const tick = xScale.ticks(numTicks).filter((tick) => Number.isInteger(tick));
+  const xScale = scaleLinear().domain([lo, hi]).range([start_pos, end_pos]);
+  const tick = xScale.ticks(5).filter((tick) => Number.isInteger(tick));
 
   for (let i = 0; i < tick.length; i++) {
+    if (tick[i] == 0) continue;
     ticks.push({
       chrom_pos: tick[i],
       pix_pos: Math.ceil(xScale(tick[i])),
@@ -192,6 +184,14 @@ export const getResFromRange = (range1: string, range2: string) => {
   }
 };
 
+export const getNewChromFromNewPos = (
+  range1: string,
+  newStart: number,
+  newEnd: number
+) => {
+  var chrom = range1.trim().split(":")[0];
+  return chrom + ":" + newStart.toString() + "-" + newEnd.toString();
+};
 export const getNewChromZoomIn = (range1: string, a: number) => {
   //range input: 0-40000000
   var chrom = range1.trim().split(":")[0];
@@ -217,6 +217,7 @@ export const getNewChromZoomIn = (range1: string, a: number) => {
 };
 export const getNewChromZoomOut = (range1: string, a: number) => {
   //range input: 0-40000000
+
   var chrom = range1.trim().split(":")[0];
   var rawrange = range1.trim().split(":")[1];
   try {
@@ -236,6 +237,7 @@ export const getNewChromZoomOut = (range1: string, a: number) => {
         Math.floor(mid - range).toString() +
         "-" +
         Math.floor(mid + range).toString();
+    console.log(range1, validateChrom(chrom_str));
     return validateChrom(chrom_str);
   } catch (err) {
     console.log(err);

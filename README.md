@@ -2,6 +2,8 @@
 
 A Vite Typescript React project for scHiC data visualization and analysis using Redux, Pixi.js, and D3.js
 
+![Visualization of this repo](./diagram.svg)
+
 ## Features
 
 - Load and visualize scHiC data in a variety of formats

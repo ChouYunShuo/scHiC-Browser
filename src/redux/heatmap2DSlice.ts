@@ -1,15 +1,17 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import config from "../config.json";
 
 type chromQueryType = {
   chrom1: string;
   chrom2: string;
 };
 
-type apiCallType = {
+export type apiCallType = {
   id: number;
   selectedCells: string[];
   query: chromQueryType;
   showChromPos: boolean;
+  selectRegion: boolean;
 };
 
 type selectRectType = {
@@ -33,16 +35,16 @@ type HeatMapStateType = {
   selectedSidebarItem: number | null;
   selectRect: selectRectType;
 };
-const initMapQuery = {
-  chrom1: "chrom2:0-100000000",
-  chrom2: "chrom2:0-100000000",
-};
-const initApiCalls = [
-  { id: 0, selectedCells: ["0"], query: initMapQuery, showChromPos: false },
-  { id: 1, selectedCells: ["1"], query: initMapQuery, showChromPos: false },
-  { id: 2, selectedCells: ["2"], query: initMapQuery, showChromPos: false },
-  { id: 3, selectedCells: ["3"], query: initMapQuery, showChromPos: false },
-];
+
+const initApiCall = (id: number) => ({
+  id,
+  selectedCells: [`${id}`],
+  query: config.init_state.query,
+  showChromPos: false,
+  selectRegion: false,
+});
+const initApiCalls = Array.from({ length: 4 }, (_, i) => initApiCall(i));
+
 const initSelectRect = {
   isVisible: false,
   startX: 0,
@@ -52,14 +54,9 @@ const initSelectRect = {
 };
 
 const initialState: HeatMapStateType = {
-  dataset_name: "Lee_et_al", //Ramani
-  resolution: "500000",
+  ...config.init_state,
   all_resolution: [],
   chrom_lengths: [],
-  app_size: 450,
-  contact_map_size: 400,
-  pix_size: 2,
-  map_cnts: 4,
   apiCalls: initApiCalls,
   selectedSidebarItem: null,
   selectRect: initSelectRect,
@@ -69,45 +66,52 @@ const heatMap2DSlice = createSlice({
   name: "heatmap2D",
   initialState,
   reducers: {
-    updateResolution: (state:HeatMapStateType, action: PayloadAction<string>) => {
+    updateResolution: (state, action: PayloadAction<string>) => {
       state.resolution = action.payload;
     },
-    updateDataset: (state:HeatMapStateType, action: PayloadAction<string>) => {
+    updateDataset: (state, action: PayloadAction<string>) => {
       state.dataset_name = action.payload;
     },
 
     updateMapSelectCells: (
-      state:HeatMapStateType,
+      state,
       action: PayloadAction<{ id: number; selectedCells: string[] }>
     ) => {
       state.apiCalls[action.payload.id].selectedCells =
         action.payload.selectedCells;
     },
     updateMapShowChromPos: (
-      state:HeatMapStateType,
+      state,
       action: PayloadAction<{ id: number; showChromPos: boolean }>
     ) => {
       state.apiCalls[action.payload.id].showChromPos =
         action.payload.showChromPos;
     },
+    updateMapSelectRegion: (
+      state,
+      action: PayloadAction<{ id: number; selectRegion: boolean }>
+    ) => {
+      state.apiCalls[action.payload.id].selectRegion =
+        action.payload.selectRegion;
+    },
 
     updateApiChromQuery: (
-      state:HeatMapStateType,
+      state,
       action: PayloadAction<{ id: number; query: chromQueryType }>
     ) => {
       state.apiCalls[action.payload.id].query = action.payload.query;
     },
-    updateChromLen: (state:HeatMapStateType, action: PayloadAction<number[]>) => {
+    updateChromLen: (state, action: PayloadAction<number[]>) => {
       state.chrom_lengths = action.payload;
     },
-    updateAllRes: (state:HeatMapStateType, action: PayloadAction<string>) => {
+    updateAllRes: (state, action: PayloadAction<string>) => {
       const numbersArr = action.payload.split(",").map(Number);
       state.all_resolution = numbersArr;
     },
-    updateSelectedSidebarItem: (state:HeatMapStateType, action: PayloadAction<number>) => {
+    updateSelectedSidebarItem: (state, action: PayloadAction<number>) => {
       state.selectedSidebarItem = action.payload;
     },
-    updateSelectRect: (state:HeatMapStateType, action: PayloadAction<selectRectType>) => {
+    updateSelectRect: (state, action: PayloadAction<selectRectType>) => {
       state.selectRect = action.payload;
     },
   },
@@ -119,6 +123,7 @@ export const {
   updateDataset,
   updateMapSelectCells,
   updateMapShowChromPos,
+  updateMapSelectRegion,
   updateApiChromQuery,
   updateChromLen,
   updateAllRes,
