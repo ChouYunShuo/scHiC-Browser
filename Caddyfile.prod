@@ -1,0 +1,18 @@
+{
+    email yunshuoc@andrew.cmu.edu
+    http_port 8021
+    https_port 443 
+}
+
+  
+
+cellscope.nucleome.org {
+  route /api/* {
+    reverse_proxy localhost:8021
+  }
+  route {
+    reverse_proxy vite:82
+    root * /usr/share/caddy
+    file_server
+  }
+}

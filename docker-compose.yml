@@ -4,11 +4,23 @@ services:
     build: .
     environment:
       - NODE_ENV=production
-    ports:
-      - "8082:82"
     networks:
       - cellscope_network
+    ports:
+      - "8088:82" # Expose port 8088 for the Vite server
+  # caddy:
+  #   image: caddy
+  #   volumes:
+  #     - ./Caddyfile.local:/etc/caddy/Caddyfile
+  #     - caddy_data:/data
+  #   ports:
+  #     - "443:443"
+  #   networks:
+  #     - cellscope_network
 
 networks:
   cellscope_network:
     external: true
+
+# volumes:
+#   caddy_data:

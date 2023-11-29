@@ -22,6 +22,12 @@ type EmbedQueryType = {
   embed_type: string;
 };
 
+type SpatialQueryType = {
+  dataset_name: string;
+  resolution: string;
+  gene_name: string;
+};
+
 type MoveType = "left" | "right";
 
 export type tickType = {

@@ -13,7 +13,7 @@ COPY . .
 
 RUN yarn build
 
-# Stage 2 - Nginx Server
+# #Stage 2 - Nginx Server
 FROM nginx:stable-alpine
 
 COPY --from=build /app/dist /usr/share/nginx/html
