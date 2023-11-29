@@ -279,15 +279,21 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
     function initializeRectsAndAddToStage(app: PIXI.Application) {
       [sltRect, symRect, posRect].forEach(initRect);
 
-      app.stage.addChild(bg_container);
-      app.stage.addChild(mapViewport);
-      mapViewport.addChild(contact2d_container);
-      app.stage.addChild(horizontal_track_container);
-      app.stage.addChild(vertical_track_container);
-      app.stage.addChild(chrom_dist_container);
-      app.stage.addChild(sltRect);
-      app.stage.addChild(symRect);
-      app.stage.addChild(posRect);
+      app.stage.addChild(bg_container as unknown as PIXI.DisplayObject);
+      app.stage.addChild(mapViewport as unknown as PIXI.DisplayObject);
+      mapViewport.addChild(
+        contact2d_container as unknown as PIXI.DisplayObject
+      );
+      app.stage.addChild(
+        horizontal_track_container as unknown as PIXI.DisplayObject
+      );
+      app.stage.addChild(
+        vertical_track_container as unknown as PIXI.DisplayObject
+      );
+      app.stage.addChild(chrom_dist_container as unknown as PIXI.DisplayObject);
+      app.stage.addChild(sltRect as unknown as PIXI.DisplayObject);
+      app.stage.addChild(symRect as unknown as PIXI.DisplayObject);
+      app.stage.addChild(posRect as unknown as PIXI.DisplayObject);
     }
 
     function addMapViewportEventListeners(viewport: Viewport) {
@@ -434,7 +440,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
       app_size,
       app_size
     );
-    bg_container.addChild(point1);
+    bg_container.addChild(point1 as unknown as PIXI.DisplayObject);
 
     // add heatmap, Text data
     handleTickUpdate();
@@ -487,9 +493,14 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
       transform_xy,
       contact_map_size
     );
-    chrom_dist_container.addChild(cornerRect);
-    horizontal_track_container.addChild(signal1Rect);
-    vertical_track_container.addChild(signal2Rect);
+
+    chrom_dist_container.addChild(cornerRect as unknown as PIXI.DisplayObject);
+    horizontal_track_container.addChild(
+      signal1Rect as unknown as PIXI.DisplayObject
+    );
+    vertical_track_container.addChild(
+      signal2Rect as unknown as PIXI.DisplayObject
+    );
 
     if (heatMapData) {
       if (!sig1IsLoading && sig1Data) {
@@ -534,8 +545,8 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
       transform_xy
     );
 
-    chrom_dist_container.addChild(chrom1Rect);
-    chrom_dist_container.addChild(chrom2Rect);
+    chrom_dist_container.addChild(chrom1Rect as unknown as PIXI.DisplayObject);
+    chrom_dist_container.addChild(chrom2Rect as unknown as PIXI.DisplayObject);
 
     const [scaleX, scaleY] = getScaleFromRange(
       range1Ref.current,
@@ -632,8 +643,8 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
         chrom1_len,
         chrom2_len
       );
-      posRect.addChild(textChrom1);
-      posRect.addChild(textChrom2);
+      posRect.addChild(textChrom1 as unknown as PIXI.DisplayObject);
+      posRect.addChild(textChrom2 as unknown as PIXI.DisplayObject);
     });
     container.on("pointerleave", (event: PIXI.FederatedMouseEvent) => {
       posRect.visible = false;

@@ -55,7 +55,8 @@ export const drawVerticalTrack = (
   // Apply fill to the shape
   graphics.endFill();
   graphics.position.set(460, 50);
-  container.addChild(graphics);
+
+  container.addChild(graphics as unknown as PIXI.DisplayObject);
 };
 export const drawHorizontalTrack = (
   data: number[],
@@ -101,7 +102,7 @@ export const drawHorizontalTrack = (
   graphics.endFill();
   graphics.position.set(50, 460);
 
-  container.addChild(graphics);
+  container.addChild(graphics as unknown as PIXI.DisplayObject);
 };
 
 export const drawHorizontalScale = (
@@ -138,12 +139,11 @@ export const drawHorizontalScale = (
   line1.lineStyle(1, parseInt(textColor.slice(1), 16));
   line1.moveTo(start_x, start_y + 6 * line_len);
   line1.lineTo(start_x + line_len, start_y + 6 * line_len);
-
-  container.addChild(text);
-  container.addChild(text1);
-  container.addChild(line);
-  container.addChild(line1);
-  container.addChild(line2);
+  container.addChild(text as unknown as PIXI.DisplayObject);
+  container.addChild(text1 as unknown as PIXI.DisplayObject);
+  container.addChild(line as unknown as PIXI.DisplayObject);
+  container.addChild(line1 as unknown as PIXI.DisplayObject);
+  container.addChild(line2 as unknown as PIXI.DisplayObject);
 };
 
 export const drawHorizontalTrackType = (
@@ -159,7 +159,7 @@ export const drawHorizontalTrackType = (
   const text = new PIXI.Text(type, testConfig);
   text.x = 60;
   text.y = 465;
-  container.addChild(text);
+  container.addChild(text as unknown as PIXI.DisplayObject);
 };
 // Functions for generating fake data when testing
 

@@ -49,8 +49,8 @@ export const addHorizontalTicksText = (
     text.x = padding_x + ticks[i].pix_pos;
     text.y = padding_y;
     if (text.x > start_x) {
-      container.addChild(line);
-      container.addChild(text);
+      container.addChild(line as unknown as PIXI.DisplayObject);
+      container.addChild(text as unknown as PIXI.DisplayObject);
     }
   }
 };
@@ -95,8 +95,8 @@ export const addVerticalTicksText = (
     text.anchor.set(1.2, 0);
     text.rotation = -Math.PI / 2;
     if (text.y > start_y) {
-      container.addChild(line);
-      container.addChild(text);
+      container.addChild(line as unknown as PIXI.DisplayObject);
+      container.addChild(text as unknown as PIXI.DisplayObject);
     }
   }
 };
