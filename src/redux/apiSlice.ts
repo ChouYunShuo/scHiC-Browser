@@ -66,7 +66,7 @@ type RawDatum = [number, number];
 
 export const rootApi = createApi({
   reducerPath: "rootApi",
-  baseQuery: fetchBaseQuery({ baseUrl: `http://${apiEndpoint}/api` }),
+  baseQuery: fetchBaseQuery({ baseUrl: `https://${apiEndpoint}/api` }),
   endpoints: (builder) => ({
     getDatasets: builder.query<datasetType[], void>({
       query: () => "/datasets",
