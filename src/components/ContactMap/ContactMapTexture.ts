@@ -43,7 +43,11 @@ export const createHeatMapFromTexture = (
     const heatmapTexture = PIXI.Texture.from(heatmapCanvas);
     const heatmapSprite = new PIXI.Sprite(heatmapTexture);
     heatmapSprite.position.set(transform_xy, transform_xy);
+<<<<<<< HEAD
     container.addChild(heatmapSprite as PIXI.DisplayObject);
+=======
+    container.addChild(heatmapSprite as unknown as PIXI.DisplayObject);
+>>>>>>> fix pixi type bug
   } else {
     console.error("Could not get 2D context from canvas");
   }
