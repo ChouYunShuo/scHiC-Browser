@@ -358,7 +358,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
           query: { chrom1: newChrom1, chrom2: newChrom2 },
         })
       );
-    }, 2000);
+    }, 1500);
 
     const debouncedHandleZoomIn = debounce((e: Viewport) => {
       const { worldPoint, worldPoint1 } = getCornerPoints(e);

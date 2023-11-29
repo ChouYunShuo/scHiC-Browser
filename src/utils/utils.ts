@@ -31,13 +31,13 @@ export type tickType = {
 
 export const fetchChromLens = async (simpleQuery: ChromLenQueryType) => {
   return axios
-    .post(`http://${apiEndpoint}/api/chromlens`, simpleQuery)
+    .post(`https://${apiEndpoint}/api/chromlens`, simpleQuery)
     .then((res) => JSON.parse(res.data));
 };
 
 export const fetchEmbedding = async (simpleQuery: EmbedQueryType) => {
   return axios
-    .post(`http://${apiEndpoint}/api/embed`, simpleQuery)
+    .post(`https://${apiEndpoint}/api/embed`, simpleQuery)
     .then((res) => JSON.parse(res.data));
 };
 

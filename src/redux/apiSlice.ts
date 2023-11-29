@@ -1,6 +1,6 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
-export const apiEndpoint = "128.2.220.67:8020";
+export const apiEndpoint = "cellscope.nucleome.org"; //use 128.2.220.67 on dev
 
 type datasetType = {
   name: string;
@@ -53,7 +53,7 @@ type RawDatum = [number, number];
 
 export const rootApi = createApi({
   reducerPath: "rootApi",
-  baseQuery: fetchBaseQuery({ baseUrl: `http://${apiEndpoint}/api` }),
+  baseQuery: fetchBaseQuery({ baseUrl: `https://${apiEndpoint}/api` }),
   endpoints: (builder) => ({
     getDatasets: builder.query<datasetType[], void>({
       query: () => "/datasets",
