@@ -7,8 +7,4 @@ export default defineConfig({
   plugins: [
     react(),
   ],
-  server: {
-    host: true,
-    port: 8082, // This is the port which we will use in docker
-  }
 })

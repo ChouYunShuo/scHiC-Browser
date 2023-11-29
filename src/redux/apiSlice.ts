@@ -29,7 +29,7 @@ type RawDatum = [number, number, string];
 
 export const rootApi = createApi({
   reducerPath: "rootApi",
-  baseQuery: fetchBaseQuery({ baseUrl: "http://128.2.220.67:8081/api" }),
+  baseQuery: fetchBaseQuery({ baseUrl: "https://cellscope.nucleome.org/api" }),
   endpoints: (builder) => ({
     getDatasets: builder.query<datasetType[], void>({
       query: () => "/datasets",

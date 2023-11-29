@@ -29,6 +29,12 @@ type EmbedQueryType = {
   embed_type: string;
 };
 
+type SpatialQueryType = {
+  dataset_name: string;
+  resolution: string;
+  gene_name: string;
+};
+
 type MoveType = "left" | "right";
 
 export type tickType = {
@@ -45,13 +51,19 @@ export type tickType = {
 // };
 export const fetchChromLens = async (simpleQuery: ChromLenQueryType) => {
   return axios
-    .post("http://128.2.220.67:8081/api/chromlens", simpleQuery)
+    .post("https://cellscope.nucleome.org/api/chromlens", simpleQuery)
     .then((res) => JSON.parse(res.data));
 };
 
 export const fetchEmbedding = async (simpleQuery: EmbedQueryType) => {
   return axios
-    .post("http://128.2.220.67:8081/api/embed", simpleQuery)
+    .post("https://cellscope.nucleome.org/api/embed", simpleQuery)
+    .then((res) => JSON.parse(res.data));
+};
+
+export const fetchSpatial = async (simpleQuery: SpatialQueryType) => {
+  return axios
+    .post("https://cellscope.nucleome.org/api/spatial", simpleQuery)
     .then((res) => JSON.parse(res.data));
 };
 

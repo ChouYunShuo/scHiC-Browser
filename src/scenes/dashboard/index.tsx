@@ -218,7 +218,7 @@ const Dashboard: React.FC<Props> = (props) => {
         >
           <GridLayoutCellTopbar id={i} type={i === 4 ? "scatter" : "cmap"} />
 
-          {i === 4 ? <Embeds /> : <HeatMap map_id={i} />}
+          {i === 4 ? <Embeds />: <HeatMap map_id={i} />}
         </Box>
       );
     });
