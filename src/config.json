@@ -47,5 +47,6 @@
       {"type": "embed", "embed_type":"umap", "meta_type": "label", "i": "4"},
       {"type": "spatial", "gene_name": "0", "i": "5"}
     ]
-  }
+  },
+  "contact": "yunshuoc@andrew.cmu.edu"
 }

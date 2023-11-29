@@ -11,7 +11,7 @@ import logoDark from "../../assets/scViz_logo.png";
 import logoLight from "../../assets/scViz_logo_light.png";
 
 const TopBarTypography = styled(Typography)(({ theme }) => ({
-  fontWeight: 400,
+  fontWeight: 500,
   "&:hover": {
     color: tokens(theme.palette.mode).text[100], // choose a lighter color on hover
     cursor: "pointer",
