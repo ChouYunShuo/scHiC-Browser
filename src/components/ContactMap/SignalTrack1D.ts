@@ -58,7 +58,7 @@ export const drawVerticalABTrack = (
     if (currentSign !== lastSign) {
       // Close the current path
       closeVPath(currentGraphics, start_pt, last_pt);
-      container.addChild(currentGraphics);
+      container.addChild(currentGraphics as PIXI.DisplayObject);
 
       // Start a new graphics path
       currentGraphics = new PIXI.Graphics();
@@ -79,7 +79,7 @@ export const drawVerticalABTrack = (
 
   //Close the last path if needed
   closeVPath(currentGraphics, start_pt, last_pt);
-  container.addChild(currentGraphics);
+  container.addChild(currentGraphics as PIXI.DisplayObject);
 };
 export const drawHorizontalABTrack = (
   data: number[],
@@ -117,7 +117,7 @@ export const drawHorizontalABTrack = (
     if (currentSign !== lastSign) {
       // Close the current path
       closeHPath(currentGraphics, start_pt, last_pt);
-      container.addChild(currentGraphics);
+      container.addChild(currentGraphics as PIXI.DisplayObject);
 
       // Start a new graphics path
       currentGraphics = new PIXI.Graphics();
@@ -138,7 +138,7 @@ export const drawHorizontalABTrack = (
 
   //Close the last path if needed
   closeHPath(currentGraphics, start_pt, last_pt);
-  container.addChild(currentGraphics);
+  container.addChild(currentGraphics as PIXI.DisplayObject);
 };
 
 function closeVPath(graphics: PIXI.Graphics, sp: PointType, ep: PointType) {
@@ -199,7 +199,7 @@ export const drawVerticalTrack = (
   // Apply fill to the shape
   graphics.endFill();
   graphics.position.set(460, 50);
-  container.addChild(graphics);
+  container.addChild(graphics as PIXI.DisplayObject);
 };
 export const drawHorizontalTrack = (
   data: number[],
@@ -245,7 +245,7 @@ export const drawHorizontalTrack = (
   graphics.endFill();
   graphics.position.set(50, 460);
 
-  container.addChild(graphics);
+  container.addChild(graphics as PIXI.DisplayObject);
 };
 
 export const drawHorizontalScale = (
@@ -283,11 +283,11 @@ export const drawHorizontalScale = (
   line1.moveTo(start_x, start_y + 6 * line_len);
   line1.lineTo(start_x + line_len, start_y + 6 * line_len);
 
-  container.addChild(text);
-  container.addChild(text1);
-  container.addChild(line);
-  container.addChild(line1);
-  container.addChild(line2);
+  container.addChild(text as PIXI.DisplayObject);
+  container.addChild(text1 as PIXI.DisplayObject);
+  container.addChild(line as PIXI.DisplayObject);
+  container.addChild(line1 as PIXI.DisplayObject);
+  container.addChild(line2 as PIXI.DisplayObject);
 };
 
 // Functions for generating fake data when testing
