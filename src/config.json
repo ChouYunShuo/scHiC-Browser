@@ -10,7 +10,7 @@
       "chrom1": "chr2:0-100000000",
       "chrom2": "chr2:0-100000000"
     },
-    "track_type": "insul_score"
+    "track_type": "ab_score"
   },
   "layout": {
     "grid":{

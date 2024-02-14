@@ -29,7 +29,8 @@ import {
   drawVerticalTrack,
   drawHorizontalTrack,
   drawHorizontalScale,
-  drawHorizontalTrackType,
+  drawVerticalABTrack,
+  drawHorizontalABTrack,
 } from "./SignalTrack1D";
 import { drawRectWithText } from "./PixiChromText";
 import createHeatMapFromTexture from "./ContactMapTexture";
@@ -185,14 +186,18 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
   //   : d3.scaleSequentialLog(d3.interpolateReds).domain([0, 1]); // adjust domain for log scale
 
   const colorScaleMemo = useMemo(() => colorScale, [theme.palette.mode]);
-  const cleanupCanvas = useCallback(() => {
+  const cleanupCanvas = () => {
     contact2d_container.removeChildren();
     contact2d_container.removeAllListeners();
     chrom_dist_container.removeChildren();
-  }, []);
-  const cleanupTicks = useCallback(() => {
+    horizontal_track_container.removeChildren();
+    vertical_track_container.removeChildren();
+  };
+  const cleanupTicks = () => {
     chrom_dist_container.removeChildren();
-  }, []);
+    horizontal_track_container.removeChildren();
+    vertical_track_container.removeChildren();
+  };
 
   // Connect to nb-dispatch
   // var nb_hub = nb_dispatch("update", "brush");
@@ -493,27 +498,59 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
 
     if (heatMapData) {
       if (!sig1IsLoading && sig1Data) {
-        drawHorizontalTrack(
-          sig1Data,
-          contact_map_size,
-          transform_xy,
-          horizontal_track_container,
-          theme.palette.mode == "dark"
-            ? colors.redAccent[300]
-            : colors.greenAccent[300]
-        );
+        if (config.init_state.track_type == "ab_score") {
+          drawHorizontalABTrack(
+            sig1Data,
+            contact_map_size,
+            transform_xy,
+            horizontal_track_container,
+
+            theme.palette.mode == "dark"
+              ? colors.redAccent[300]
+              : colors.greenAccent[300],
+            theme.palette.mode == "dark"
+              ? colors.greenAccent[300]
+              : colors.redAccent[500]
+          );
+        } else {
+          drawHorizontalTrack(
+            sig1Data,
+            contact_map_size,
+            transform_xy,
+            horizontal_track_container,
+            theme.palette.mode == "dark"
+              ? colors.redAccent[300]
+              : colors.greenAccent[300]
+          );
+        }
+
         drawHorizontalScale(chrom_dist_container, colors.grey[100]);
       }
       if (!sig2IsLoading && sig2Data) {
-        drawVerticalTrack(
-          sig2Data,
-          contact_map_size,
-          transform_xy,
-          vertical_track_container,
-          theme.palette.mode == "dark"
-            ? colors.redAccent[300]
-            : colors.greenAccent[300]
-        );
+        if (config.init_state.track_type == "ab_score") {
+          drawVerticalABTrack(
+            sig2Data,
+            contact_map_size,
+            transform_xy,
+            vertical_track_container,
+            theme.palette.mode == "dark"
+              ? colors.redAccent[300]
+              : colors.greenAccent[300],
+            theme.palette.mode == "dark"
+              ? colors.greenAccent[300]
+              : colors.redAccent[500]
+          );
+        } else {
+          drawVerticalTrack(
+            sig2Data,
+            contact_map_size,
+            transform_xy,
+            vertical_track_container,
+            theme.palette.mode == "dark"
+              ? colors.redAccent[300]
+              : colors.greenAccent[300]
+          );
+        }
       }
     }
   };

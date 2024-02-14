@@ -43,6 +43,8 @@ const initApiCall = (id: number) => ({
   showChromPos: false,
   selectRegion: false,
 });
+
+
 const initApiCalls = Array.from({ length: 4 }, (_, i) => initApiCall(i));
 
 const initSelectRect = {

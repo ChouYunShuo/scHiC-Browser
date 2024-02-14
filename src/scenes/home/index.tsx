@@ -1,4 +1,3 @@
-import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import config from "../../config.json";
 import {
@@ -43,7 +42,7 @@ const Home: React.FC = () => {
 
   return (
     <Box>
-      <Box textAlign="center" sx={{ p: 4, mt: 16 }}>
+      <Box textAlign="center" sx={{ p: 4, mt: "10vh", height: "35vh" }}>
         <Box sx={{ fontWeight: "bold", fontSize: 42, mb: 4 }}>
           Visualize and explore chromosome interactions
         </Box>
@@ -55,8 +54,8 @@ const Home: React.FC = () => {
             color: colors.text[100],
           }}
         >
-          CellScope enpowers you to visually explore your <br /> multiscale Hi-C
-          data at the cellular level.
+          CellScope enpowers you to visually explore your <br /> multiscale sing
+          le cell Hi-C data.
         </Box>
 
         <Link
@@ -70,7 +69,6 @@ const Home: React.FC = () => {
             sx={{
               fontWeight: "600",
               fontSize: "24px",
-              mb: 10,
               color: colors.primary[500],
               backgroundColor: colors.greenAccent[500],
               textAlign: "center", // Center the text
