@@ -1,5 +1,5 @@
 import * as PIXI from "pixi.js";
-import { scaleLinear } from "d3-scale";
+import { scaleLinear, scaleLog } from "d3-scale";
 import { min, max } from "d3";
 import { useFetchTrackDataQuery } from "../../redux/apiSlice";
 
@@ -14,6 +14,149 @@ function normalizeArray(data: number[]): number[] {
 
   return data.map((d) => scale(d));
 }
+
+const z_tranArray = (data: number[]): number[] => {
+  const mean = data.reduce((acc, val) => acc + val, 0) / data.length;
+  const standardDeviation = Math.sqrt(
+    data.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / data.length
+  );
+
+  return data.map((d) => (d - mean) / standardDeviation);
+};
+export const drawVerticalABTrack = (
+  data: number[],
+  app_size: number,
+  tramsform_xy: number,
+  container: PIXI.Container,
+  posColor: string,
+  negColor: string
+) => {
+  const arr = z_tranArray(data);
+  const yScale = scaleLinear().domain([0, arr.length]).range([0, app_size]);
+  const xScale = scaleLinear()
+    .domain([min(arr)!, max(arr)!])
+    .range([-tramsform_xy / 3, tramsform_xy / 3]);
+
+  const points = arr.map((d, i) => ({
+    x: xScale(d),
+    y: yScale(i),
+  }));
+
+  let currentGraphics = new PIXI.Graphics();
+  let lastSign = points[0].x > 0;
+  let curColor = parseInt(
+    lastSign === false ? posColor.slice(1) : negColor.slice(1),
+    16
+  );
+  currentGraphics.beginFill(curColor, 0.6);
+
+  let start_pt = points[0];
+  let last_pt = points[0];
+  points.forEach((point, index) => {
+    const currentSign = point.x > 0;
+
+    if (currentSign !== lastSign) {
+      // Close the current path
+      closeVPath(currentGraphics, start_pt, last_pt);
+      container.addChild(currentGraphics);
+
+      // Start a new graphics path
+      currentGraphics = new PIXI.Graphics();
+      let curColor = parseInt(
+        lastSign === true ? posColor.slice(1) : negColor.slice(1),
+        16
+      );
+      currentGraphics.beginFill(curColor, 0.6);
+
+      currentGraphics.moveTo(point.x, point.y);
+      lastSign = currentSign;
+      start_pt = point;
+    } else {
+      currentGraphics.lineTo(point.x, point.y);
+      last_pt = point;
+    }
+  });
+
+  //Close the last path if needed
+  closeVPath(currentGraphics, start_pt, last_pt);
+  container.addChild(currentGraphics);
+};
+export const drawHorizontalABTrack = (
+  data: number[],
+  app_size: number,
+  tramsform_xy: number,
+  container: PIXI.Container,
+  posColor: string,
+  negColor: string
+) => {
+  const arr = z_tranArray(data);
+  const xScale = scaleLinear().domain([0, arr.length]).range([0, app_size]);
+  const yScale = scaleLinear()
+    .domain([min(arr)!, max(arr)!])
+    .range([-tramsform_xy / 3, tramsform_xy / 3]);
+
+  const points = arr.map((d, i) => ({
+    x: xScale(i),
+    y: yScale(d),
+  }));
+
+  let currentGraphics = new PIXI.Graphics();
+  let lastSign = points[0].y >= 0;
+  let curColor = parseInt(
+    lastSign === false ? posColor.slice(1) : negColor.slice(1),
+    16
+  );
+  currentGraphics.beginFill(curColor, 0.6);
+
+  let start_pt = points[0];
+  let last_pt = points[0];
+
+  points.forEach((point, index) => {
+    const currentSign = point.y >= 0;
+
+    if (currentSign !== lastSign) {
+      // Close the current path
+      closeHPath(currentGraphics, start_pt, last_pt);
+      container.addChild(currentGraphics);
+
+      // Start a new graphics path
+      currentGraphics = new PIXI.Graphics();
+      let curColor = parseInt(
+        lastSign === true ? posColor.slice(1) : negColor.slice(1),
+        16
+      );
+      currentGraphics.beginFill(curColor, 0.6);
+
+      currentGraphics.moveTo(point.x, point.y);
+      lastSign = currentSign;
+      start_pt = point;
+    } else {
+      currentGraphics.lineTo(point.x, point.y);
+      last_pt = point;
+    }
+  });
+
+  //Close the last path if needed
+  closeHPath(currentGraphics, start_pt, last_pt);
+  container.addChild(currentGraphics);
+};
+
+function closeVPath(graphics: PIXI.Graphics, sp: PointType, ep: PointType) {
+  graphics.lineTo(0, ep.y);
+  graphics.lineTo(0, sp.y);
+  graphics.closePath();
+  graphics.endFill();
+  graphics.position.set(475, 50);
+}
+
+function closeHPath(graphics: PIXI.Graphics, sp: PointType, ep: PointType) {
+  graphics.lineTo(ep.x, 0);
+  graphics.lineTo(sp.x, 0);
+  graphics.closePath();
+  graphics.endFill();
+  graphics.position.set(50, 475);
+}
+
 export const drawVerticalTrack = (
   data: number[],
   app_size: number,
@@ -23,6 +166,7 @@ export const drawVerticalTrack = (
 ) => {
   // 1. Normalize & Scale Data:
   // Create y scale
+  //const arr = z_tranArray(data);
   const arr = normalizeArray(data);
   const yScale = scaleLinear().domain([0, arr.length]).range([0, app_size]);
 
@@ -128,7 +272,7 @@ export const drawHorizontalScale = (
   const line = new PIXI.Graphics();
   line.lineStyle(1, parseInt(textColor.slice(1), 16));
   line.moveTo(start_x, start_y);
-  line.lineTo(start_x, start_y + 6 * line_len);
+  line.lineTo(start_x, start_y + 6 * line_len + 1);
 
   const line1 = new PIXI.Graphics();
   line1.lineStyle(1, parseInt(textColor.slice(1), 16));
@@ -146,21 +290,6 @@ export const drawHorizontalScale = (
   container.addChild(line2 as unknown as PIXI.DisplayObject);
 };
 
-export const drawHorizontalTrackType = (
-  container: PIXI.Container,
-  textColor: string,
-  type: string
-) => {
-  const testConfig = {
-    fontFamily: "Arial",
-    fontSize: 12,
-    fill: textColor,
-  };
-  const text = new PIXI.Text(type, testConfig);
-  text.x = 60;
-  text.y = 465;
-  container.addChild(text as unknown as PIXI.DisplayObject);
-};
 // Functions for generating fake data when testing
 
 // const generateRandomNumber = (min: number, max: number) => {
