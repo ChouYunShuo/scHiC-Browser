@@ -30,8 +30,14 @@ const GridLayoutCellTopbar: React.FC<GridLayoutTopbarProps> = ({
 
   return (
     <Box display="flex" flexDirection="column">
-      <GrabBox display="flex" className="dragHandle">
-        <Box display="flex" alignItems="center" paddingX={1}>
+      <Box display="flex">
+        <GrabBox
+          className="dragHandle"
+          flexGrow={1}
+          display="flex"
+          alignItems="center"
+          paddingX={1}
+        >
           <Typography
             variant="h5"
             color={colors.grey[100]}
@@ -46,21 +52,22 @@ const GridLayoutCellTopbar: React.FC<GridLayoutTopbarProps> = ({
             {type === "spatial" ? `Spatial Coords` : null}
             {type === "cmap" ? `Contact Map ${id + 1}` : null}
           </Typography>
+        </GrabBox>
+        <Box display="flex" justifyContent="flex-end">
+          <div onClick={handleShowToggle}>
+            <IconButton
+              sx={{
+                borderRadius: 1,
+                "&:hover": {
+                  backgroundColor: colors.border[100],
+                },
+              }}
+            >
+              <MoreVertIcon />
+            </IconButton>
+          </div>
         </Box>
-        <Box display="flex" justifyContent="flex-end" flexGrow={1}>
-          <IconButton
-            onClick={handleShowToggle}
-            sx={{
-              borderRadius: 1,
-              "&:hover": {
-                backgroundColor: colors.border[100],
-              },
-            }}
-          >
-            <MoreVertIcon />
-          </IconButton>
-        </Box>
-      </GrabBox>
+      </Box>
       {open && type === "cmap" && (
         <GridLayoutCMapSetting
           map_id={id}
