@@ -15,6 +15,7 @@ import {
   getNewChromFromNewPos,
   getNewChromZoomOut,
   adjustChromValues,
+  getPosFromChromLen
 } from "../../utils/utils";
 import {
   useFetchContactMapDataQuery,
@@ -624,16 +625,20 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
   }, [showChromPos, isSelectRegionEvent]);
 
   useEffect(() => {
-    if (selectRect.isVisible) {
-      const x = selectRect.startX;
-      const y = selectRect.startY;
-      const width = selectRect.width;
-      const height = selectRect.height;
-      drawSelectRect(sltRect, x, y, width, height, colors.grey[100]);
-      drawSelectRect(symRect, y, x, height, width, colors.grey[100]);
+    if (!selectRect.isVisible) {
+      sltRect.visible = false;
+      return;
+    }
+    const [scaleX, scaleY] = getScaleFromRange(range1, range2);
+    let x = getPosFromChromLen(range1, selectRect.startX , contact_map_size * scaleX) + transform_xy
+    let y = getPosFromChromLen(range2, selectRect.startY , contact_map_size * scaleY) + transform_xy
+    let x1 = getPosFromChromLen(range1, selectRect.endX, contact_map_size * scaleX) + transform_xy
+    let y1 = getPosFromChromLen(range2, selectRect.endY, contact_map_size * scaleY) + transform_xy
+   
+    if (x >0 && y>0 && x1 > 0 && y1>0) {
+      drawSelectRect(sltRect, x, y, x1-x, y1-y, colors.grey[100]);
     } else {
       sltRect.visible = false;
-      symRect.visible = false;
     }
   }, [selectRect]);
 
@@ -683,8 +688,8 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
           isVisible: false,
           startX: 0,
           startY: 0,
-          width: 0,
-          height: 0,
+          endX: 0,
+          endY: 0,
         })
       );
 
@@ -694,14 +699,34 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
     container.on("mousemove", (event: PIXI.FederatedMouseEvent) => {
       if (isDragging.current) {
         posRect.visible = false;
-        const endX = event.globalX; //- dimensions.diff_x * resize_ratio;
-        const endY = event.globalY; //- dimensions.diff_y * resize_ratio;
-        const width = Math.abs(endX - mousePos.current.x_pos);
-        const height = Math.abs(endY - mousePos.current.y_pos);
-        const startX = Math.min(mousePos.current.x_pos, endX);
-        const startY = Math.min(mousePos.current.y_pos, endY);
+        const [scaleX, scaleY] = getScaleFromRange(range1, range2);
+       
+        const startX = Math.min(mousePos.current.x_pos, event.globalX);
+        const startY = Math.min(mousePos.current.y_pos, event.globalY);
+        const endX = Math.max(mousePos.current.x_pos, event.globalX); 
+        const endY =  Math.max(mousePos.current.y_pos, event.globalY); 
+        let chrom1_start = getChromLenFromPos(
+          range1,
+          contact_map_size * scaleX,
+          startX - transform_xy
+        );
+        let chrom2_start = getChromLenFromPos(
+          range2,
+          contact_map_size * scaleY,
+          startY - transform_xy
+        );
+        let chrom1_end = getChromLenFromPos(
+          range1,
+          contact_map_size * scaleX,
+          endX - transform_xy
+        );
+        let chrom2_end = getChromLenFromPos(
+          range2,
+          contact_map_size * scaleY,
+          endY - transform_xy
+        );
         dispatch(
-          updateSelectRect({ isVisible: true, startX, startY, width, height })
+          updateSelectRect({ isVisible: true, startX:chrom1_start, startY:chrom2_start, endX:chrom1_end, endY:chrom2_end })
         );
       }
     });
@@ -712,37 +737,10 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
           isVisible: false,
           startX: 0,
           startY: 0,
-          width: 0,
-          height: 0,
+          endX: 0,
+          endY: 0,
         })
       );
-
-      // const endX = event.globalX; //- dimensions.diff_x * resize_ratio;
-      // const endY = event.globalY; //- dimensions.diff_y * resize_ratio;
-      // const x = Math.min(mousePos.current.x_pos, endX);
-      // const y = Math.min(mousePos.current.y_pos, endY);
-
-      // const width = Math.abs(endX - mousePos.current.x_pos);
-      // const height = Math.abs(endY - mousePos.current.y_pos);
-      // const chrom1_start = getChromLenFromPos(
-      //   range1,
-      //   contact_map_size,
-      //   x - transform_xy
-      // );
-      // const chrom2_start = getChromLenFromPos(
-      //   range2,
-      //   contact_map_size,
-      //   y - transform_xy
-      // );
-      // const chrom1_len =
-      //   getChromLenFromPos(range1, contact_map_size, x - transform_xy + width) -
-      //   chrom1_start;
-      // const chrom2_len =
-      //   getChromLenFromPos(
-      //     range2,
-      //     contact_map_size,
-      //     y - transform_xy + height
-      //   ) - chrom2_start;
 
       //callNbQuery(chrom1_start, chrom2_start, chrom1_len, chrom2_len);
       event.stopImmediatePropagation();

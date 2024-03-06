@@ -18,8 +18,8 @@ type selectRectType = {
   isVisible: boolean;
   startX: number;
   startY: number;
-  width: number;
-  height: number;
+  endX: number;
+  endY: number;
 };
 
 type HeatMapStateType = {
@@ -51,8 +51,8 @@ const initSelectRect = {
   isVisible: false,
   startX: 0,
   startY: 0,
-  width: 0,
-  height: 0,
+  endX: 0,
+  endY: 0,
 };
 
 const initialState: HeatMapStateType = {

@@ -92,6 +92,24 @@ export const getChromLenFromPos = (
   const xScale = scaleLinear().domain([0, map_size]).range([lo, hi]);
   return Math.min(Math.max(lo, Math.ceil(xScale(pos))), hi);
 };
+
+
+export const getPosFromChromLen = (
+  range: string,
+  chromLen: number,
+  map_size: number
+): number => {
+  const raw = range.trim().split(":")[1];
+  const lo = Number(raw.split("-")[0]);
+  const hi = Number(raw.split("-")[1]);
+  if (chromLen < lo || chromLen > hi) {
+    return 0;
+  }
+  const clampedChromLen = Math.min(Math.max(lo, chromLen), hi);
+  const xScale = scaleLinear().domain([lo, hi]).range([0, map_size]);
+  return xScale(clampedChromLen);
+};
+
 export const calculateRange = (start: number, end: number) => end - start;
 
 export const adjustChromValues = (
