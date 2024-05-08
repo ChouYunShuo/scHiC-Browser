@@ -45,7 +45,7 @@ const initApiCall = (id: number) => ({
 });
 
 
-const initApiCalls = Array.from({ length: 4 }, (_, i) => initApiCall(i));
+const initApiCalls = Array.from({ length: config.init_state.map_cnts }, (_, i) => initApiCall(i));
 
 const initSelectRect = {
   isVisible: false,
