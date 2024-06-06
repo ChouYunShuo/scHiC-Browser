@@ -15,7 +15,7 @@ import {
   getNewChromFromNewPos,
   getNewChromZoomOut,
   adjustChromValues,
-  getPosFromChromLen
+  getPosFromChromLen,
 } from "../../utils/utils";
 import {
   useFetchContactMapDataQuery,
@@ -630,13 +630,21 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
       return;
     }
     const [scaleX, scaleY] = getScaleFromRange(range1, range2);
-    let x = getPosFromChromLen(range1, selectRect.startX , contact_map_size * scaleX) + transform_xy
-    let y = getPosFromChromLen(range2, selectRect.startY , contact_map_size * scaleY) + transform_xy
-    let x1 = getPosFromChromLen(range1, selectRect.endX, contact_map_size * scaleX) + transform_xy
-    let y1 = getPosFromChromLen(range2, selectRect.endY, contact_map_size * scaleY) + transform_xy
-   
-    if (x >0 && y>0 && x1 > 0 && y1>0) {
-      drawSelectRect(sltRect, x, y, x1-x, y1-y, colors.grey[100]);
+    let x =
+      getPosFromChromLen(range1, selectRect.startX, contact_map_size * scaleX) +
+      transform_xy;
+    let y =
+      getPosFromChromLen(range2, selectRect.startY, contact_map_size * scaleY) +
+      transform_xy;
+    let x1 =
+      getPosFromChromLen(range1, selectRect.endX, contact_map_size * scaleX) +
+      transform_xy;
+    let y1 =
+      getPosFromChromLen(range2, selectRect.endY, contact_map_size * scaleY) +
+      transform_xy;
+
+    if (x > 0 && y > 0 && x1 > 0 && y1 > 0) {
+      drawSelectRect(sltRect, x, y, x1 - x, y1 - y, colors.grey[100]);
     } else {
       sltRect.visible = false;
     }
@@ -700,11 +708,11 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
       if (isDragging.current) {
         posRect.visible = false;
         const [scaleX, scaleY] = getScaleFromRange(range1, range2);
-       
+
         const startX = Math.min(mousePos.current.x_pos, event.globalX);
         const startY = Math.min(mousePos.current.y_pos, event.globalY);
-        const endX = Math.max(mousePos.current.x_pos, event.globalX); 
-        const endY =  Math.max(mousePos.current.y_pos, event.globalY); 
+        const endX = Math.max(mousePos.current.x_pos, event.globalX);
+        const endY = Math.max(mousePos.current.y_pos, event.globalY);
         let chrom1_start = getChromLenFromPos(
           range1,
           contact_map_size * scaleX,
@@ -726,7 +734,13 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
           endY - transform_xy
         );
         dispatch(
-          updateSelectRect({ isVisible: true, startX:chrom1_start, startY:chrom2_start, endX:chrom1_end, endY:chrom2_end })
+          updateSelectRect({
+            isVisible: true,
+            startX: chrom1_start,
+            startY: chrom2_start,
+            endX: chrom1_end,
+            endY: chrom2_end,
+          })
         );
       }
     });

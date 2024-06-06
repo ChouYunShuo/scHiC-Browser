@@ -11,10 +11,8 @@ function normalizeArray(data: number[]): number[] {
   const scale = scaleLinear()
     .domain([min(data)!, max(data)!])
     .range([0, 1]);
-
-  return data.map((d) => scale(d));
+  return data.map((d) => (d !== null ? scale(d) : 0));
 }
-
 const z_tranArray = (data: number[]): number[] => {
   const mean = data.reduce((acc, val) => acc + val, 0) / data.length;
   const standardDeviation = Math.sqrt(
@@ -160,7 +158,7 @@ function closeHPath(graphics: PIXI.Graphics, sp: PointType, ep: PointType) {
 export const drawVerticalTrack = (
   data: number[],
   app_size: number,
-  tramsform_xy: number,
+  transform_xy: number,
   container: PIXI.Container,
   textColor: string
 ) => {
@@ -173,7 +171,7 @@ export const drawVerticalTrack = (
   // Create x scale
   const xScale = scaleLinear()
     .domain([0, 1])
-    .range([tramsform_xy / 2, 0]); // reverse as y is from top to bottom in canvas
+    .range([transform_xy / 2, 0]); // reverse as y is from top to bottom in canvas
 
   // Map data points to scaled values
   const points = arr.map((d, i) => ({
@@ -192,8 +190,8 @@ export const drawVerticalTrack = (
   for (let i = 1; i < points.length; i++) {
     graphics.lineTo(points[i].x, points[i].y);
   }
-  graphics.lineTo(tramsform_xy / 2, points[points.length - 1].y);
-  graphics.lineTo(tramsform_xy / 2, points[0].y);
+  graphics.lineTo(transform_xy / 2, points[points.length - 1].y);
+  graphics.lineTo(transform_xy / 2, points[0].y);
   graphics.closePath();
 
   // Apply fill to the shape
@@ -204,7 +202,7 @@ export const drawVerticalTrack = (
 export const drawHorizontalTrack = (
   data: number[],
   app_size: number,
-  tramsform_xy: number,
+  transform_xy: number,
   container: PIXI.Container,
   textColor: string
 ) => {
@@ -215,7 +213,7 @@ export const drawHorizontalTrack = (
   // Create y scale
   const yScale = scaleLinear()
     .domain([0, 1])
-    .range([tramsform_xy / 2, 0]); // reverse as y is from top to bottom in canvas
+    .range([transform_xy / 2, 0]); // reverse as y is from top to bottom in canvas
 
   // Map data points to scaled values
   const points = arr.map((d, i) => ({
@@ -237,8 +235,8 @@ export const drawHorizontalTrack = (
   }
 
   // Close the shape by drawing a line back to the start along the bottom
-  graphics.lineTo(points[points.length - 1].x, tramsform_xy / 2);
-  graphics.lineTo(points[0].x, tramsform_xy / 2);
+  graphics.lineTo(points[points.length - 1].x, transform_xy / 2);
+  graphics.lineTo(points[0].x, transform_xy / 2);
   graphics.closePath();
 
   // Apply fill to the shape
