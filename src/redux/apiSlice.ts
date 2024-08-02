@@ -1,7 +1,7 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 export const apiEndpoint = "128.2.220.67:8020";
-
+//export const apiEndpoint = "128.2.220.67:8000";
 type datasetType = {
   name: string;
   description: string;
@@ -42,7 +42,7 @@ type MetaQueryRequest = {
 
 type GeneExprQueryRequest = {
   dataset_name: string;
-  index: string;
+  name: string;
 };
 
 type SpatialQueryRequest = {
