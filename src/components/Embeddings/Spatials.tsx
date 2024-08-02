@@ -94,7 +94,7 @@ const Spatials: React.FC = () => {
     error: exprError,
   } = useFetchGeneExprQuery({
     dataset_name: heatmap_state.dataset_name,
-    index: "0",
+    name: "Gnai3",
   });
   const CellSelectColor: d3.ScaleOrdinal<string, string> = d3
     .scaleOrdinal<string>()
