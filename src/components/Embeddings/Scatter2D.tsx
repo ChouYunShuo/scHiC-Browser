@@ -103,7 +103,7 @@ const Scatter2D: React.FC = () => {
     error: labelError,
   } = useFetchMetaQuery({
     dataset_name: heatmap_state.dataset_name,
-    meta_type: "label",
+    meta_type: "cell_label",
   });
 
   useEffect(() => {
