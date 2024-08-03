@@ -5,6 +5,7 @@ import Topbar from "./scenes/global/Topbar";
 import Dashboard from "./scenes/dashboard";
 import DataPage from "./scenes/datasets";
 import Home from "./scenes/home";
+import DashboardContol from "./scenes/dashboard/dashboardContol";
 
 function App() {
   const [theme, colorMode] = useMode();
@@ -24,6 +25,7 @@ function App() {
                 path="/dashboard"
                 element={
                   <>
+                    <DashboardContol />
                     {/* @ts-ignore */}
                     <Dashboard />
                   </>
