@@ -32,7 +32,6 @@ type HeatMapStateType = {
   pix_size: number;
   map_cnts: number;
   apiCalls: apiCallType[];
-  selectedSidebarItem: number | null;
   selectRect: selectRectType;
 };
 
@@ -44,8 +43,10 @@ const initApiCall = (id: number) => ({
   selectRegion: false,
 });
 
-
-const initApiCalls = Array.from({ length: config.init_state.map_cnts }, (_, i) => initApiCall(i));
+const initApiCalls = Array.from(
+  { length: config.init_state.map_cnts },
+  (_, i) => initApiCall(i)
+);
 
 const initSelectRect = {
   isVisible: false,
@@ -60,7 +61,6 @@ const initialState: HeatMapStateType = {
   all_resolution: [],
   chrom_lengths: [],
   apiCalls: initApiCalls,
-  selectedSidebarItem: null,
   selectRect: initSelectRect,
 };
 
@@ -68,6 +68,9 @@ const heatMap2DSlice = createSlice({
   name: "heatmap2D",
   initialState,
   reducers: {
+    loadConfig: (state, action: PayloadAction<HeatMapStateType>) => {
+      return action.payload;
+    },
     updateResolution: (state, action: PayloadAction<string>) => {
       state.resolution = action.payload;
     },
@@ -110,9 +113,6 @@ const heatMap2DSlice = createSlice({
       const numbersArr = action.payload.split(",").map(Number);
       state.all_resolution = numbersArr;
     },
-    updateSelectedSidebarItem: (state, action: PayloadAction<number>) => {
-      state.selectedSidebarItem = action.payload;
-    },
     updateSelectRect: (state, action: PayloadAction<selectRectType>) => {
       state.selectRect = action.payload;
     },
@@ -129,12 +129,9 @@ export const {
   updateApiChromQuery,
   updateChromLen,
   updateAllRes,
-  updateSelectedSidebarItem,
   updateSelectRect,
 } = heatMap2DSlice.actions;
 export const selectAppSize = (state: HeatMapStateType) => state.app_size;
 export const selectPixSize = (state: HeatMapStateType) => state.pix_size;
 export const selectAllRes = (state: HeatMapStateType) => state.all_resolution;
 export const selectChromLen = (state: HeatMapStateType) => state.chrom_lengths;
-export const selectSidebarItem = (state: HeatMapStateType) =>
-  state.selectedSidebarItem;
