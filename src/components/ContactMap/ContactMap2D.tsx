@@ -24,6 +24,7 @@ import {
 import {
   updateSelectRect,
   updateApiChromQuery,
+  selectTrackType,
 } from "../../redux/heatmap2DSlice";
 import { addHorizontalTicksText, addVerticalTicksText } from "./ChromTickTrack";
 import {
@@ -102,7 +103,6 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
   const range2 = useAppSelector(
     (state) => state.heatmap2D.apiCalls[map_id]?.query.chrom2
   );
-  console.log(range1);
   const app_size = useAppSelector((state) => state.heatmap2D.app_size);
   const contact_map_size = useAppSelector(
     (state) => state.heatmap2D.contact_map_size
@@ -118,6 +118,8 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
     (state) => state.heatmap2D.apiCalls[map_id].selectRegion
   );
   const selectRect = useAppSelector((state) => state.heatmap2D.selectRect);
+  const trackType = useAppSelector(selectTrackType);
+
   const dispatch = useAppDispatch();
 
   // pixi related variables
@@ -223,7 +225,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
     isFetching: sig1IsFetching,
     isLoading: sig1IsLoading,
   } = useFetchTrackDataQuery({
-    type: config.init_state.track_type, // ab_score, gene_score, insul_score
+    type: trackType, // ab_score, gene_score, insul_score
     chrom1: range1,
     dataset_name: dataset_name,
     resolution: resolution,
@@ -235,7 +237,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
     isFetching: sig2IsFetching,
     isLoading: sig2IsLoading,
   } = useFetchTrackDataQuery({
-    type: config.init_state.track_type,
+    type: trackType,
     chrom1: range2,
     dataset_name: dataset_name,
     resolution: resolution,
@@ -499,7 +501,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
 
     if (heatMapData) {
       if (!sig1IsLoading && sig1Data) {
-        if (config.init_state.track_type == "ab_score") {
+        if (trackType == "ab_score") {
           drawHorizontalABTrack(
             sig1Data,
             contact_map_size,
@@ -528,7 +530,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
         drawHorizontalScale(chrom_dist_container, colors.grey[100]);
       }
       if (!sig2IsLoading && sig2Data) {
-        if (config.init_state.track_type == "ab_score") {
+        if (trackType == "ab_score") {
           drawVerticalABTrack(
             sig2Data,
             contact_map_size,
