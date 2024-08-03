@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import config from "../config.json";
+import { RootState } from "./store";
 
 type chromQueryType = {
   chrom1: string;
@@ -33,6 +34,7 @@ type HeatMapStateType = {
   map_cnts: number;
   apiCalls: apiCallType[];
   selectRect: selectRectType;
+  track_type: string;
 };
 
 const initApiCall = (id: number) => ({
@@ -116,6 +118,9 @@ const heatMap2DSlice = createSlice({
     updateSelectRect: (state, action: PayloadAction<selectRectType>) => {
       state.selectRect = action.payload;
     },
+    updateTrackType: (state, action: PayloadAction<string>) => {
+      state.track_type = action.payload;
+    },
   },
 });
 
@@ -130,8 +135,10 @@ export const {
   updateChromLen,
   updateAllRes,
   updateSelectRect,
+  updateTrackType,
 } = heatMap2DSlice.actions;
 export const selectAppSize = (state: HeatMapStateType) => state.app_size;
 export const selectPixSize = (state: HeatMapStateType) => state.pix_size;
 export const selectAllRes = (state: HeatMapStateType) => state.all_resolution;
 export const selectChromLen = (state: HeatMapStateType) => state.chrom_lengths;
+export const selectTrackType = (state: RootState) => state.heatmap2D.track_type;
