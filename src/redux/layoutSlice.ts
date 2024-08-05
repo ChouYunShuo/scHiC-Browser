@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import config from "../config.json";
+import config from "../configs/Lee_et_al.json";
 
 type panelType = {
   x: number;
@@ -20,7 +20,7 @@ type componentType = {
   meta_type?: string;
   gene_name?: string;
 };
-type layoutStateType = {
+export type layoutStateType = {
   grid: gridType;
   component: componentType[];
 };
@@ -32,6 +32,9 @@ const layoutSlice = createSlice({
   name: "gridLayout",
   initialState,
   reducers: {
+    updateLayout: (state, action: PayloadAction<layoutStateType>) => {
+      return action.payload;
+    },
     updateGridLayout: (state, action: PayloadAction<gridType>) => {
       state.grid = action.payload;
     },
@@ -42,4 +45,5 @@ const layoutSlice = createSlice({
 });
 
 export default layoutSlice.reducer;
-export const { updateGridLayout, updateComponent } = layoutSlice.actions;
+export const { updateGridLayout, updateComponent, updateLayout } =
+  layoutSlice.actions;
