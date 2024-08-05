@@ -1,5 +1,11 @@
 import React, { useState } from "react";
-import { useFilters, usePagination, useSortBy, useTable } from "react-table";
+import {
+  useFilters,
+  usePagination,
+  useSortBy,
+  useTable,
+  Cell,
+} from "react-table";
 import {
   SvgIconTypeMap,
   FormControl,
@@ -21,11 +27,20 @@ import {
 } from "@mui/material";
 import { OverridableComponent } from "@mui/types";
 import { tokens } from "../../theme";
+import { useNavigate } from "react-router-dom";
 import NavigateBeforeIcon from "@mui/icons-material/NavigateBefore";
 import FirstPageIcon from "@mui/icons-material/FirstPage";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import LastPageIcon from "@mui/icons-material/LastPage";
 import FilterButton from "./FilterButton";
+import { useAppDispatch } from "../../redux/hooks";
+import { layoutStateType, updateLayout } from "../../redux/layoutSlice";
+import {
+  HeatMapStateType,
+  initApiCalls,
+  initSelectRect,
+  loadConfig,
+} from "../../redux/heatmap2DSlice";
 interface DataTableProps {
   columns: any;
   data: any;
@@ -35,6 +50,13 @@ interface PaginationButtonProps {
   Icon: OverridableComponent<SvgIconTypeMap<{}, "svg">>;
   onClick: () => void;
   disabled: boolean;
+}
+
+interface DataType {
+  name: string;
+  description: string;
+  cells: number;
+  resolutions: number;
 }
 
 const PaginationButton: React.FC<PaginationButtonProps> = ({
@@ -64,6 +86,8 @@ const PaginationButton: React.FC<PaginationButtonProps> = ({
 const DataTable: React.FC<DataTableProps> = ({ columns, data }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
 
   const instance = useTable(
     //@ts-ignore
@@ -88,6 +112,33 @@ const DataTable: React.FC<DataTableProps> = ({ columns, data }) => {
     state: { pageIndex, pageSize },
     setPageSize,
   } = instance;
+
+  const handleCellClick = async (cell: Cell<DataType, string>) => {
+    if (
+      cell.column.id === "dataset_description" &&
+      typeof cell.value === "string"
+    ) {
+      try {
+        let name = cell.value.split("\n")[0];
+        const config = await import(`../../configs/${name}.json`);
+        let newMapState: HeatMapStateType = {
+          ...config.init_state,
+          all_resolution: [],
+          chrom_lengths: [],
+          apiCalls: initApiCalls,
+          selectRect: initSelectRect,
+        };
+        let newLayout: layoutStateType = {
+          ...config.layout,
+        };
+        dispatch(loadConfig(newMapState));
+        dispatch(updateLayout(newLayout));
+        navigate("/dashboard");
+      } catch (error) {
+        console.error("Failed to load config:", error);
+      }
+    }
+  };
 
   return (
     <TableContainer sx={{ padding: 3, width: "98vw", position: "relative" }}>
@@ -154,7 +205,10 @@ const DataTable: React.FC<DataTableProps> = ({ columns, data }) => {
                 {...row.getRowProps()}
               >
                 {row.cells.map((cell: any) => (
-                  <TableCell {...cell.getCellProps()}>
+                  <TableCell
+                    {...cell.getCellProps()}
+                    onClick={() => handleCellClick(cell)}
+                  >
                     {cell.render("Cell")}
                   </TableCell>
                 ))}
