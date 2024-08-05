@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import config from "../config.json";
+import config from "../configs/Lee_et_al.json";
 import { RootState } from "./store";
 
 type chromQueryType = {
@@ -23,7 +23,7 @@ type selectRectType = {
   endY: number;
 };
 
-type HeatMapStateType = {
+export type HeatMapStateType = {
   dataset_name: string;
   resolution: string;
   all_resolution: number[];
@@ -36,7 +36,6 @@ type HeatMapStateType = {
   selectRect: selectRectType;
   track_type: string;
 };
-
 const initApiCall = (id: number) => ({
   id,
   selectedCells: [`${id}`],
@@ -45,12 +44,12 @@ const initApiCall = (id: number) => ({
   selectRegion: false,
 });
 
-const initApiCalls = Array.from(
+export const initApiCalls = Array.from(
   { length: config.init_state.map_cnts },
   (_, i) => initApiCall(i)
 );
 
-const initSelectRect = {
+export const initSelectRect = {
   isVisible: false,
   startX: 0,
   startY: 0,
@@ -126,6 +125,7 @@ const heatMap2DSlice = createSlice({
 
 export default heatMap2DSlice.reducer;
 export const {
+  loadConfig,
   updateResolution,
   updateDataset,
   updateMapSelectCells,
