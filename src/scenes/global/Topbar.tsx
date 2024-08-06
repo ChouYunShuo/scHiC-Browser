@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 import { styled } from "@mui/system";
 import { Box, IconButton, useTheme, Typography } from "@mui/material";
@@ -76,12 +76,13 @@ const Topbar: React.FC = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const colorMode = useContext(ColorModeContext);
+  const location = useLocation();
   const [selected, setSelected] = useState<ItemType>("");
 
   useEffect(() => {
     const currentPath = window.location.pathname.slice(1); // Remove the initial '/'
     setSelected(currentPath as ItemType);
-  }, []);
+  }, [location]);
 
   const handleSelect = (title: ItemType) => {
     setSelected(title);
