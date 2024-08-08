@@ -10,6 +10,7 @@ type chromQueryType = {
 export type apiCallType = {
   id: number;
   selectedCells: string[];
+  selectedCellType: string;
   query: chromQueryType;
   showChromPos: boolean;
   selectRegion: boolean;
@@ -39,6 +40,7 @@ export type HeatMapStateType = {
 const initApiCall = (id: number) => ({
   id,
   selectedCells: [`${id}`],
+  selectedCellType: "",
   query: config.init_state.query,
   showChromPos: false,
   selectRegion: false,
@@ -86,6 +88,19 @@ const heatMap2DSlice = createSlice({
       state.apiCalls[action.payload.id].selectedCells =
         action.payload.selectedCells;
     },
+    updateMapSelectCellTypeAndCells: (
+      state,
+      action: PayloadAction<{
+        id: number;
+        selectedCellType: string;
+        selectedCells: string[];
+      }>
+    ) => {
+      state.apiCalls[action.payload.id].selectedCellType =
+        action.payload.selectedCellType;
+      state.apiCalls[action.payload.id].selectedCells =
+        action.payload.selectedCells;
+    },
     updateMapShowChromPos: (
       state,
       action: PayloadAction<{ id: number; showChromPos: boolean }>
@@ -129,6 +144,7 @@ export const {
   updateResolution,
   updateDataset,
   updateMapSelectCells,
+  updateMapSelectCellTypeAndCells,
   updateMapShowChromPos,
   updateMapSelectRegion,
   updateApiChromQuery,
