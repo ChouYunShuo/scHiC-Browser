@@ -27,6 +27,8 @@ const Scatter2D: React.FC = () => {
   // State declarations
   const [formattedData, setFormattedData] = useState<Datum[]>([]);
   const [selectedCells, setSelectedCells] = useState<string[]>([]);
+  const [selectedCellType, setSelectedCellType] = useState<string>("");
+  const [curSelected, setCurSelected] = useState<string>("");
   const [isZoom, setIsZoom] = useState<boolean>(true);
   const [isColorCellSelect, setIsColorCellSelect] = useState<boolean>(false);
   const [isPopup, setIsPopup] = useState<boolean>(false);
@@ -236,7 +238,25 @@ const Scatter2D: React.FC = () => {
       .join("div")
       .style("display", "flex")
       .style("align-items", "center")
-      .style("margin-bottom", "5px");
+      .style("margin-bottom", "5px")
+      .style("cursor", "pointer")
+      .on("click", (event, d) => {
+        // Trigger an API call or log to the console
+        console.log(`Legend item clicked: ${d}`);
+        if (!isColorCellSelect) {
+          setIsPopup(true);
+
+          const selected = formattedData
+            .filter((cell) => {
+              return cell.cellType == d;
+            })
+            .map((cell) => cell.cellId);
+
+          setSelectedCells(selected);
+          setSelectedCellType(d);
+          setCurSelected("group");
+        }
+      });
 
     legendItems
       .append("div")
@@ -373,6 +393,7 @@ const Scatter2D: React.FC = () => {
             }
           });
         setSelectedCells(selected);
+        setCurSelected("cell");
 
         if (selected.length > 0) {
           setIsPopup(true);
@@ -409,6 +430,8 @@ const Scatter2D: React.FC = () => {
           handleVisToggle={handleVisToggle}
           handleMapToggle={handleContactMapToggle}
           selectedUmapCells={selectedCells}
+          selectedCellType={selectedCellType}
+          curSelected={curSelected}
           pWidth={currentWidth}
         ></EmbeddingPopUp>
         <svg
