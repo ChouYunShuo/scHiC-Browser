@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
-import { updateMapSelectCells } from "../../redux/heatmap2DSlice";
+import {
+  updateMapSelectCells,
+  updateMapSelectCellTypeAndCells,
+} from "../../redux/heatmap2DSlice";
 import {
   Box,
   Button,
@@ -65,6 +68,8 @@ type EmbeddingPopUpProps = {
   handleVisToggle: () => void;
   handleMapToggle: (selectedMap: number) => void;
   selectedUmapCells: string[];
+  selectedCellType?: string;
+  curSelected?: string;
   pWidth: number;
 };
 
@@ -73,6 +78,8 @@ const EmbeddingPopUp: React.FC<EmbeddingPopUpProps> = ({
   handleVisToggle,
   handleMapToggle,
   selectedUmapCells,
+  selectedCellType,
+  curSelected,
   pWidth,
 }) => {
   const theme = useTheme();
@@ -86,13 +93,24 @@ const EmbeddingPopUp: React.FC<EmbeddingPopUpProps> = ({
     setSelectedMap(event.target.value as string);
   };
 
-  const handleConfirm = () => {
-    dispatch(
-      updateMapSelectCells({
-        id: parseInt(selectedMap),
-        selectedCells: selectedUmapCells,
-      })
-    );
+  const handleConfirm = async () => {
+    if (curSelected === "group" && selectedCellType != undefined) {
+      dispatch(
+        updateMapSelectCellTypeAndCells({
+          id: parseInt(selectedMap),
+          selectedCellType: selectedCellType,
+          selectedCells: selectedUmapCells,
+        })
+      );
+    } else {
+      await dispatch(
+        updateMapSelectCells({
+          id: parseInt(selectedMap),
+          selectedCells: selectedUmapCells,
+        })
+      );
+    }
+
     handleMapToggle(parseInt(selectedMap) + 1);
     handleVisToggle();
   };
@@ -132,13 +150,23 @@ const EmbeddingPopUp: React.FC<EmbeddingPopUpProps> = ({
               </Select>
             </FormControl>
             <CellCntContainer>
-              <Typography
-                variant="body1"
-                color={colors.grey[200]}
-                sx={{ m: "0 0 5px 0" }}
-              >
-                You selected {selectedUmapCells.length} cells
-              </Typography>
+              {curSelected === "group" ? (
+                <Typography
+                  variant="body1"
+                  color={colors.grey[200]}
+                  sx={{ m: "0 0 5px 0" }}
+                >
+                  You selected {selectedCellType}
+                </Typography>
+              ) : (
+                <Typography
+                  variant="body1"
+                  color={colors.grey[200]}
+                  sx={{ m: "0 0 5px 0" }}
+                >
+                  You selected {selectedUmapCells.length} cells
+                </Typography>
+              )}
             </CellCntContainer>
             <ButtonContainer isMd={isMd}>
               <Button
