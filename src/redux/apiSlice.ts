@@ -14,6 +14,7 @@ type ContactMapRequest = {
   dataset_name: string;
   resolution: string;
   cell_id: string | string[];
+  cell_type: string;
 };
 
 type TrackRequest = {
