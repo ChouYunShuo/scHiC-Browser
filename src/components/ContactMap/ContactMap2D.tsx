@@ -44,9 +44,6 @@ import { DragEvent } from "pixi-viewport/dist/types";
 import debounce from "lodash.debounce";
 import { initRect, drawSelectRect, createGraphics } from "../../utils/heatmap";
 
-// load config
-import config from "../../config.json";
-
 interface HeatMapProps {
   map_id: number;
   selected?: string[];
@@ -218,6 +215,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
     dataset_name: dataset_name,
     resolution: resolution,
     cell_id: apiCall.selectedCells,
+    cell_type: apiCall.selectedCellType,
   });
   const {
     data: sig1Data,
