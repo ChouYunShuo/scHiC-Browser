@@ -11,6 +11,9 @@ import {
 } from "@mui/material";
 import { styled } from "@mui/system";
 import { tokens } from "../../theme";
+import { selectDashboardUuid } from "../../redux/heatmap2DSlice";
+import { useAppSelector } from "../../redux/hooks";
+
 const cards = [
   {
     img: { light: "light_map.png", dark: "dark_map.png" },
@@ -39,6 +42,7 @@ const HeaderTypography = styled(Typography)(({ theme }) => ({
 const Home: React.FC = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+  const dashboardId = useAppSelector(selectDashboardUuid);
 
   return (
     <Box>
@@ -59,7 +63,7 @@ const Home: React.FC = () => {
         </Box>
 
         <Link
-          to="/dashboard"
+          to={`/dashboard/${dashboardId}`}
           style={{
             textDecoration: "none",
             backgroundColor: colors.blueAccent[500],

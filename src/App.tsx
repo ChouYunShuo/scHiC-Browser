@@ -22,7 +22,7 @@ function App() {
               {/* @ts-ignore */}
               <Route path="/" element={<Home />} />
               <Route
-                path="/dashboard"
+                path="/dashboard/:uuid"
                 element={
                   <>
                     <DashboardContol />
