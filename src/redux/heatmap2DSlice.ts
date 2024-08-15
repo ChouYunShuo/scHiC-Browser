@@ -36,6 +36,7 @@ export type HeatMapStateType = {
   apiCalls: apiCallType[];
   selectRect: selectRectType;
   track_type: string;
+  uuid: string;
 };
 const initApiCall = (id: number) => ({
   id,
@@ -65,6 +66,7 @@ const initialState: HeatMapStateType = {
   chrom_lengths: [],
   apiCalls: initApiCalls,
   selectRect: initSelectRect,
+  uuid: "088aab9b-6ae1-4b7d-ae98-0858a88f10a5",
 };
 
 const heatMap2DSlice = createSlice({
@@ -115,7 +117,9 @@ const heatMap2DSlice = createSlice({
       state.apiCalls[action.payload.id].selectRegion =
         action.payload.selectRegion;
     },
-
+    updateDashboardUuid: (state, action: PayloadAction<string>) => {
+      state.uuid = action.payload;
+    },
     updateApiChromQuery: (
       state,
       action: PayloadAction<{ id: number; query: chromQueryType }>
@@ -152,9 +156,11 @@ export const {
   updateAllRes,
   updateSelectRect,
   updateTrackType,
+  updateDashboardUuid,
 } = heatMap2DSlice.actions;
 export const selectAppSize = (state: HeatMapStateType) => state.app_size;
 export const selectPixSize = (state: HeatMapStateType) => state.pix_size;
 export const selectAllRes = (state: HeatMapStateType) => state.all_resolution;
 export const selectChromLen = (state: HeatMapStateType) => state.chrom_lengths;
 export const selectTrackType = (state: RootState) => state.heatmap2D.track_type;
+export const selectDashboardUuid = (state: RootState) => state.heatmap2D.uuid;
