@@ -248,189 +248,187 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
   }, [range1, range2]);
 
   useEffect(() => {
-    if (!canvasRef.current) {
-      return;
-    }
+    if (!canvasRef.current) return;
+
+    // Destroy the previous PIXI application
 
     // Initialize PIXI application and viewport
-    const { app, mapViewport } = initializePixiAppAndViewport();
+    const { newApp, mapViewport } = initializePixiAppAndViewport();
     viewportRef.current = mapViewport;
 
     // Initialize rectangles and add them to the stage
-    initializeRectsAndAddToStage(app);
+    initializeRectsAndAddToStage(newApp);
 
     // Add event listeners to the viewport
     addMapViewportEventListeners(mapViewport);
 
-    function initializePixiAppAndViewport() {
-      const app = new PIXI.Application({
-        view: canvasRef.current!,
-        width: app_size,
-        height: app_size,
-        resolution: 1,
-      });
-
-      const mapViewport = new Viewport({
-        screenWidth: app_size,
-        screenHeight: app_size,
-        worldWidth: contact_map_size,
-        worldHeight: contact_map_size,
-        passiveWheel: false,
-        events: app.renderer.events,
-      });
-
-      return { app, mapViewport };
-    }
-
-    function initializeRectsAndAddToStage(app: PIXI.Application) {
-      [sltRect, symRect, posRect].forEach(initRect);
-
-      app.stage.addChild(bg_container as PIXI.DisplayObject);
-      app.stage.addChild(mapViewport as PIXI.DisplayObject);
-      mapViewport.addChild(contact2d_container as PIXI.DisplayObject);
-      app.stage.addChild(horizontal_track_container as PIXI.DisplayObject);
-      app.stage.addChild(vertical_track_container as PIXI.DisplayObject);
-      app.stage.addChild(chrom_dist_container as PIXI.DisplayObject);
-      app.stage.addChild(sltRect as PIXI.DisplayObject);
-      app.stage.addChild(symRect as PIXI.DisplayObject);
-      app.stage.addChild(posRect as PIXI.DisplayObject);
-    }
-
-    function addMapViewportEventListeners(viewport: Viewport) {
-      viewport.drag().wheel();
-
-      viewport.on("zoomed-end", (e: Viewport) => {
-        const mapTLCorner = new PIXI.Point(0, 0);
-        const mapBRCorner = new PIXI.Point(contact_map_size, contact_map_size);
-        const worldTLPosition = e.toGlobal(mapTLCorner);
-        const worldBRPosition = e.toGlobal(mapBRCorner);
-        topCornerRef.current = worldTLPosition;
-        bottomCornerRef.current = worldBRPosition;
-        setMapTopCorner(worldTLPosition);
-        setMapBottomCorner(worldBRPosition);
-        horizontal_track_container.scale.x = e.scale.x;
-        horizontal_track_container.position.x = worldTLPosition.x;
-        vertical_track_container.scale.y = e.scale.y;
-        vertical_track_container.position.y = worldTLPosition.y;
-        handleZoomedEnd(e);
-      });
-      viewport.on("drag-end", (e: DragEvent) => {
-        const mapTLCorner = new PIXI.Point(0, 0);
-        const mapBRCorner = new PIXI.Point(contact_map_size, contact_map_size);
-
-        const worldTLPosition = e.viewport.toGlobal(mapTLCorner);
-        const worldBRPosition = e.viewport.toGlobal(mapBRCorner);
-        topCornerRef.current = worldTLPosition;
-        bottomCornerRef.current = worldBRPosition;
-
-        setMapTopCorner(worldTLPosition);
-        setMapBottomCorner(worldBRPosition);
-        horizontal_track_container.position.x = worldTLPosition.x;
-        vertical_track_container.position.y = worldTLPosition.y;
-      });
-      return () => {
-        viewport.off("zoomed-end");
-        viewport.off("drag-end");
-      };
-    }
-
-    function handleZoomedEnd(e: Viewport) {
-      if (e.x === 0 && e.y === 0) {
-        console.log("Viewport is at (0, 0), returning early.");
-        return;
-      }
-      if (e.scale.x < 1) {
-        debouncedhandleZoomOut(e);
-        return;
-      } else if (e.scale.x > 1) {
-        debouncedHandleZoomIn(e);
-        return;
-      }
-    }
-    const debouncedhandleZoomOut = debounce((e: Viewport) => {
-      const newChrom1 = getNewChromZoomOut(range1Ref.current, 1 / e.scale.x);
-      const newChrom2 = getNewChromZoomOut(range2Ref.current, 1 / e.scale.y);
-      range1Ref.current = newChrom1;
-      range2Ref.current = newChrom2;
-      dispatch(
-        updateApiChromQuery({
-          id: map_id,
-          query: { chrom1: newChrom1, chrom2: newChrom2 },
-        })
-      );
-    }, 2000);
-
-    const debouncedHandleZoomIn = debounce((e: Viewport) => {
-      const { worldPoint, worldPoint1 } = getCornerPoints(e);
-
-      let chrom1_start = getChromLenFromPos(
-        range1Ref.current,
-        contact_map_size,
-        worldPoint.x - transform_xy
-      );
-      let chrom2_start = getChromLenFromPos(
-        range2Ref.current,
-        contact_map_size,
-        worldPoint.y - transform_xy
-      );
-      let chrom1_end = getChromLenFromPos(
-        range1Ref.current,
-        contact_map_size,
-        worldPoint1.x - transform_xy
-      );
-      let chrom2_end = getChromLenFromPos(
-        range2Ref.current,
-        contact_map_size,
-        worldPoint1.y - transform_xy
-      );
-
-      const adjustedChromValues = adjustChromValues(
-        chrom1_start,
-        chrom1_end,
-        chrom2_start,
-        chrom2_end
-      );
-
-      const newChrom1 = getNewChromFromNewPos(
-        range1Ref.current,
-        adjustedChromValues.chrom1_start,
-        adjustedChromValues.chrom1_end
-      );
-      const newChrom2 = getNewChromFromNewPos(
-        range2Ref.current,
-        adjustedChromValues.chrom2_start,
-        adjustedChromValues.chrom2_end
-      );
-
-      range1Ref.current = newChrom1;
-      range2Ref.current = newChrom2;
-
-      dispatch(
-        updateApiChromQuery({
-          id: map_id,
-          query: { chrom1: newChrom1, chrom2: newChrom2 },
-        })
-      );
-    }, 1000);
-
-    function getCornerPoints(e: Viewport) {
-      const devicePoint = new PIXI.Point(transform_xy, transform_xy);
-      const devicePoint1 = new PIXI.Point(
-        contact_map_size + transform_xy,
-        contact_map_size + transform_xy
-      );
-
-      const worldPoint = e.toLocal(devicePoint);
-      const worldPoint1 = e.toLocal(devicePoint1);
-
-      return { worldPoint, worldPoint1 };
-    }
-
-    // Cleanup function to remove all children from the stage
+    // Cleanup function to remove all children from the stage and destroy PIXI application
     return () => {
-      app.stage.removeChildren();
+      // Check if cancelResize exists before calling destroy
+      newApp.stage.removeChildren();
+      newApp.destroy(true, true);
     };
   }, []);
+
+  // Initialize PIXI application and viewport
+  function initializePixiAppAndViewport() {
+    const newApp = new PIXI.Application({
+      view: canvasRef.current!,
+      width: app_size,
+      height: app_size,
+      resolution: 1,
+    });
+
+    const mapViewport = new Viewport({
+      screenWidth: app_size,
+      screenHeight: app_size,
+      worldWidth: contact_map_size,
+      worldHeight: contact_map_size,
+      passiveWheel: false,
+      events: newApp.renderer.events,
+    });
+
+    return { newApp, mapViewport };
+  }
+
+  // Initialize rectangles and add them to the stage
+  function initializeRectsAndAddToStage(app: PIXI.Application) {
+    [sltRect, symRect, posRect].forEach(initRect);
+
+    app.stage.addChild(bg_container as PIXI.DisplayObject);
+    app.stage.addChild(viewportRef.current as PIXI.DisplayObject);
+    viewportRef.current!.addChild(contact2d_container as PIXI.DisplayObject);
+    app.stage.addChild(horizontal_track_container as PIXI.DisplayObject);
+    app.stage.addChild(vertical_track_container as PIXI.DisplayObject);
+    app.stage.addChild(chrom_dist_container as PIXI.DisplayObject);
+    app.stage.addChild(sltRect as PIXI.DisplayObject);
+    app.stage.addChild(symRect as PIXI.DisplayObject);
+    app.stage.addChild(posRect as PIXI.DisplayObject);
+  }
+
+  // Add event listeners to the viewport
+  function addMapViewportEventListeners(viewport: Viewport) {
+    viewport.drag().wheel();
+
+    viewport.on("zoomed-end", handleZoomedEnd);
+    viewport.on("drag-end", handleDragEnd);
+
+    // Cleanup event listeners
+    return () => {
+      viewport.off("zoomed-end", handleZoomedEnd);
+      viewport.off("drag-end", handleDragEnd);
+    };
+  }
+
+  // Handle zoom end event
+  function handleZoomedEnd(e: Viewport) {
+    if (e.x === 0 && e.y === 0) {
+      console.log("Viewport is at (0, 0), returning early.");
+      return;
+    }
+    if (e.scale.x < 1) {
+      debouncedhandleZoomOut(e);
+    } else if (e.scale.x > 1) {
+      debouncedHandleZoomIn(e);
+    }
+  }
+
+  // Handle drag end event
+  function handleDragEnd(e: DragEvent) {
+    const mapTLCorner = new PIXI.Point(0, 0);
+    const mapBRCorner = new PIXI.Point(contact_map_size, contact_map_size);
+    const worldTLPosition = e.viewport.toGlobal(mapTLCorner);
+    const worldBRPosition = e.viewport.toGlobal(mapBRCorner);
+    topCornerRef.current = worldTLPosition;
+    bottomCornerRef.current = worldBRPosition;
+
+    setMapTopCorner(worldTLPosition);
+    setMapBottomCorner(worldBRPosition);
+    horizontal_track_container.position.x = worldTLPosition.x;
+    vertical_track_container.position.y = worldTLPosition.y;
+  }
+
+  // Handle zoom out event (debounced)
+  const debouncedhandleZoomOut = debounce((e: Viewport) => {
+    const newChrom1 = getNewChromZoomOut(range1Ref.current, 1 / e.scale.x);
+    const newChrom2 = getNewChromZoomOut(range2Ref.current, 1 / e.scale.y);
+    range1Ref.current = newChrom1;
+    range2Ref.current = newChrom2;
+    dispatch(
+      updateApiChromQuery({
+        id: map_id,
+        query: { chrom1: newChrom1, chrom2: newChrom2 },
+      })
+    );
+  }, 2000);
+
+  // Handle zoom in event (debounced)
+  const debouncedHandleZoomIn = debounce((e: Viewport) => {
+    const { worldPoint, worldPoint1 } = getCornerPoints(e);
+
+    let chrom1_start = getChromLenFromPos(
+      range1Ref.current,
+      contact_map_size,
+      worldPoint.x - transform_xy
+    );
+    let chrom2_start = getChromLenFromPos(
+      range2Ref.current,
+      contact_map_size,
+      worldPoint.y - transform_xy
+    );
+    let chrom1_end = getChromLenFromPos(
+      range1Ref.current,
+      contact_map_size,
+      worldPoint1.x - transform_xy
+    );
+    let chrom2_end = getChromLenFromPos(
+      range2Ref.current,
+      contact_map_size,
+      worldPoint1.y - transform_xy
+    );
+
+    const adjustedChromValues = adjustChromValues(
+      chrom1_start,
+      chrom1_end,
+      chrom2_start,
+      chrom2_end
+    );
+
+    const newChrom1 = getNewChromFromNewPos(
+      range1Ref.current,
+      adjustedChromValues.chrom1_start,
+      adjustedChromValues.chrom1_end
+    );
+    const newChrom2 = getNewChromFromNewPos(
+      range2Ref.current,
+      adjustedChromValues.chrom2_start,
+      adjustedChromValues.chrom2_end
+    );
+
+    range1Ref.current = newChrom1;
+    range2Ref.current = newChrom2;
+
+    dispatch(
+      updateApiChromQuery({
+        id: map_id,
+        query: { chrom1: newChrom1, chrom2: newChrom2 },
+      })
+    );
+  }, 1000);
+
+  // Helper function to get corner points
+  function getCornerPoints(e: Viewport) {
+    const devicePoint = new PIXI.Point(transform_xy, transform_xy);
+    const devicePoint1 = new PIXI.Point(
+      contact_map_size + transform_xy,
+      contact_map_size + transform_xy
+    );
+
+    const worldPoint = e.toLocal(devicePoint);
+    const worldPoint1 = e.toLocal(devicePoint1);
+
+    return { worldPoint, worldPoint1 };
+  }
 
   useEffect(() => {
     const point1 = createGraphics(
