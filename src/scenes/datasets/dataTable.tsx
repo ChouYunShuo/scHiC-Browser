@@ -57,6 +57,7 @@ interface DataType {
   description: string;
   cells: number;
   resolutions: number;
+  uuid: string;
 }
 
 const PaginationButton: React.FC<PaginationButtonProps> = ({
@@ -116,24 +117,11 @@ const DataTable: React.FC<DataTableProps> = ({ columns, data }) => {
   const handleCellClick = async (cell: Cell<DataType, string>) => {
     if (
       cell.column.id === "dataset_description" &&
-      typeof cell.value === "string"
+      typeof cell.value === "string" &&
+      cell.row.original.uuid != ""
     ) {
       try {
-        let name = cell.value.split("\n")[0];
-        const config = await import(`../../configs/${name}.json`);
-        let newMapState: HeatMapStateType = {
-          ...config.init_state,
-          all_resolution: [],
-          chrom_lengths: [],
-          apiCalls: initApiCalls,
-          selectRect: initSelectRect,
-        };
-        let newLayout: layoutStateType = {
-          ...config.layout,
-        };
-        dispatch(loadConfig(newMapState));
-        dispatch(updateLayout(newLayout));
-        navigate("/dashboard");
+        navigate(`/dashboard/${cell.row.original.uuid}`);
       } catch (error) {
         console.error("Failed to load config:", error);
       }
@@ -208,6 +196,12 @@ const DataTable: React.FC<DataTableProps> = ({ columns, data }) => {
                   <TableCell
                     {...cell.getCellProps()}
                     onClick={() => handleCellClick(cell)}
+                    sx={{
+                      cursor:
+                        cell.column.id === "dataset_description"
+                          ? "pointer"
+                          : "default",
+                    }}
                   >
                     {cell.render("Cell")}
                   </TableCell>
