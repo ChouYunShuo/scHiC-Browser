@@ -9,14 +9,26 @@ import "react-resizable/css/styles.css";
 import { tokens } from "../../theme";
 import HeatMap from "../../components/ContactMap/ContactMap2D";
 import { useGetDatasetsQuery } from "../../redux/apiSlice";
+import {
+  HeatMapStateType,
+  initApiCalls,
+  initSelectRect,
+  loadConfig,
+  updateDashboardUuid,
+} from "../../redux/heatmap2DSlice";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { updateAllRes, updateChromLen } from "../../redux/heatmap2DSlice";
 import { fetchChromLens } from "../../utils/utils";
 import Scatter2D from "../../components/Embeddings/Scatter2D";
 import Spatials from "../../components/Embeddings/Spatials";
 import GridLayoutCellTopbar from "../../components/GridLayoutCellTopbar";
-import { updateGridLayout } from "../../redux/layoutSlice";
-
+import {
+  layoutStateType,
+  updateLayout,
+  updateGridLayout,
+} from "../../redux/layoutSlice";
+import { useParams } from "react-router-dom";
+import configMap from "../../configs/configMap.json";
 interface Props {
   domElements: any[];
   className?: string;
@@ -26,11 +38,16 @@ interface Props {
   breakpoints?: any;
   containerPadding?: number[];
 }
+interface ConfigMap {
+  [key: string]: string;
+}
+
 const ResponsiveReactGridLayout = WidthProvider(Responsive);
 
 const Dashboard: React.FC<Props> = (props) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+  const { uuid } = useParams();
   const { data: allDataset, error: error_getDataSet } = useGetDatasetsQuery();
 
   const heatmap_state = useAppSelector((state) => state.heatmap2D);
@@ -51,6 +68,39 @@ const Dashboard: React.FC<Props> = (props) => {
       }
     }
   }, [allDataset]);
+
+  useEffect(() => {
+    const loadConfigAndLayout = async () => {
+      try {
+        if (uuid != undefined) {
+          const map: ConfigMap = configMap;
+          const configFileName = map[uuid];
+          if (configFileName) {
+            const config = await import(`../../configs/${configFileName}.json`);
+            let newMapState: HeatMapStateType = {
+              ...config.init_state,
+              all_resolution: [],
+              chrom_lengths: [],
+              apiCalls: initApiCalls,
+              selectRect: initSelectRect,
+            };
+            let newLayout: layoutStateType = {
+              ...config.layout,
+            };
+            dispatch(updateLayout(newLayout));
+            dispatch(loadConfig(newMapState));
+            dispatch(updateDashboardUuid(uuid));
+          } else {
+            console.error("Config file not found for UUID:", uuid);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading config:", error);
+      }
+    };
+
+    loadConfigAndLayout();
+  }, [uuid, dispatch]);
 
   const handleResize = () => {
     // console.log("In handleResize init");
