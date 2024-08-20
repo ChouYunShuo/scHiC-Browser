@@ -2,13 +2,24 @@ import React, { useContext, useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 
 import { styled } from "@mui/system";
-import { Box, IconButton, useTheme, Typography } from "@mui/material";
+import {
+  Box,
+  IconButton,
+  useTheme,
+  Typography,
+  Menu,
+  MenuItem,
+} from "@mui/material";
 import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
 import DarkModeOutlinedIcon from "@mui/icons-material/DarkModeOutlined";
 import GitHubIcon from "@mui/icons-material/GitHub";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { ColorModeContext, tokens } from "../../theme";
 import logoDark from "../../assets/scViz_logo.png";
 import logoLight from "../../assets/scViz_logo_light.png";
+import { selectDashboardUuid } from "../../redux/heatmap2DSlice";
+import { useAppSelector, useAppDispatch } from "../../redux/hooks";
+import { v4 as uuidv4 } from "uuid";
 
 const TopBarTypography = styled(Typography)(({ theme }) => ({
   fontWeight: 500,
@@ -78,6 +89,11 @@ const Topbar: React.FC = () => {
   const colorMode = useContext(ColorModeContext);
   const location = useLocation();
   const [selected, setSelected] = useState<ItemType>("");
+  const dashboardId = useAppSelector(selectDashboardUuid);
+  const dispatch = useAppDispatch();
+
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const open = Boolean(anchorEl);
 
   useEffect(() => {
     const currentPath = window.location.pathname.slice(1); // Remove the initial '/'
@@ -87,6 +103,54 @@ const Topbar: React.FC = () => {
   const handleSelect = (title: ItemType) => {
     setSelected(title);
   };
+
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+  const handleSave = () => {
+    const state = useAppSelector((state) => state.heatmap2D); // Get current redux state
+    const blob = new Blob([JSON.stringify(state)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `session_${uuidv4()}.json`;
+    a.click();
+    handleMenuClose();
+  };
+
+  const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const content = e.target?.result as string;
+        const parsedConfig = JSON.parse(content);
+        //dispatch(loadConfig(parsedConfig)); // Load the uploaded config into Redux
+      };
+      reader.readAsText(file);
+    }
+    handleMenuClose();
+  };
+
+  const handleShare = () => {
+    const state = useAppSelector((state) => state.heatmap2D); // Get current redux state
+    const sessionId = uuidv4();
+    const configFileName = `session_${sessionId}.json`;
+
+    // Assume a function to save the file locally or to a backend.
+    // saveConfigFileLocallyOrBackend(configFileName, state);
+
+    const url = `${window.location.origin}/dashboard/${sessionId}`;
+    navigator.clipboard.writeText(url); // Copy the URL to clipboard
+    alert(`Session URL copied to clipboard!`);
+    handleMenuClose();
+  };
+
   return (
     <Box
       height="60px"
@@ -122,7 +186,7 @@ const Topbar: React.FC = () => {
 
           <Item
             title="Dashboard"
-            to="/dashboard"
+            to={`/dashboard/${dashboardId}`}
             selected={selected}
             handleSelect={handleSelect}
           ></Item>
@@ -138,6 +202,41 @@ const Topbar: React.FC = () => {
             selected={selected}
             handleSelect={handleSelect}
           ></Item>
+          <TopBarTypography
+            variant="h5"
+            color={
+              selected.toLowerCase() === "session"
+                ? colors.text[100]
+                : colors.text[200]
+            }
+            onClick={handleMenuOpen}
+          >
+            Session
+          </TopBarTypography>
+          <Menu
+            id="basic-menu"
+            anchorEl={anchorEl}
+            open={open}
+            onClose={handleMenuClose}
+            MenuListProps={{
+              "aria-labelledby": "basic-button",
+            }}
+          >
+            <MenuItem onClick={handleSave}>Save</MenuItem>
+            <MenuItem>
+              <input
+                type="file"
+                accept="application/json"
+                onChange={handleUpload}
+                style={{ display: "none" }}
+                id="upload-config"
+              />
+              <label htmlFor="upload-config" style={{ cursor: "pointer" }}>
+                Upload
+              </label>
+            </MenuItem>
+            <MenuItem onClick={handleShare}>Share</MenuItem>
+          </Menu>
         </Box>
       </Box>
 
