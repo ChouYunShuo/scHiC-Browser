@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 
-import { Box, useTheme } from "@mui/material";
+import { Box, useTheme, CircularProgress, Typography } from "@mui/material";
 import _ from "lodash";
 import { Responsive, WidthProvider } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
@@ -8,7 +8,10 @@ import "react-resizable/css/styles.css";
 
 import { tokens } from "../../theme";
 import HeatMap from "../../components/ContactMap/ContactMap2D";
-import { useGetDatasetsQuery } from "../../redux/apiSlice";
+import {
+  useGetDatasetsQuery,
+  useFetchSessionQuery,
+} from "../../redux/apiSlice";
 import {
   HeatMapStateType,
   initApiCalls,
@@ -28,7 +31,6 @@ import {
   updateGridLayout,
 } from "../../redux/layoutSlice";
 import { useParams } from "react-router-dom";
-import configMap from "../../configs/configMap.json";
 interface Props {
   domElements: any[];
   className?: string;
@@ -49,6 +51,7 @@ const Dashboard: React.FC<Props> = (props) => {
   const colors = tokens(theme.palette.mode);
   const { uuid } = useParams();
   const { data: allDataset, error: error_getDataSet } = useGetDatasetsQuery();
+  const { data: session, error, isLoading } = useFetchSessionQuery(uuid ?? "");
 
   const heatmap_state = useAppSelector((state) => state.heatmap2D);
   const grid_layout = useAppSelector((state) => state.layout.grid);
@@ -72,35 +75,33 @@ const Dashboard: React.FC<Props> = (props) => {
   useEffect(() => {
     const loadConfigAndLayout = async () => {
       try {
-        if (uuid != undefined) {
-          const map: ConfigMap = configMap;
-          const configFileName = map[uuid];
-          if (configFileName) {
-            const config = await import(`../../configs/${configFileName}.json`);
-            let newMapState: HeatMapStateType = {
-              ...config.init_state,
-              all_resolution: [],
-              chrom_lengths: [],
-              apiCalls: initApiCalls,
-              selectRect: initSelectRect,
-            };
-            let newLayout: layoutStateType = {
-              ...config.layout,
-            };
-            dispatch(updateLayout(newLayout));
-            dispatch(loadConfig(newMapState));
-            dispatch(updateDashboardUuid(uuid));
-          } else {
-            console.error("Config file not found for UUID:", uuid);
-          }
+        if (uuid != undefined && session != undefined) {
+          const { heatMapState, layout } = session;
+
+          let newMapState: HeatMapStateType = {
+            ...heatMapState,
+            all_resolution: [],
+            chrom_lengths: [],
+            apiCalls: initApiCalls,
+            selectRect: initSelectRect,
+          };
+          let newLayout: layoutStateType = {
+            ...layout,
+          };
+          dispatch(updateLayout(newLayout));
+          dispatch(loadConfig(newMapState));
+          dispatch(updateDashboardUuid(uuid));
+        } else {
+          console.error("Config file not found for UUID:", uuid);
         }
       } catch (error) {
         console.error("Error loading config:", error);
       }
     };
-
-    loadConfigAndLayout();
-  }, [uuid, dispatch]);
+    if (!isLoading && session) {
+      loadConfigAndLayout();
+    }
+  }, [session, isLoading, dispatch]);
 
   const handleResize = () => {
     // console.log("In handleResize init");
@@ -201,6 +202,47 @@ const Dashboard: React.FC<Props> = (props) => {
       );
     });
   }, [grid_layout, theme]);
+  if (isLoading) {
+    return (
+      <Box
+        width="100%"
+        height="100%"
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+      >
+        <Typography
+          variant="h3"
+          sx={{ marginLeft: "16px" }}
+          color={colors.text[200]}
+          fontWeight={200}
+        >
+          Loading session data...
+        </Typography>
+      </Box>
+    );
+  }
+
+  if (!session) {
+    return (
+      <Box
+        width="100%"
+        height="100%"
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+      >
+        <Typography
+          variant="h3"
+          sx={{ marginLeft: "16px" }}
+          color={colors.text[200]}
+          fontWeight={200}
+        >
+          No session found for UUID: {uuid}
+        </Typography>
+      </Box>
+    );
+  }
   return (
     <Box width="100%" height="100%">
       <Box ref={gridRef} flexGrow={1} mx="10px">

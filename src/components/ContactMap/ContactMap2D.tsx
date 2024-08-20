@@ -203,6 +203,10 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
   // var nb_hub = nb_dispatch("update", "brush");
   // nb_hub.connect(function (status: any) {});
 
+  if (!app_size || !psize) {
+    return <div>Loading...</div>;  // Or some other loading indicator
+  }
+
   // fetch data from rtk apis
   const {
     data: heatMapData,
