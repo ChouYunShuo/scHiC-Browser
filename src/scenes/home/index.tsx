@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import config from "../../configs/Lee_et_al.json";
 import {
   Box,
   Grid,
@@ -178,7 +177,7 @@ const Home: React.FC = () => {
                 style={{ textDecoration: "none", position: "relative" }}
               >
                 <a
-                  href={"mailto:" + config.contact}
+                  href={"mailto:yunshuoc@andrew.cmu.edu"}
                   style={{ textDecoration: "none", color: "inherit" }}
                 >
                   Contact us

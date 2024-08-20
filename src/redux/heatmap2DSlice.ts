@@ -66,7 +66,7 @@ const initialState: HeatMapStateType = {
   chrom_lengths: [],
   apiCalls: initApiCalls,
   selectRect: initSelectRect,
-  uuid: "088aab9b-6ae1-4b7d-ae98-0858a88f10a5",
+  uuid: "f9a819ec-6e8e-4b43-a1d3-4281bb154643",
 };
 
 const heatMap2DSlice = createSlice({
