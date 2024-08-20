@@ -58,6 +58,7 @@ interface DataType {
   cells: number;
   resolutions: number;
   uuid: string;
+  session_uuid: string;
 }
 
 const PaginationButton: React.FC<PaginationButtonProps> = ({
@@ -118,10 +119,10 @@ const DataTable: React.FC<DataTableProps> = ({ columns, data }) => {
     if (
       cell.column.id === "dataset_description" &&
       typeof cell.value === "string" &&
-      cell.row.original.uuid != ""
+      cell.row.original.session_uuid != ""
     ) {
       try {
-        navigate(`/dashboard/${cell.row.original.uuid}`);
+        navigate(`/dashboard/${cell.row.original.session_uuid}`);
       } catch (error) {
         console.error("Failed to load config:", error);
       }

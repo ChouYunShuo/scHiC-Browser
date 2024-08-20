@@ -1,5 +1,6 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-
+import { HeatMapStateType } from "./heatmap2DSlice";
+import { layoutStateType } from "./layoutSlice";
 export const apiEndpoint = "128.2.220.67:8020";
 //export const apiEndpoint = "128.2.220.67:8000";
 type datasetType = {
@@ -49,6 +50,11 @@ type GeneExprQueryRequest = {
 type SpatialQueryRequest = {
   dataset_name: string;
 };
+
+interface SessionResponse {
+  heatMapState: HeatMapStateType;
+  layout: layoutStateType;
+}
 
 type RawDatum = [number, number];
 
@@ -132,6 +138,23 @@ export const rootApi = createApi({
         return JSON.parse(response);
       },
     }),
+    fetchSession: builder.query<SessionResponse, string>({
+      query: (uuid) => ({
+        url: `/session/${uuid}`,
+        method: "GET",
+      }),
+      transformResponse: (response: SessionResponse): SessionResponse => {
+        // Check if the response is already an object, otherwise parse it
+        const parsedResponse = typeof response === 'string' ? JSON.parse(response) : response;
+        console.log(parsedResponse);
+    
+        // Return the parsed response in the required format
+        return {
+          heatMapState: parsedResponse.init_state,
+          layout: parsedResponse.layout,
+        };
+      },
+    }),
   }),
 });
 
@@ -145,4 +168,5 @@ export const {
   useFetchSpatialQuery,
   useFetchMetaQuery,
   useFetchGeneExprQuery,
+  useFetchSessionQuery,
 } = rootApi;
