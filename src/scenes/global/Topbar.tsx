@@ -9,11 +9,11 @@ import {
   Typography,
   Menu,
   MenuItem,
+  Button,
 } from "@mui/material";
 import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
 import DarkModeOutlinedIcon from "@mui/icons-material/DarkModeOutlined";
 import GitHubIcon from "@mui/icons-material/GitHub";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { ColorModeContext, tokens } from "../../theme";
 import logoDark from "../../assets/scViz_logo.png";
 import logoLight from "../../assets/scViz_logo_light.png";
@@ -22,6 +22,7 @@ import { useAppSelector, useAppDispatch } from "../../redux/hooks";
 import { v4 as uuidv4 } from "uuid";
 
 const TopBarTypography = styled(Typography)(({ theme }) => ({
+  textTransform: "none",
   fontWeight: 500,
   "&:hover": {
     color: tokens(theme.palette.mode).text[100], // choose a lighter color on hover
@@ -29,7 +30,7 @@ const TopBarTypography = styled(Typography)(({ theme }) => ({
   },
 }));
 
-type ItemType = "Dashboard" | "Datasets" | "Documentation" | "";
+type ItemType = "Dashboard" | "Datasets" | "Documentation" | "Session" | "";
 interface ItemProps {
   title: ItemType;
   to: string;
@@ -90,13 +91,18 @@ const Topbar: React.FC = () => {
   const location = useLocation();
   const [selected, setSelected] = useState<ItemType>("");
   const dashboardId = useAppSelector(selectDashboardUuid);
+  const heatMapState = useAppSelector((state) => state.heatmap2D); // Get current heatmap2D state
+  const layoutState = useAppSelector((state) => state.layout); // Get current layout state
   const dispatch = useAppDispatch();
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
   useEffect(() => {
-    const currentPath = window.location.pathname.slice(1); // Remove the initial '/'
+    let currentPath = window.location.pathname.split("/")[1]; // Remove the initial '/'
+    if (currentPath == "doc") {
+      currentPath = "Documentation";
+    }
     setSelected(currentPath as ItemType);
   }, [location]);
 
@@ -111,14 +117,16 @@ const Topbar: React.FC = () => {
     setAnchorEl(null);
   };
   const handleSave = () => {
-    const state = useAppSelector((state) => state.heatmap2D); // Get current redux state
-    const blob = new Blob([JSON.stringify(state)], {
-      type: "application/json",
-    });
+    const blob = new Blob(
+      [JSON.stringify({ heatMapState, layoutState }, null, 2)],
+      {
+        type: "application/json",
+      }
+    );
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `session_${uuidv4()}.json`;
+    a.download = `session_${heatMapState.uuid}.json`;
     a.click();
     handleMenuClose();
   };
@@ -202,17 +210,27 @@ const Topbar: React.FC = () => {
             selected={selected}
             handleSelect={handleSelect}
           ></Item>
-          <TopBarTypography
-            variant="h5"
-            color={
-              selected.toLowerCase() === "session"
-                ? colors.text[100]
-                : colors.text[200]
-            }
+          <Button
+            sx={{
+              padding: 0,
+              minWidth: "auto",
+              "&:hover": {
+                backgroundColor: "transparent",
+              },
+            }}
             onClick={handleMenuOpen}
           >
-            Session
-          </TopBarTypography>
+            <TopBarTypography
+              variant="h5"
+              color={
+                selected.toLowerCase() === "session"
+                  ? colors.text[100]
+                  : colors.text[200]
+              }
+            >
+              Session
+            </TopBarTypography>
+          </Button>
           <Menu
             id="basic-menu"
             anchorEl={anchorEl}
