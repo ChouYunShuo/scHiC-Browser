@@ -18,6 +18,7 @@ import { ColorModeContext, tokens } from "../../theme";
 import logoDark from "../../assets/scViz_logo.png";
 import logoLight from "../../assets/scViz_logo_light.png";
 import { selectDashboardUuid } from "../../redux/heatmap2DSlice";
+import { useUploadSessionMutation } from "../../redux/apiSlice";
 import { useAppSelector, useAppDispatch } from "../../redux/hooks";
 import { v4 as uuidv4 } from "uuid";
 
@@ -84,6 +85,33 @@ const Item: React.FC<ItemProps> = ({ title, to, selected, handleSelect }) => {
   );
 };
 
+const validateHeatMapState = (heatMapState: any): boolean => {
+  return (
+    typeof heatMapState.dataset_name === "string" &&
+    Array.isArray(heatMapState.apiCalls) &&
+    typeof heatMapState.app_size === "number" &&
+    typeof heatMapState.contact_map_size === "number" &&
+    typeof heatMapState.pix_size === "number" &&
+    typeof heatMapState.map_cnts === "number" &&
+    typeof heatMapState.track_type === "string"
+  );
+};
+
+const validateLayoutState = (layoutState: any): boolean => {
+  return (
+    Array.isArray(layoutState.grid?.lg) && Array.isArray(layoutState.component)
+  );
+};
+
+const validateConfigStructure = (parsedConfig: any): boolean => {
+  return (
+    parsedConfig.hasOwnProperty("heatMapState") &&
+    parsedConfig.hasOwnProperty("layoutState") &&
+    validateHeatMapState(parsedConfig.heatMapState) &&
+    validateLayoutState(parsedConfig.layoutState)
+  );
+};
+
 const Topbar: React.FC = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
@@ -94,6 +122,7 @@ const Topbar: React.FC = () => {
   const heatMapState = useAppSelector((state) => state.heatmap2D); // Get current heatmap2D state
   const layoutState = useAppSelector((state) => state.layout); // Get current layout state
   const dispatch = useAppDispatch();
+  const [uploadSession] = useUploadSessionMutation();
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
@@ -134,11 +163,41 @@ const Topbar: React.FC = () => {
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      const fileName = file.name;
+      const fileExtension = fileName.split(".").pop()?.toLowerCase();
+
+      // Check if the file extension is 'json'
+      if (fileExtension !== "json") {
+        console.error("Uploaded file is not a JSON file");
+        return;
+      }
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         const content = e.target?.result as string;
-        const parsedConfig = JSON.parse(content);
-        //dispatch(loadConfig(parsedConfig)); // Load the uploaded config into Redux
+        try {
+          const parsedConfig = JSON.parse(content);
+          if (validateConfigStructure(parsedConfig)) {
+            console.log("Valid configuration file:", parsedConfig);
+            console.log("Uploaded file name:", fileName);
+            // Prepare data to be sent to the server
+            const requestData = {
+              config: parsedConfig,
+              file_name: fileName,
+            };
+            try {
+              const response = await uploadSession(requestData).unwrap();
+              const newUuid = response.session_uuid;
+              console.log("New session UUID:", newUuid);
+              // Optionally, redirect to the new session or update state
+            } catch (error) {
+              console.error("Failed to upload session:", error);
+            }
+          } else {
+            console.error("Invalid configuration structure");
+          }
+        } catch (error) {
+          console.error("Error parsing JSON:", error);
+        }
       };
       reader.readAsText(file);
     }
