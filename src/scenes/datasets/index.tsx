@@ -23,17 +23,6 @@ const DataPage: React.FC = () => {
     isFetching,
   } = useGetDatasetsQuery();
 
-  // const desc: string [] = useMemo(,[])
-  // const data: DataType[] = useMemo(
-  //   () =>
-  //     _.range(1, 101).map((idx) => ({
-  //       Dataset: `Dataset ${idx}`,
-  //       Cells: idx * 10,
-  //       Tissue: `Tissue${idx}`,
-  //       Organism: `Organism${idx}`,
-  //     })),
-  //   []
-  // );
   //@ts-ignore
   const columns: Column<DataType>[] = useMemo(
     () => [
