@@ -51,11 +51,17 @@ type SpatialQueryRequest = {
   dataset_name: string;
 };
 
-interface SessionResponse {
+interface Session {
   heatMapState: HeatMapStateType;
   layout: layoutStateType;
 }
-
+interface UploadSessionRequest {
+  config: Session;
+  file_name: string;
+}
+interface UploadSessionResponse {
+  session_uuid: string;
+}
 type RawDatum = [number, number];
 
 export const rootApi = createApi({
@@ -138,22 +144,33 @@ export const rootApi = createApi({
         return JSON.parse(response);
       },
     }),
-    fetchSession: builder.query<SessionResponse, string>({
+    fetchSession: builder.query<Session, string>({
       query: (uuid) => ({
         url: `/session/${uuid}`,
         method: "GET",
       }),
-      transformResponse: (response: SessionResponse): SessionResponse => {
+      transformResponse: (response: Session): Session => {
         // Check if the response is already an object, otherwise parse it
-        const parsedResponse = typeof response === 'string' ? JSON.parse(response) : response;
+        const parsedResponse =
+          typeof response === "string" ? JSON.parse(response) : response;
         console.log(parsedResponse);
-    
+
         // Return the parsed response in the required format
         return {
-          heatMapState: parsedResponse.init_state,
-          layout: parsedResponse.layout,
+          heatMapState: parsedResponse.heatMapState,
+          layout: parsedResponse.layoutState,
         };
       },
+    }),
+    uploadSession: builder.mutation<
+      UploadSessionResponse,
+      UploadSessionRequest
+    >({
+      query: (payload) => ({
+        url: "/session_upload",
+        method: "POST",
+        body: payload,
+      }),
     }),
   }),
 });
@@ -169,4 +186,5 @@ export const {
   useFetchMetaQuery,
   useFetchGeneExprQuery,
   useFetchSessionQuery,
+  useUploadSessionMutation,
 } = rootApi;
