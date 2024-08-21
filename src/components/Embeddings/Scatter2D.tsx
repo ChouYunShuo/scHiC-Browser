@@ -111,14 +111,23 @@ const Scatter2D: React.FC = () => {
   useEffect(() => {
     // Only proceed if all required data is available and not loading
     if (!isLoading && rawEmbedData && !isLabelLoading && cell_label) {
+      const cellToSelectMap: { [key: string]: string } = {};
+      for (const [key, value] of Object.entries(apiCalls)) {
+        value.selectedCells.forEach((cellId) => {
+          cellToSelectMap[cellId] = key;
+        });
+      }
       const newFormattedData = rawEmbedData.map(([pc1, pc2], index) => {
         const label = cell_label?.[index] ?? "N/A";
+        const cellId = index.toString();
+        const selectMap = cellToSelectMap[cellId] || "0";
+
         return {
           pc1: typeof pc1 === "string" ? parseFloat(pc1) : pc1,
           pc2: typeof pc2 === "string" ? parseFloat(pc2) : pc2,
           cellType: label,
-          cellId: index.toString(),
-          selectMap: "0",
+          cellId: cellId,
+          selectMap: selectMap,
         };
       });
 
