@@ -77,13 +77,18 @@ const Dashboard: React.FC<Props> = (props) => {
       try {
         if (uuid != undefined && session != undefined) {
           const { heatMapState, layout } = session;
+          console.log(heatMapState, layout);
 
           let newMapState: HeatMapStateType = {
             ...heatMapState,
             all_resolution: [],
             chrom_lengths: [],
-            apiCalls: initApiCalls,
-            selectRect: initSelectRect,
+            apiCalls: heatMapState.apiCalls?.length
+              ? heatMapState.apiCalls
+              : initApiCalls,
+            selectRect: heatMapState.selectRect
+              ? heatMapState.selectRect
+              : initSelectRect,
           };
           let newLayout: layoutStateType = {
             ...layout,
