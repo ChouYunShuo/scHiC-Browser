@@ -114,7 +114,7 @@ const Scatter2D: React.FC = () => {
       const cellToSelectMap: { [key: string]: string } = {};
       for (const [key, value] of Object.entries(apiCalls)) {
         value.selectedCells.forEach((cellId) => {
-          cellToSelectMap[cellId] = key;
+          cellToSelectMap[cellId] = (parseInt(key) + 1).toString();
         });
       }
       const newFormattedData = rawEmbedData.map(([pc1, pc2], index) => {
