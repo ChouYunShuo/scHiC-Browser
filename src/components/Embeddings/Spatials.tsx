@@ -121,14 +121,22 @@ const Spatials: React.FC = () => {
   //console.log(isFetching, isExprFetching,rawSpatialData)
   useEffect(() => {
     if (!isLoading && rawSpatialData && !isExprLoading && geneExprData) {
+      const cellToSelectMap: { [key: string]: string } = {};
+      for (const [key, value] of Object.entries(apiCalls)) {
+        value.selectedCells.forEach((cellId) => {
+          cellToSelectMap[cellId] = (parseInt(key) + 1).toString();
+        });
+      }
       const formattedData = rawSpatialData.map(([x, y], index) => {
         const expr = geneExprData?.[index] ?? "N/A";
+        const cellId = index.toString();
+        const selectMap = cellToSelectMap[cellId] || "0";
         return {
           x: typeof x === "string" ? parseFloat(x) : x,
           y: typeof y === "string" ? parseFloat(y) : y,
           expr: typeof expr === "string" ? parseFloat(expr) : expr,
-          cellId: index.toString(),
-          selectMap: "0",
+          cellId: cellId,
+          selectMap: selectMap,
         };
       });
 
@@ -146,7 +154,6 @@ const Spatials: React.FC = () => {
       const apiCallWithCell = apiCalls.find((apiCall) =>
         apiCall.selectedCells.includes(cellId)
       );
-
       // Return the corresponding map id, or "0" if the cell is not selected
       return apiCallWithCell ? (apiCallWithCell.id + 1).toString() : "0";
     };
