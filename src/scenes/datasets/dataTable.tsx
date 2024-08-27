@@ -34,13 +34,7 @@ import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import LastPageIcon from "@mui/icons-material/LastPage";
 import FilterButton from "./FilterButton";
 import { useAppDispatch } from "../../redux/hooks";
-import { layoutStateType, updateLayout } from "../../redux/layoutSlice";
-import {
-  HeatMapStateType,
-  initApiCalls,
-  initSelectRect,
-  loadConfig,
-} from "../../redux/heatmap2DSlice";
+
 interface DataTableProps {
   columns: any;
   data: any;
@@ -88,7 +82,6 @@ const PaginationButton: React.FC<PaginationButtonProps> = ({
 const DataTable: React.FC<DataTableProps> = ({ columns, data }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-  const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
   const instance = useTable(
@@ -124,7 +117,7 @@ const DataTable: React.FC<DataTableProps> = ({ columns, data }) => {
       try {
         navigate(`/dashboard/${cell.row.original.session_uuid}`);
       } catch (error) {
-        console.error("Failed to load config:", error);
+        console.error("Failed to navigate to new session:", error);
       }
     }
   };

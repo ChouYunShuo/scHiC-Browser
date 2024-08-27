@@ -1,6 +1,5 @@
 import React, { useContext, useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
-
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { styled } from "@mui/system";
 import {
   Box,
@@ -121,8 +120,9 @@ const Topbar: React.FC = () => {
   const dashboardId = useAppSelector(selectDashboardUuid);
   const heatMapState = useAppSelector((state) => state.heatmap2D); // Get current heatmap2D state
   const layoutState = useAppSelector((state) => state.layout); // Get current layout state
-  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const [uploadSession] = useUploadSessionMutation();
+  const [sessionName, setSessionName] = useState("");
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
@@ -145,7 +145,16 @@ const Topbar: React.FC = () => {
   const handleMenuClose = () => {
     setAnchorEl(null);
   };
-  const handleSave = () => {
+  const handleSave = async () => {
+    const fileName = prompt(
+      "Enter the file name for saving the session (without extension):",
+      `session_${heatMapState.uuid}`
+    );
+
+    if (!fileName) {
+      console.error("No file name provided. Save operation canceled.");
+      return;
+    }
     const blob = new Blob(
       [JSON.stringify({ heatMapState, layoutState }, null, 2)],
       {
@@ -155,8 +164,9 @@ const Topbar: React.FC = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `session_${heatMapState.uuid}.json`;
+    a.download = `${fileName}.json`; // Use the user-provided file name
     a.click();
+    URL.revokeObjectURL(url); // Clean up the object URL
     handleMenuClose();
   };
 
@@ -188,7 +198,12 @@ const Topbar: React.FC = () => {
               const response = await uploadSession(requestData).unwrap();
               const newUuid = response.session_uuid;
               console.log("New session UUID:", newUuid);
-              // Optionally, redirect to the new session or update state
+              //redirect to the new session or update state
+              try {
+                navigate(`/dashboard/${newUuid}`);
+              } catch (error) {
+                console.error("Failed to navigate to new session:", error);
+              }
             } catch (error) {
               console.error("Failed to upload session:", error);
             }
