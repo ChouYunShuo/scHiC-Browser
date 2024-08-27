@@ -219,17 +219,49 @@ const Topbar: React.FC = () => {
     handleMenuClose();
   };
 
-  const handleShare = () => {
-    const state = useAppSelector((state) => state.heatmap2D); // Get current redux state
-    const sessionId = uuidv4();
-    const configFileName = `session_${sessionId}.json`;
+  const handleShare = async () => {
+    const sessionName = prompt(
+      "Enter the session name for sharing the session:"
+    );
 
-    // Assume a function to save the file locally or to a backend.
-    // saveConfigFileLocallyOrBackend(configFileName, state);
+    if (!sessionName) {
+      console.error("No sessionName provided. Upload operation canceled.");
+      return;
+    }
 
-    const url = `${window.location.origin}/dashboard/${sessionId}`;
-    navigator.clipboard.writeText(url); // Copy the URL to clipboard
-    alert(`Session URL copied to clipboard!`);
+    const requestData = {
+      config: {
+        heatMapState: heatMapState,
+        layoutState: layoutState,
+      },
+      file_name: sessionName,
+    };
+
+    try {
+      const response = await uploadSession(requestData).unwrap();
+      const newUuid = response.session_uuid;
+      console.log("New session UUID:", newUuid);
+      // Copy newUuid to clipboard
+      if (navigator.clipboard) {
+        try {
+          await navigator.clipboard.writeText(newUuid);
+          alert("Session UUID copied to clipboard!");
+        } catch (clipboardError) {
+          console.error("Failed to copy UUID to clipboard:", clipboardError);
+          alert("Failed to copy the session UUID to clipboard.");
+        }
+      } else {
+        alert("Clipboard API not supported in this environment.");
+      }
+      //redirect to the new session or update state
+      try {
+        navigate(`/dashboard/${newUuid}`);
+      } catch (error) {
+        console.error("Failed to navigate to new session:", error);
+      }
+    } catch (error) {
+      console.error("Failed to upload session:", error);
+    }
     handleMenuClose();
   };
 

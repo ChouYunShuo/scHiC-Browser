@@ -76,8 +76,8 @@ const Dashboard: React.FC<Props> = (props) => {
     const loadConfigAndLayout = async () => {
       try {
         if (uuid != undefined && session != undefined) {
-          const { heatMapState, layout } = session;
-          console.log(heatMapState, layout);
+          const { heatMapState, layoutState } = session;
+          console.log(heatMapState, layoutState);
 
           let newMapState: HeatMapStateType = {
             ...heatMapState,
@@ -91,7 +91,7 @@ const Dashboard: React.FC<Props> = (props) => {
               : initSelectRect,
           };
           let newLayout: layoutStateType = {
-            ...layout,
+            ...layoutState,
           };
           dispatch(updateLayout(newLayout));
           dispatch(loadConfig(newMapState));
