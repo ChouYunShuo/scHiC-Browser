@@ -53,7 +53,7 @@ type SpatialQueryRequest = {
 
 interface Session {
   heatMapState: HeatMapStateType;
-  layout: layoutStateType;
+  layoutState: layoutStateType;
 }
 interface UploadSessionRequest {
   config: Session;
@@ -158,7 +158,7 @@ export const rootApi = createApi({
         // Return the parsed response in the required format
         return {
           heatMapState: parsedResponse.heatMapState,
-          layout: parsedResponse.layoutState,
+          layoutState: parsedResponse.layoutState,
         };
       },
     }),
