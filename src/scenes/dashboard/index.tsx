@@ -11,6 +11,7 @@ import HeatMap from "../../components/ContactMap/ContactMap2D";
 import {
   useGetDatasetsQuery,
   useFetchSessionQuery,
+  useFetchChromLenQuery,
 } from "../../redux/apiSlice";
 import {
   HeatMapStateType,
@@ -63,14 +64,14 @@ const Dashboard: React.FC<Props> = (props) => {
 
   useEffect(() => {
     if (allDataset) {
-      const dataset_name = heatmap_state.dataset_name;
+      const dataset_name = session?.heatMapState.dataset_name;
       const key = "name";
       const d_index = allDataset.findIndex((obj) => obj[key] === dataset_name);
       if (d_index != -1) {
         dispatch(updateAllRes(allDataset[d_index].resolutions));
       }
     }
-  }, [allDataset]);
+  }, [allDataset, session]);
 
   useEffect(() => {
     const loadConfigAndLayout = async () => {
@@ -81,8 +82,6 @@ const Dashboard: React.FC<Props> = (props) => {
 
           let newMapState: HeatMapStateType = {
             ...heatMapState,
-            all_resolution: [],
-            chrom_lengths: [],
             apiCalls: heatMapState.apiCalls?.length
               ? heatMapState.apiCalls
               : initApiCalls,
@@ -109,7 +108,6 @@ const Dashboard: React.FC<Props> = (props) => {
   }, [session, isLoading, dispatch]);
 
   const handleResize = () => {
-    // console.log("In handleResize init");
     const Resize = () => {
       if (gridRef.current) {
         const width = (gridRef.current as HTMLElement).offsetWidth;
@@ -132,15 +130,18 @@ const Dashboard: React.FC<Props> = (props) => {
   useEffect(() => {
     const getData = async () => {
       const chromLens = await fetchChromLens({
-        name: heatmap_state.dataset_name,
-        resolution: heatmap_state.all_resolution[0].toString(),
+        name: session?.heatMapState.dataset_name!,
+        resolution: session?.heatMapState.all_resolution.toString()!,
         cell_id: heatmap_state.apiCalls[0].id.toString(),
       });
       dispatch(updateChromLen(chromLens));
     };
-
-    if (heatmap_state.all_resolution.length != 0) getData();
-  }, [heatmap_state.all_resolution, heatmap_state.dataset_name]);
+    if (
+      session?.heatMapState.all_resolution.length != 0 &&
+      session?.heatMapState.dataset_name
+    )
+      getData();
+  }, [session]);
 
   const [currentBreakpoint, setCurrentBreakpoint] = useState<string>("lg");
   const [compactType, setCompactType] = useState<string | null>("vertical");

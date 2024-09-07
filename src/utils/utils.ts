@@ -49,7 +49,6 @@ export const chrom2idx = (chrom: string) => {
 };
 export const getNbChrom = (range: string): string => {
   var chrom = range.trim().split(":")[0].substring(3);
-  //console.log(chrom)
   return "chr" + chrom;
 };
 
@@ -200,8 +199,8 @@ export const getResFromRange = (range1: string, range2: string) => {
     );
     console.log(bindex, res[bindex]);
     return res[bindex];
-  } catch (err) {
-    console.log(err);
+  } catch (err: any) {
+    console.error(err, err.stack);
   }
 };
 
@@ -234,8 +233,8 @@ export const getNewChromZoomIn = (range1: string, a: number) => {
       "-" +
       Math.floor(mid + new_range).toString()
     );
-  } catch (err) {
-    console.log(err);
+  } catch (err: any) {
+    console.error(err, err.stack);
     return range1;
   }
 };
@@ -266,8 +265,8 @@ export const getNewChromZoomOut = (range1: string, a: number) => {
         Math.floor(mid + range).toString();
     console.log(range1, validateChrom(chrom_str));
     return validateChrom(chrom_str);
-  } catch (err) {
-    console.log(err);
+  } catch (err: any) {
+    console.error(err, err.stack);
     return range1;
   }
 };
@@ -315,8 +314,8 @@ export const getNewChromeMove = (range1: string, type: MoveType) => {
     }
 
     return validateChrom(chrom_str);
-  } catch (err) {
-    console.log(err);
+  } catch (err: any) {
+    console.error(err, err.stack);
     return range1;
   }
 };
