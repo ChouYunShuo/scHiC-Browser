@@ -3,8 +3,8 @@ import react from "@vitejs/plugin-react";
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  // base: process.env.NODE_ENV === 'production' ? '/cellscope/' : '/',
-  plugins: [
-    react(),
-  ],
-})
+  plugins: [react()],
+  optimizeDeps: {
+    exclude: ["js-big-decimal"],
+  },
+});

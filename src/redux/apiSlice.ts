@@ -1,7 +1,7 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { HeatMapStateType } from "./heatmap2DSlice";
 import { layoutStateType } from "./layoutSlice";
-export const apiEndpoint = "128.2.220.67:8020";
+export const apiEndpoint = "cellscope.nucleome.org";
 //export const apiEndpoint = "128.2.220.67:8000";
 type datasetType = {
   name: string;
