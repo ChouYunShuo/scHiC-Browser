@@ -58,6 +58,10 @@ export const getChromLen = (chrom: string) => {
   let chrom_len = selectChromLen(state.heatmap2D).slice();
   return chrom_len[chrom2idx(chrom)];
 };
+export const getChromFromRange = (range: string) => {
+  const chrom = range.trim().split(":")[0];
+  return getChromLen(chrom);
+};
 export const validateChrom = (range: string): string => {
   const chrom = range.trim().split(":")[0];
   const raw = range.trim().split(":")[1];
@@ -92,7 +96,6 @@ export const getChromLenFromPos = (
   const xScale = scaleLinear().domain([0, map_size]).range([lo, hi]);
   return Math.min(Math.max(lo, Math.ceil(xScale(pos))), hi);
 };
-
 
 export const getPosFromChromLen = (
   range: string,
@@ -219,7 +222,10 @@ export const getNewChromZoomIn = (range1: string, a: number) => {
     const hi = Number(rawrange.split("-")[1]);
     const mid = (hi - lo) / 2 + lo;
     const new_range = (hi - lo) / (2 * a);
-    if (mid <= 0 || isNaN(mid)) throw "range not valid";
+    if (mid <= 0 || isNaN(mid)) {
+      console.log("range not valid");
+      return validateChrom(range1);
+    }
 
     return (
       chrom +
@@ -243,7 +249,10 @@ export const getNewChromZoomOut = (range1: string, a: number) => {
     const hi = Number(rawrange.split("-")[1]);
     const mid = (hi - lo) / 2 + lo;
     const range = ((hi - lo) * a) / 2;
-    if (mid <= 0 || isNaN(mid)) throw "range not valid";
+    if (mid <= 0 || isNaN(mid)) {
+      console.log("range not valid");
+      return validateChrom(range1);
+    }
 
     let chrom_str = "";
     if (mid - range <= 0)

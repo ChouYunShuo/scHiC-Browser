@@ -16,6 +16,7 @@ import {
   getNewChromZoomOut,
   adjustChromValues,
   getPosFromChromLen,
+  getChromFromRange,
 } from "../../utils/utils";
 import {
   useFetchContactMapDataQuery,
@@ -204,7 +205,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
   // nb_hub.connect(function (status: any) {});
 
   if (!app_size || !psize) {
-    return <div>Loading...</div>;  // Or some other loading indicator
+    return <div>Loading...</div>; // Or some other loading indicator
   }
 
   // fetch data from rtk apis
@@ -253,9 +254,6 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
 
   useEffect(() => {
     if (!canvasRef.current) return;
-
-    // Destroy the previous PIXI application
-
     // Initialize PIXI application and viewport
     const { newApp, mapViewport } = initializePixiAppAndViewport();
     viewportRef.current = mapViewport;
@@ -313,7 +311,6 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
   // Add event listeners to the viewport
   function addMapViewportEventListeners(viewport: Viewport) {
     viewport.drag().wheel();
-
     viewport.on("zoomed-end", handleZoomedEnd);
     viewport.on("drag-end", handleDragEnd);
 
@@ -341,8 +338,10 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
   function handleDragEnd(e: DragEvent) {
     const mapTLCorner = new PIXI.Point(0, 0);
     const mapBRCorner = new PIXI.Point(contact_map_size, contact_map_size);
-    const worldTLPosition = e.viewport.toGlobal(mapTLCorner);
-    const worldBRPosition = e.viewport.toGlobal(mapBRCorner);
+
+    let worldTLPosition = e.viewport.toGlobal(mapTLCorner);
+    let worldBRPosition = e.viewport.toGlobal(mapBRCorner);
+
     topCornerRef.current = worldTLPosition;
     bottomCornerRef.current = worldBRPosition;
 
@@ -468,6 +467,7 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
 
   //update ticks in real-time
   useEffect(() => {
+    cleanupTicks();
     handleTickUpdate();
     handleSignal1dUpdate();
     return cleanupTicks;
@@ -600,7 +600,6 @@ const HeatMap: React.FC<HeatMapProps> = ({ map_id, selected }) => {
     );
 
     // Add Text data
-
     addHorizontalTicksText(
       horizontal_ticks,
       chrom_dist_container,
