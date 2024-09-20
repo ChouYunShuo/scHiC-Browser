@@ -1,61 +1,53 @@
-# Single cell HiC Data Visualization and Analysis Tool
+# Single Cell HiC Data Visualization and Analysis Tool
 
-A Vite Typescript React project for scHiC data visualization and analysis using Redux, Pixi.js, and D3.js
-
-![Visualization of this repo](./diagram.svg)
+A Vite Typescript React project for scHiC data visualization and analysis using Redux, Pixi.js, and D3.js.
 
 ## Features
 
-- Load and visualize scHiC data in a variety of formats
-- Interactively explore and analyze scHiC data through different visualizations
-- Visualize data as contact matrices, signal tracls, and scatter plots
+- Load and visualize single-cell HiC (scHiC) data in multiple formats
+- Interactively explore and analyze scHiC data with various visualizations
+- Visualize data as contact maps, signal tracks, and scatter plots
 - Perform clustering, dimensionality reduction, and other data analysis techniques
 - Share and collaborate on data visualizations with others
 
 ## Prerequisites
 
-- Node.js `>=v16.17.1`
-- Yarn `>=v1.22.19`
-- React `^18.2.0`
-- Pixi.js `^7.1.0`
-- D3 `^7.8.1`
+- Docker `>=19.03.13` (tested on 19.03.13, 26.1.0)
+- Docker-compose `>=v2.29.2` (tested on v2.29.2, v1.26.0)
 
-## Installation
+## Running the Frontend Locally
 
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/<username>/scHiC-data-viz.git
+git clone https://github.com/ChouYunShuo/scHiC-Browser
 ```
 
-### 2. Change into the project directory
+### 2. Navigate to the Project Directory
 
 ```bash
-cd scHiC-data-viz
+cd scHiC-Browser
 ```
 
-#### 3. Install dependencies
+### 3. Update apiEndpoint in apiSlice.ts
+Navigate to the redux directory:
 
 ```bash
-yarn install
+cd src/redux
 ```
+Then, update the apiEndpoint in apiSlice.ts to point to your local data server. For example:
 
-## Usage
-
-### 1. Start the development server
-
-```bash
-yarn run dev
+```typescript
+export const apiEndpoint = "http://localhost:8020";
 ```
-
-### 2. Open your web browser and navigate to <http://localhost:5173>
-
-## Build
-
-To build the production version of the project, run
-
+### 4. Run the Application Using Docker Compose
+```
+docker-compose up --build 
+```
+### 5. Open the Application in Your Browser
+Once the application is running, open your web browser and go to:
 ```bash
-yarn build
+http://localhost:8088
 ```
 
 ## License

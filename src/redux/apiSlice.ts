@@ -1,7 +1,8 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { HeatMapStateType } from "./heatmap2DSlice";
 import { layoutStateType } from "./layoutSlice";
-export const apiEndpoint = "cellscope.nucleome.org";
+//export const apiEndpoint = "https://cellscope.nucleome.org";
+export const apiEndpoint = "http://localhost:8020";
 //export const apiEndpoint = "128.2.220.67:8000";
 type datasetType = {
   name: string;
@@ -66,7 +67,7 @@ type RawDatum = [number, number];
 
 export const rootApi = createApi({
   reducerPath: "rootApi",
-  baseQuery: fetchBaseQuery({ baseUrl: `https://${apiEndpoint}/api` }),
+  baseQuery: fetchBaseQuery({ baseUrl: `${apiEndpoint}/api` }),
   endpoints: (builder) => ({
     getDatasets: builder.query<datasetType[], void>({
       query: () => "/datasets",
